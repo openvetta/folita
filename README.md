@@ -15,12 +15,19 @@
 
 ```text
 Folita/
-  App/              应用入口、AppDelegate、菜单栏菜单
-  MainPanel/        主面板及其分区
-  ClipboardPanel/   剪贴面板窗口、控制器、尺寸与内容
+  App/              应用入口、AppDelegate（装配各服务）、菜单栏菜单、开机自启
+  ClipboardPanel/   剪贴面板窗口、控制器、状态模型、历史列表与搜索
+  History/          剪贴板监听、采集规则、SwiftData 模型与存储、保留与隐私设置
+  Paste/            写回剪贴板、自动粘贴与权限提示
+  HotKey/           全局快捷键（封装 KeyboardShortcuts）
+  Updates/          应用内更新（封装 Sparkle）
+  MainPanel/        主面板及其设置分区
   DesignSystem/     Siri 风格玻璃容器与取色
   Resources/        Localizable.xcstrings（en / zh-Hans）
-FolitaTests/        Swift Testing 单元测试
+FolitaTests/        Swift Testing 单元、视图与流程测试
+Configs/            签名配置（Local.xcconfig 不入库）
+docs/adr/           架构决策记录
+docs/releasing.md   发布流程与所需凭据
 project.yml         XcodeGen 工程定义（.xcodeproj 不入库）
 ```
 
