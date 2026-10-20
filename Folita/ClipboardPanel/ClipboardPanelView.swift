@@ -11,6 +11,7 @@ struct ClipboardPanelView: View {
         SiriGlassContainer {
             VStack(alignment: .leading, spacing: 14) {
                 dragRegion
+                PanelNoticeBanner(notice: model.notice, action: model.resolveNotice)
                 ClipboardHistoryList(model: model)
                     .frame(maxHeight: .infinity, alignment: .top)
             }

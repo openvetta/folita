@@ -32,6 +32,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             clipboardPanel?.hide()
             pasteService.paste(item, mode: mode)
         }
+        clipboardPanel.model.noticeProvider = {
+            PanelNotice.resolve(
+                autoPaste: pasteSettings.autoPaste,
+                accessibilityTrusted: AccessibilityAccess.system.isTrusted(),
+                pasteboardBehavior: NSPasteboard.general.accessBehavior
+            )
+        }
+        clipboardPanel.model.onResolveNotice = { [weak clipboardPanel] notice in
+            clipboardPanel?.hide()
+            // 先请求一次授权，系统会把应用加入授权列表，用户只需打开开关。
+            if notice == .accessibilityNeeded {
+                AccessibilityAccess.system.requestAccess()
+            }
+            if let url = notice.settingsURL {
+                NSWorkspace.shared.open(url)
+            }
+        }
 
         self.pasteSettings = pasteSettings
         self.pasteService = pasteService

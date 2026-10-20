@@ -56,9 +56,14 @@ final class ClipboardPanelModel {
     /// 每次呼出面板递增，视图据此把焦点放回搜索框。
     private(set) var presentationCount = 0
 
+    /// 呼出时刷新；授权状态可能在面板关闭期间被用户修改。
+    private(set) var notice: PanelNotice = .none
+
     @ObservationIgnored let store: ClipboardHistoryStore
     @ObservationIgnored var onPaste: (HistoryItem, PasteMode) -> Void = { _, _ in }
     @ObservationIgnored var onDismiss: () -> Void = {}
+    @ObservationIgnored var noticeProvider: () -> PanelNotice = { .none }
+    @ObservationIgnored var onResolveNotice: (PanelNotice) -> Void = { _ in }
 
     init(store: ClipboardHistoryStore) {
         self.store = store
@@ -78,7 +83,12 @@ final class ClipboardPanelModel {
     func prepareForPresentation() {
         query = ""
         selectedID = nil
+        notice = noticeProvider()
         presentationCount += 1
+    }
+
+    func resolveNotice() {
+        onResolveNotice(notice)
     }
 
     func select(_ item: HistoryItem) {

@@ -21,6 +21,16 @@
         }
       }
     },
+    "Auto-paste needs permission" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动粘贴需要授权"
+          }
+        }
+      }
+    },
     "Choose your preferred display language for Folita." : {
       "localizations" : {
         "zh-Hans" : {
@@ -47,6 +57,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "剪贴板"
+          }
+        }
+      }
+    },
+    "Clipboard access is denied" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "剪贴板访问被拒绝"
           }
         }
       }
@@ -127,6 +147,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "筛选"
+          }
+        }
+      }
+    },
+    "Folita can't record new copies. Click to allow clipboard access in System Settings." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folita 无法记录新的复制内容。点击前往系统设置允许访问剪贴板。"
           }
         }
       }
@@ -328,6 +358,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "搜索…"
+          }
+        }
+      }
+    },
+    "Selected items are copied — press ⌘V to paste. Click to grant permission in System Settings." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选中的内容会先复制，按 ⌘V 即可粘贴。点击前往系统设置授权。"
           }
         }
       }
