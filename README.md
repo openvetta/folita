@@ -39,6 +39,8 @@ make run       # 构建并启动
 
 Debug 构建可用 `open .build/DerivedData/Build/Products/Debug/Folita.app --args -FolitaShowClipboardPanel YES` 启动即弹出剪贴面板。
 
+发布流程与所需凭据见 [docs/releasing.md](docs/releasing.md)。
+
 ## 许可证
 
 [MIT](LICENSE) © nbecloud

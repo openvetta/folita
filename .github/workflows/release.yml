@@ -1,0 +1,138 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-26
+    env:
+      DERIVED_DATA: build/DerivedData
+      # 未配置时跳过更新 Homebrew tap；step 的 if 只能读取 job 级 env。
+      HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          project_version=$(sed -n 's/^ *MARKETING_VERSION: *"\{0,1\}\([^"]*\)"\{0,1\} *$/\1/p' project.yml | head -n 1)
+          if [ "$version" != "$project_version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match MARKETING_VERSION $project_version"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Check release notes
+        run: scripts/release/check-release-notes.sh "${{ steps.version.outputs.version }}"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Import Developer ID certificate
+        env:
+          CERTIFICATE_P12: ${{ secrets.DEVELOPER_ID_CERTIFICATE_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+        run: |
+          keychain="$RUNNER_TEMP/release.keychain-db"
+          keychain_password=$(uuidgen)
+          echo "$CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          security import "$RUNNER_TEMP/certificate.p12" -k "$keychain" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -k "$keychain_password" "$keychain" >/dev/null
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          rm "$RUNNER_TEMP/certificate.p12"
+          echo "KEYCHAIN=$keychain" >> "$GITHUB_ENV"
+
+      - name: Archive and export
+        env:
+          TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          SPARKLE_PUBLIC_ED_KEY: ${{ vars.SPARKLE_PUBLIC_ED_KEY }}
+        run: |
+          make project
+          xcodebuild archive \
+            -project Folita.xcodeproj -scheme Folita -configuration Release \
+            -derivedDataPath "$DERIVED_DATA" -archivePath build/Folita.xcarchive \
+            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Developer ID Application" \
+            DEVELOPMENT_TEAM="$TEAM_ID" SPARKLE_PUBLIC_ED_KEY="$SPARKLE_PUBLIC_ED_KEY" \
+            OTHER_CODE_SIGN_FLAGS="--timestamp --keychain $KEYCHAIN"
+          cat > build/ExportOptions.plist <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>developer-id</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>signingCertificate</key><string>Developer ID Application</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath build/Folita.xcarchive \
+            -exportOptionsPlist build/ExportOptions.plist -exportPath build/export
+
+      - name: Notarize and staple
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+        run: |
+          ditto -c -k --keepParent build/export/Folita.app build/Folita-notarize.zip
+          xcrun notarytool submit build/Folita-notarize.zip \
+            --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$TEAM_ID" --wait
+          xcrun stapler staple build/export/Folita.app
+          spctl --assess --type execute --verbose build/export/Folita.app
+
+      - name: Package and generate appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          mkdir -p build/release
+          ditto -c -k --sequesterRsrc --keepParent build/export/Folita.app "build/release/Folita-$version.zip"
+          key_file="$RUNNER_TEMP/sparkle_ed_key"
+          printf '%s' "$SPARKLE_PRIVATE_KEY" > "$key_file"
+          "$DERIVED_DATA/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_appcast" \
+            --ed-key-file "$key_file" \
+            --download-url-prefix "https://github.com/${GITHUB_REPOSITORY}/releases/download/v$version/" \
+            --full-release-notes-url "https://github.com/${GITHUB_REPOSITORY}/releases/tag/v$version" \
+            build/release
+          rm "$key_file"
+          shasum -a 256 "build/release/Folita-$version.zip" | cut -d ' ' -f 1 > build/release/sha256.txt
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          gh release create "$GITHUB_REF_NAME" \
+            "build/release/Folita-$version.zip" build/release/appcast.xml \
+            --title "Folita $version" \
+            --notes-file ".github/release-notes/v$version.md"
+
+      - name: Update Homebrew tap
+        if: ${{ env.HOMEBREW_TAP_TOKEN != '' }}
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          sha256=$(cat build/release/sha256.txt)
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/nbecloud/homebrew-tap.git" build/tap
+          mkdir -p build/tap/Casks
+          sed -e "s/{{VERSION}}/$version/" -e "s/{{SHA256}}/$sha256/" packaging/homebrew/folita.rb > build/tap/Casks/folita.rb
+          cd build/tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/folita.rb
+          git commit -m "folita $version"
+          git push
+
+      - name: Clean up keychain
+        if: always()
+        run: |
+          if [ -n "${KEYCHAIN:-}" ]; then
+            security delete-keychain "$KEYCHAIN" || true
+          fi
