@@ -27,7 +27,7 @@ enum ClipboardFilter: String, CaseIterable, Identifiable, Hashable {
     var symbolName: String {
         switch self {
         case .all: "list.bullet"
-        case .text: "textformat"
+        case .text: "text.alignleft"
         case .images: "photo"
         case .files: "doc"
         case .links: "link"

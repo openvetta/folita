@@ -9,6 +9,12 @@ struct ClipboardPanelHeaderTests {
         #expect(ClipboardFilter.allCases == [.all, .text, .images, .files, .links, .colors, .emails])
     }
 
+    /// `textformat` 在中文环境下会渲染成「格式」二字而不是图标。
+    @Test func symbolsAreNotLocalizedGlyphs() {
+        let symbols = ClipboardFilter.allCases.map(\.symbolName) + ClipCategory.allCases.map(\.symbolName)
+        #expect(!symbols.contains { $0.hasPrefix("textformat") })
+    }
+
     @Test func filterSymbolsAreDistinct() {
         let symbols = ClipboardFilter.allCases.map(\.symbolName)
         #expect(Set(symbols).count == symbols.count)
