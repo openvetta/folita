@@ -2,15 +2,56 @@ import AppKit
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    let historySettings: HistorySettings
+    let privacySettings: PrivacySettings
+    let historyStore: ClipboardHistoryStore
     /// 剪贴面板是独立于 SwiftUI Scene 的 NSPanel，由 AppDelegate 持有整个生命周期。
     let clipboardPanel = ClipboardPanelController()
 
+    private let clipboardMonitor: ClipboardMonitor
+    private let historyBackupURL: URL?
+
+    override init() {
+        let historySettings = HistorySettings()
+        let privacySettings = PrivacySettings()
+        let opened = AppEnvironment.isRunningTests
+            ? HistoryStorage.Opened(container: HistoryStorage.makeInMemoryContainer(), backupURL: nil)
+            : HistoryStorage.open()
+        let historyStore = ClipboardHistoryStore(container: opened.container, limit: { historySettings.limit })
+
+        self.historySettings = historySettings
+        self.privacySettings = privacySettings
+        self.historyStore = historyStore
+        historyBackupURL = opened.backupURL
+        clipboardMonitor = ClipboardMonitor(privacy: privacySettings) { historyStore.record($0) }
+        super.init()
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        guard !AppEnvironment.isRunningTests else { return }
+        clipboardMonitor.start()
+        if let historyBackupURL {
+            presentHistoryRecoveredAlert(backupURL: historyBackupURL)
+        }
+
         #if DEBUG
         // 调试入口：`open Folita.app --args -FolitaShowClipboardPanel YES` 启动即弹出剪贴面板。
         if UserDefaults.standard.bool(forKey: "FolitaShowClipboardPanel") {
             clipboardPanel.show()
         }
         #endif
+    }
+
+    private func presentHistoryRecoveredAlert(backupURL: URL) {
+        let locale = LanguageSettings.shared.effectiveLocale
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = String(localized: "Clipboard history could not be opened", locale: locale)
+        alert.informativeText = String(
+            localized: "Folita started a new history. The previous data was moved to \(backupURL.path(percentEncoded: false)).",
+            locale: locale
+        )
+        NSApp.activate()
+        alert.runModal()
     }
 }

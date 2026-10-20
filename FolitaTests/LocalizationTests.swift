@@ -62,4 +62,13 @@ struct LocalizationTests {
         #expect(localized("Choose your preferred display language for Folita.", "en") == "Choose your preferred display language for Folita.")
         #expect(localized("Choose your preferred display language for Folita.", "zh-Hans") == "选择 Folita 的显示语言。")
     }
+
+    @Test func historyRecoveryAlertIsLocalized() {
+        #expect(localized("Clipboard history could not be opened", "zh-Hans") == "无法打开剪贴历史")
+        let path = "/tmp/History-corrupted"
+        #expect(localized("Folita started a new history. The previous data was moved to \(path).", "en")
+            == "Folita started a new history. The previous data was moved to /tmp/History-corrupted.")
+        #expect(localized("Folita started a new history. The previous data was moved to \(path).", "zh-Hans")
+            == "Folita 已新建历史记录，原有数据已移至 /tmp/History-corrupted。")
+    }
 }

@@ -41,6 +41,16 @@
         }
       }
     },
+    "Clipboard history could not be opened" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法打开剪贴历史"
+          }
+        }
+      }
+    },
     "Close" : {
       "localizations" : {
         "zh-Hans" : {
@@ -107,6 +117,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "筛选"
+          }
+        }
+      }
+    },
+    "Folita started a new history. The previous data was moved to %@." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folita 已新建历史记录，原有数据已移至 %@。"
           }
         }
       }
