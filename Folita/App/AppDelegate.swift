@@ -5,10 +5,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let historySettings: HistorySettings
     let privacySettings: PrivacySettings
     let historyStore: ClipboardHistoryStore
+    let pasteSettings: PasteSettings
     /// 剪贴面板是独立于 SwiftUI Scene 的 NSPanel，由 AppDelegate 持有整个生命周期。
     let clipboardPanel: ClipboardPanelController
 
     private let clipboardMonitor: ClipboardMonitor
+    private let pasteService: PasteService
     private let historyBackupURL: URL?
 
     override init() {
@@ -23,7 +25,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.privacySettings = privacySettings
         self.historyStore = historyStore
         historyBackupURL = opened.backupURL
-        clipboardPanel = ClipboardPanelController(model: ClipboardPanelModel(store: historyStore))
+        let pasteSettings = PasteSettings()
+        let pasteService = PasteService(store: historyStore, settings: pasteSettings)
+        let clipboardPanel = ClipboardPanelController(model: ClipboardPanelModel(store: historyStore))
+        clipboardPanel.model.onPaste = { [weak clipboardPanel] item, mode in
+            clipboardPanel?.hide()
+            pasteService.paste(item, mode: mode)
+        }
+
+        self.pasteSettings = pasteSettings
+        self.pasteService = pasteService
+        self.clipboardPanel = clipboardPanel
         clipboardMonitor = ClipboardMonitor(privacy: privacySettings) { historyStore.record($0) }
         super.init()
     }
