@@ -281,16 +281,6 @@
         }
       }
     },
-    "Copy" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "复制"
-          }
-        }
-      }
-    },
     "Delete" : {
       "localizations" : {
         "zh-Hans" : {
@@ -477,6 +467,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "图片"
+          }
+        }
+      }
+    },
+    "Image (%@ × %@ px)" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图片（%@ × %@ 像素）"
           }
         }
       }
@@ -712,16 +712,6 @@
         }
       }
     },
-    "Paste to %@" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "粘贴到 %@"
-          }
-        }
-      }
-    },
     "Pause Recording" : {
       "localizations" : {
         "zh-Hans" : {
@@ -758,16 +748,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "小猪"
-          }
-        }
-      }
-    },
-    "Plain Text" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "纯文本"
           }
         }
       }
@@ -1088,16 +1068,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在任何应用中都可使用。部分应用用 ⌘⇧V 表示「粘贴并匹配样式」，如有冲突请换一个快捷键。"
-          }
-        }
-      }
-    },
-    "and %lld more" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "等另外 %lld 个"
           }
         }
       }

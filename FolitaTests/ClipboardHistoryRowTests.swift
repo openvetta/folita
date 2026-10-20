@@ -45,51 +45,48 @@ struct ClipboardHistoryRowTests {
         return host.fittingSize.height
     }
 
-    /// 选中行就地展开显示详情，其余行保持单行。
+    private func localized(_ resource: LocalizedStringResource, _ identifier: String) -> String {
+        var resource = resource
+        resource.locale = Locale(identifier: identifier)
+        return String(localized: resource)
+    }
+
+    /// 内容与选中状态都不改变行高，列表滚动时不会跳动。
     @Test(arguments: appearances)
-    func selectedRowExpandsWithDetails(locale: String, scheme: ColorScheme) {
+    func rowsShareOneHeight(locale: String, scheme: ColorScheme) {
         for contents in Self.samples {
             let item = item(contents)
-            let collapsed = height(of: ClipboardHistoryRow(item: item, isSelected: false), locale: locale, scheme: scheme)
-            for canAutoPaste in [true, false] {
-                let expanded = height(
-                    of: ClipboardHistoryRow(item: item, isSelected: true, targetAppName: "Notes", canAutoPaste: canAutoPaste),
+            for isSelected in [false, true] {
+                let height = height(
+                    of: ClipboardHistoryRow(item: item, isSelected: isSelected),
                     locale: locale,
                     scheme: scheme
                 )
-                #expect(expanded > collapsed)
+                #expect(height == ClipboardPanelMetrics.historyRowHeight)
             }
         }
     }
 
-    @Test func expandedCopyIsLocalized() {
-        func zh(_ resource: LocalizedStringResource) -> String {
-            var resource = resource
-            resource.locale = Locale(identifier: "zh-Hans")
-            return String(localized: resource)
-        }
-        let app = "Notes", count = 3
-        #expect(zh("Paste to \(app)") == "粘贴到 Notes")
-        #expect(zh("Copy") == "复制")
-        #expect(zh("Plain Text") == "纯文本")
-        #expect(zh("\(count) files") == "3 个文件")
-        #expect(zh("\(count) characters") == "3 个字符")
-        #expect(zh("and \(count) more") == "等另外 3 个")
-        #expect(ClipCategory.allCases.map { zh($0.title) } == ["文本", "富文本", "图片", "文件", "链接", "颜色", "邮箱"])
+    /// 图片的标题显示像素尺寸，中英文都要带上单位，且不出现千位分隔符。
+    @Test func imageTitleShowsPixelSize() {
+        let size = CGSize(width: 1024, height: 768)
+        #expect(localized(ClipboardHistoryRow.imageTitle(pixelSize: size), "en") == "Image (1024 × 768 px)")
+        #expect(localized(ClipboardHistoryRow.imageTitle(pixelSize: size), "zh-Hans") == "图片（1024 × 768 像素）")
+        #expect(localized(ClipboardHistoryRow.imageTitle(pixelSize: nil), "zh-Hans") == "图片")
     }
 
-    @Test func presentationCapturesTargetAppAndPasteAbility() {
-        let model = makePanelModel(copying: ["a"])
-        model.targetAppProvider = { "Notes" }
-        model.autoPasteProvider = { true }
-        model.prepareForPresentation()
-        #expect(model.targetAppName == "Notes")
-        #expect(model.canAutoPaste)
+    /// 文本取第一行，文件只保留文件名。
+    @Test func titlesUseFirstLineAndFileNames() {
+        #expect(ClipboardHistoryRow.title(of: item(Self.samples[0])) == "第一行")
+        #expect(ClipboardHistoryRow.title(of: item(Self.samples[3])) == "a.txt, b.txt")
+        #expect(ClipboardHistoryRow.title(of: item(Self.samples[2])) == "https://folita.app")
+    }
 
-        model.targetAppProvider = { nil }
-        model.autoPasteProvider = { false }
-        model.prepareForPresentation()
-        #expect(model.targetAppName == nil)
-        #expect(!model.canAutoPaste)
+    @Test func metadataCopyIsLocalized() {
+        func zh(_ resource: LocalizedStringResource) -> String { localized(resource, "zh-Hans") }
+        let count = 3
+        #expect(zh("\(count) files") == "3 个文件")
+        #expect(zh("\(count) characters") == "3 个字符")
+        #expect(ClipCategory.allCases.map { zh($0.title) } == ["文本", "富文本", "图片", "文件", "链接", "颜色", "邮箱"])
     }
 }

@@ -9,17 +9,13 @@ struct ClipboardHistoryList: View {
         if items.isEmpty {
             emptyState
         } else {
+            let selectedID = model.selectedItem?.id
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 4) {
                         ForEach(items) { item in
-                            // 悬停只高亮不选中：选中会展开行，跟随鼠标会让列表在指针下来回跳动。
-                            ClipboardHistoryRow(
-                                item: item,
-                                isSelected: item.id == model.selectedItem?.id,
-                                targetAppName: model.targetAppName,
-                                canAutoPaste: model.canAutoPaste
-                            )
+                            // 悬停只高亮不选中：跟随鼠标改变选中项会让列表在指针下来回跳动。
+                            ClipboardHistoryRow(item: item, isSelected: item.id == selectedID)
                                 .id(item.id)
                                 .onTapGesture {
                                     model.select(item)
@@ -32,8 +28,8 @@ struct ClipboardHistoryList: View {
                     .padding(.bottom, 72)
                 }
                 .scrollIndicators(.never)
-                .animation(.snappy(duration: 0.22), value: model.selectedItem?.id)
-                .onChange(of: model.selectedItem?.id) { _, id in
+                .animation(.snappy(duration: 0.22), value: selectedID)
+                .onChange(of: selectedID) { _, id in
                     guard let id else { return }
                     withAnimation(.snappy(duration: 0.22)) {
                         proxy.scrollTo(id)
@@ -85,212 +81,83 @@ struct ClipboardHistoryList: View {
     }
 }
 
-/// 一条历史。未选中时只占一行；选中时就地展开成卡片，显示预览、来源与大小等信息和回填按键，
-/// 让窄面板在保持简洁的同时，当前这条的内容都能看清。
+/// 一条历史：左侧是缩略图或类型图标，右侧两行——标题与元信息。所有行同高，选中只换底色，
+/// 列表不会因为展开在指针下跳动，一屏也能稳定扫读。按键提示统一放在设置里的快捷键页。
 struct ClipboardHistoryRow: View {
     let item: HistoryItem
     let isSelected: Bool
-    var targetAppName: String?
-    var canAutoPaste = false
 
+    @Environment(\.colorScheme) private var colorScheme
     @State private var isHovering = false
     @State private var thumbnail: CGImage?
 
     var body: some View {
-        Group {
-            if isSelected {
-                expanded
-            } else {
-                collapsed
+        let details = ClipDetails(contents: item.clipContents, category: item.category)
+        HStack(spacing: 10) {
+            icon(details)
+                .frame(width: 28, height: 28)
+            VStack(alignment: .leading, spacing: 2) {
+                title(details)
+                    .font(.system(size: 13, weight: .medium))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                metadata(details)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .padding(.horizontal, 10)
+        .frame(height: ClipboardPanelMetrics.historyRowHeight)
+        .background { background }
         .contentShape(.rect)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
         .onHover { isHovering = $0 }
-        .task(id: TaskID(item: item.id, isSelected: isSelected)) {
+        .task(id: item.id) {
             guard item.category == .image,
                   let data = item.clipContents.first(where: { ClipboardCapture.imageTypes.contains($0.type) })?.data
             else { return }
-            thumbnail = await ClipPreviewImages.thumbnail(from: data, maxPixelSize: isSelected ? 720 : 64)
+            thumbnail = await ClipPreviewImages.thumbnail(from: data, maxPixelSize: 64)
         }
     }
 
-    private struct TaskID: Equatable {
-        let item: UUID
-        let isSelected: Bool
-    }
+    // MARK: 背景
 
-    // MARK: 收起
-
-    private var collapsed: some View {
-        HStack(spacing: 12) {
-            icon
-                .frame(width: 26, height: 26)
-            titleText
-                .font(.system(size: 14))
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.horizontal, 10)
-        .frame(height: 38)
-        .background {
-            if isHovering {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(.primary.opacity(0.06))
+    private var background: some View {
+        let style = SiriGlassStyle.resolve(for: colorScheme)
+        let shape = RoundedRectangle(cornerRadius: ClipboardPanelMetrics.historyRowCornerRadius, style: .continuous)
+        return shape
+            .fill(rowFill(style))
+            .overlay {
+                if isSelected {
+                    shape.strokeBorder(style.selectionRim, lineWidth: 1)
+                }
             }
-        }
     }
 
-    // MARK: 展开
-
-    private var expanded: some View {
-        let details = ClipDetails(contents: item.clipContents, category: item.category)
-        return VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top, spacing: 12) {
-                icon
-                    .frame(width: 26, height: 26)
-                expandedTitle(details)
-                    .font(.system(size: 14, weight: .medium))
-                    .frame(maxWidth: .infinity, minHeight: 26, alignment: .leading)
-            }
-
-            preview(details)
-
-            metadata(details)
-
-            keyHints
-        }
-        .padding(12)
-        .background {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.primary.opacity(0.10))
-        }
+    /// 选中时近乎实心，滚到容器下部的渐隐区也不会透出桌面；悬停只加一层很淡的着色。
+    private func rowFill(_ style: SiriGlassStyle) -> Color {
+        if isSelected { return style.selection }
+        return isHovering ? .primary.opacity(0.06) : .clear
     }
+
+    // MARK: 左侧
 
     @ViewBuilder
-    private func preview(_ details: ClipDetails) -> some View {
-        switch item.category {
-        case .image:
-            if let thumbnail {
-                Image(decorative: thumbnail, scale: 2)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: 150)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-            }
-        case .file:
-            VStack(alignment: .leading, spacing: 4) {
-                ForEach(details.fileURLs.prefix(3), id: \.self) { url in
-                    Text(verbatim: url.path(percentEncoded: false))
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                }
-                if details.fileURLs.count > 3 {
-                    Text("and \(details.fileURLs.count - 3) more")
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .font(.system(size: 12))
-            .padding(.leading, 38)
-        case .color:
-            if let color = details.color {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Color(.sRGB, red: color.red, green: color.green, blue: color.blue, opacity: color.alpha))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .strokeBorder(.primary.opacity(0.15))
-                    }
-                    .frame(height: 44)
-            }
-        case .text, .richText, .email, .link:
-            // 文本类的完整内容已在标题位置展开。
-            EmptyView()
-        }
-    }
-
-    /// 文本类展开后直接显示多行正文；其他类别显示一行标题。
-    @ViewBuilder
-    private func expandedTitle(_ details: ClipDetails) -> some View {
-        if item.category.isTextual, let text = details.text {
-            Text(verbatim: text.trimmingCharacters(in: .whitespacesAndNewlines))
-                .lineLimit(6)
-                .truncationMode(.tail)
-        } else {
-            titleText
-                .lineLimit(1)
-                .truncationMode(.middle)
-        }
-    }
-
-    /// 来源 · 类型 · 尺寸/字数/文件数 · 大小 · 时间，一行看完。
-    private func metadata(_ details: ClipDetails) -> some View {
-        HStack(spacing: 6) {
-            if let bundleID = item.sourceBundleID {
-                if let appIcon = ClipPreviewImages.appIcon(bundleID: bundleID) {
-                    Image(nsImage: appIcon)
-                        .resizable()
-                        .frame(width: 14, height: 14)
-                        .accessibilityHidden(true)
-                }
-                Text(verbatim: ClipPreviewImages.appName(bundleID: bundleID) ?? bundleID)
-                separator
-            }
-            Text(item.category.title)
-            if let size = details.pixelSize {
-                separator
-                Text(verbatim: "\(Int(size.width))×\(Int(size.height))")
-            } else if details.fileURLs.count > 1 {
-                separator
-                Text("\(details.fileURLs.count) files")
-            } else if let characters = details.characterCount, item.category.isTextual {
-                separator
-                Text("\(characters) characters")
-            }
-            separator
-            Text(Int64(details.byteCount), format: .byteCount(style: .file))
-            separator
-            Text(item.lastCopiedAt, format: .relative(presentation: .named))
-        }
-        .font(.system(size: 11))
-        .foregroundStyle(.secondary)
-        .lineLimit(1)
-        .padding(.leading, 38)
-    }
-
-    private var separator: some View {
-        Text(verbatim: "·").foregroundStyle(.tertiary)
-    }
-
-    private var keyHints: some View {
-        HStack(spacing: 14) {
-            KeyHint(keys: "↩") {
-                if !canAutoPaste {
-                    Text("Copy")
-                } else if let targetAppName {
-                    Text("Paste to \(targetAppName)")
-                } else {
-                    Text("Paste")
-                }
-            }
-            if item.category.isTextual {
-                KeyHint(keys: "⇧↩") { Text("Plain Text") }
-            }
-        }
-        .padding(.leading, 38)
-    }
-
-    // MARK: 共用
-
-    @ViewBuilder
-    private var icon: some View {
-        if let thumbnail, !isSelected || item.category != .image {
+    private func icon(_ details: ClipDetails) -> some View {
+        if let thumbnail {
             Image(decorative: thumbnail, scale: 2)
                 .resizable()
                 .scaledToFill()
-                .frame(width: 26, height: 26)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        } else if item.category == .color, let color = details.color {
+            // 颜色值没有缩略图，用色块代替类型图标。
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(Color(.sRGB, red: color.red, green: color.green, blue: color.blue, opacity: color.alpha))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(.primary.opacity(0.15))
+                }
         } else {
             Image(systemName: item.category.symbolName)
                 .font(.system(size: 13))
@@ -300,39 +167,77 @@ struct ClipboardHistoryRow: View {
         }
     }
 
-    /// 图片没有文本标题；文件只显示文件名。
-    private var titleText: Text {
-        switch item.category {
-        case .image:
-            Text("Image")
-        case .file:
-            Text(verbatim: item.title
-                .split(separator: "\n")
-                .map { URL(filePath: String($0)).lastPathComponent }
-                .joined(separator: ", "))
-        default:
-            Text(verbatim: item.title.components(separatedBy: .newlines).first ?? item.title)
+    // MARK: 右侧
+
+    @ViewBuilder
+    private func title(_ details: ClipDetails) -> some View {
+        if item.category == .image {
+            Text(Self.imageTitle(pixelSize: details.pixelSize))
+        } else {
+            Text(verbatim: Self.title(of: item))
         }
     }
-}
 
-/// 按键提示：键帽 + 说明。
-private struct KeyHint<Label: View>: View {
-    let keys: String
-    @ViewBuilder let label: Label
-
-    var body: some View {
+    /// 来源 · 类型 · 字数/文件数 · 大小 · 时间，一行看完；图片的尺寸已在标题里。
+    private func metadata(_ details: ClipDetails) -> some View {
         HStack(spacing: 5) {
-            Text(verbatim: keys)
-                .font(.system(size: 10, weight: .semibold))
-                .padding(.horizontal, 5)
-                .padding(.vertical, 1)
-                .background(.primary.opacity(0.10), in: RoundedRectangle(cornerRadius: 4, style: .continuous))
-                .accessibilityHidden(true)
-            label
-                .font(.system(size: 11, weight: .medium))
+            if let bundleID = item.sourceBundleID {
+                if let appIcon = ClipPreviewImages.appIcon(bundleID: bundleID) {
+                    Image(nsImage: appIcon)
+                        .resizable()
+                        .frame(width: 12, height: 12)
+                        .accessibilityHidden(true)
+                }
+                Text(verbatim: ClipPreviewImages.appName(bundleID: bundleID) ?? bundleID)
+                separator
+            }
+            // 图片的尺寸已经在标题里，元信息不再重复类型与尺寸。
+            if item.category != .image {
+                Text(item.category.title)
+                separator
+                if details.fileURLs.count > 1 {
+                    Text("\(details.fileURLs.count) files")
+                    separator
+                } else if let characters = details.characterCount, item.category.isTextual {
+                    Text("\(characters) characters")
+                    separator
+                }
+            }
+            Text(Int64(details.byteCount), format: .byteCount(style: .file))
+            separator
+            Text(item.lastCopiedAt, format: .relative(presentation: .named))
         }
+        .font(.system(size: 11))
         .foregroundStyle(.secondary)
+        .lineLimit(1)
+    }
+
+    private var separator: some View {
+        Text(verbatim: "·").foregroundStyle(.tertiary)
+    }
+
+    // MARK: 标题
+
+    /// 图片没有文本标题，改用像素尺寸；尺寸读不出来时只显示类型。
+    /// 像素值转成字符串再插值，避免数字插值按本地化规则加上千位分隔符。
+    static func imageTitle(pixelSize: CGSize?) -> LocalizedStringResource {
+        guard let pixelSize else { return "Image" }
+        let width = String(Int(pixelSize.width))
+        let height = String(Int(pixelSize.height))
+        return "Image (\(width) × \(height) px)"
+    }
+
+    /// 文件只显示文件名，其余取标题的第一行。
+    static func title(of item: HistoryItem) -> String {
+        switch item.category {
+        case .file:
+            item.title
+                .split(separator: "\n")
+                .map { URL(filePath: String($0)).lastPathComponent }
+                .joined(separator: ", ")
+        default:
+            item.title.components(separatedBy: .newlines).first ?? item.title
+        }
     }
 }
 

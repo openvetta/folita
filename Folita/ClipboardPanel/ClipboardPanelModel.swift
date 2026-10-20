@@ -59,17 +59,10 @@ final class ClipboardPanelModel {
     /// 呼出时刷新；授权状态可能在面板关闭期间被用户修改。
     private(set) var notice: PanelNotice = .none
 
-    /// 呼出面板前的前台应用，回填的目标。
-    private(set) var targetAppName: String?
-    /// 能否直接粘贴；不能时回填只会复制，按钮文案随之改变。
-    private(set) var canAutoPaste = false
-
     @ObservationIgnored let store: ClipboardHistoryStore
     @ObservationIgnored var onPaste: (HistoryItem, PasteMode) -> Void = { _, _ in }
     @ObservationIgnored var onDismiss: () -> Void = {}
     @ObservationIgnored var noticeProvider: () -> PanelNotice = { .none }
-    @ObservationIgnored var targetAppProvider: () -> String? = { nil }
-    @ObservationIgnored var autoPasteProvider: () -> Bool = { false }
     @ObservationIgnored var onResolveNotice: (PanelNotice) -> Void = { _ in }
     /// 用户关掉的提示在本次运行期间不再出现；状态没修复的话下次启动会再次提示。
     @ObservationIgnored private var dismissedNotices: Set<PanelNotice> = []
@@ -93,8 +86,6 @@ final class ClipboardPanelModel {
         query = ""
         selectedID = nil
         refreshNotice()
-        targetAppName = targetAppProvider()
-        canAutoPaste = autoPasteProvider()
         presentationCount += 1
     }
 

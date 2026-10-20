@@ -6,6 +6,10 @@ struct SiriGlassStyle: Equatable {
     var tint: [Gradient.Stop]
     var rim: [Color]
     var handle: Color
+    /// 选中行的底色：近乎实心，列表落到容器下部的渐隐区时也不会透出桌面。
+    var selection: Color
+    /// 选中行的描边，给实心底色勾出边缘。
+    var selectionRim: Color
 
     /// 内容在容器底部渐隐的蒙版，与着色渐隐的节奏保持一致。
     static let contentFade: [Gradient.Stop] = [
@@ -25,7 +29,9 @@ struct SiriGlassStyle: Equatable {
                     .init(color: .white.opacity(0.08), location: 1),
                 ],
                 rim: [.white.opacity(0.95), .black.opacity(0.06), .white.opacity(0.7)],
-                handle: .black.opacity(0.35)
+                handle: .black.opacity(0.35),
+                selection: Color(white: 0.90).opacity(0.97),
+                selectionRim: .black.opacity(0.06)
             )
         default:
             SiriGlassStyle(
@@ -36,7 +42,9 @@ struct SiriGlassStyle: Equatable {
                     .init(color: .black.opacity(0.06), location: 1),
                 ],
                 rim: [.white.opacity(0.40), .white.opacity(0.08), .white.opacity(0.22)],
-                handle: .white.opacity(0.85)
+                handle: .white.opacity(0.85),
+                selection: Color(white: 0.24).opacity(0.97),
+                selectionRim: .white.opacity(0.10)
             )
         }
     }

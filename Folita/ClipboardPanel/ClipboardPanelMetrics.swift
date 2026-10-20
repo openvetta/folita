@@ -7,6 +7,9 @@ enum ClipboardPanelMetrics {
     /// 顶栏圆形按钮与搜索胶囊的高度。
     static let controlHeight: CGFloat = 30
     static let searchFieldWidth: CGFloat = 220
+    /// 历史行的统一高度：两行文字加上下留白，选中不改变高度，列表不会跳动。
+    static let historyRowHeight: CGFloat = 52
+    static let historyRowCornerRadius: CGFloat = 12
     /// 窗口四周为 SwiftUI 阴影预留的透明边距。
     static let shadowInset: CGFloat = 28
     /// 容器顶边距离屏幕可见区域顶部（菜单栏下沿）的距离。
