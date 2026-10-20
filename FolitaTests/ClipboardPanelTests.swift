@@ -5,6 +5,17 @@ import Testing
 
 @MainActor
 struct ClipboardPanelTests {
+    @Test func panelMovesByItsDraggableHeader() {
+        let panel = ClipboardPanel()
+        panel.setFrame(CGRect(x: 200, y: 600, width: 496, height: 616), display: false)
+
+        // 无边框窗口没有标题栏，若关闭 background drag 则面板完全不可移动。
+        #expect(panel.isMovableByWindowBackground)
+        #expect(panel.isMovable)
+        panel.setFrameOrigin(CGPoint(x: 240, y: 560))
+        #expect(panel.frame.origin == CGPoint(x: 240, y: 560))
+    }
+
     @Test func panelIsTransparentNonActivatingAndKeyable() {
         let panel = ClipboardPanel()
 

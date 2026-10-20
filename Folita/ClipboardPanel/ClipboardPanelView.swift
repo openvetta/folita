@@ -9,8 +9,7 @@ struct ClipboardPanelView: View {
     var body: some View {
         SiriGlassContainer {
             VStack(alignment: .leading, spacing: 18) {
-                topBar
-                header
+                dragRegion
                 ClipboardHistoryEmptyView(filter: filter)
                 Spacer(minLength: 0)
             }
@@ -24,6 +23,16 @@ struct ClipboardPanelView: View {
         )
         .shadow(color: .black.opacity(0.28), radius: 22, y: 10)
         .padding(ClipboardPanelMetrics.shadowInset)
+    }
+
+    /// 顶部可拖拽区域：按钮之间的空白与标题都可拖动面板，按钮自身保持点击。
+    private var dragRegion: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            topBar
+            header
+        }
+        .contentShape(.rect)
+        .gesture(WindowDragGesture())
     }
 
     /// 左侧关闭、右侧筛选，两端圆形控件，标题在其下方。
