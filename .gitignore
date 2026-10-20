@@ -1,0 +1,12 @@
+.DS_Store
+
+# Xcode 工程由 project.yml 经 XcodeGen 生成
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+
+# 构建产物
+.build/
+build/
+DerivedData/
+*.xcresult
