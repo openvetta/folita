@@ -401,6 +401,16 @@
         }
       }
     },
+    "MIT License" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MIT 许可证"
+          }
+        }
+      }
+    },
     "No clipboard history yet" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -672,6 +682,16 @@
         }
       }
     },
+    "Source Code" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "源代码"
+          }
+        }
+      }
+    },
     "Startup" : {
       "localizations" : {
         "zh-Hans" : {
@@ -732,22 +752,22 @@
         }
       }
     },
-    "This section is not implemented yet." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "该部分尚未实现。"
-          }
-        }
-      }
-    },
     "Try a different search or filter." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "换个关键词或筛选条件试试。"
+          }
+        }
+      }
+    },
+    "Version %@ (%@)" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %@（%@）"
           }
         }
       }

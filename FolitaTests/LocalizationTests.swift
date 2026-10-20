@@ -141,4 +141,11 @@ struct LocalizationTests {
             #expect(localized(key, "en") == key.key)
         }
     }
+
+    @Test func aboutCopyIsLocalized() {
+        let version = "0.1.0", build = "1"
+        #expect(localized("Version \(version) (\(build))", "en") == "Version 0.1.0 (1)")
+        #expect(localized("Version \(version) (\(build))", "zh-Hans") == "版本 0.1.0（1）")
+        #expect(localized("Source Code", "zh-Hans") == "源代码")
+    }
 }

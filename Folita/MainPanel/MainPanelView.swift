@@ -2,7 +2,11 @@ import SwiftUI
 
 struct MainPanelView: View {
     @Environment(ClipboardPanelController.self) private var clipboardPanel
-    @State private var selection: MainSection? = .general
+    @State private var selection: MainSection?
+
+    init(initialSection: MainSection = .general) {
+        _selection = State(initialValue: initialSection)
+    }
 
     private var currentSection: MainSection { selection ?? .general }
 
@@ -47,25 +51,8 @@ struct MainPanelView: View {
             HistorySettingsView()
         case .privacy:
             PrivacySettingsView()
-        default:
-            SectionPlaceholderView(section: section)
-        }
-    }
-}
-
-/// 各设置页的占位视图；功能落地后替换为对应的 Form。
-struct SectionPlaceholderView: View {
-    let section: MainSection
-
-    var body: some View {
-        ContentUnavailableView {
-            Label {
-                Text(section.title)
-            } icon: {
-                Image(systemName: section.symbolName)
-            }
-        } description: {
-            Text("This section is not implemented yet.")
+        case .about:
+            AboutView()
         }
     }
 }
