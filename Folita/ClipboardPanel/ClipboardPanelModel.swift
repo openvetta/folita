@@ -64,6 +64,8 @@ final class ClipboardPanelModel {
     @ObservationIgnored var onDismiss: () -> Void = {}
     @ObservationIgnored var noticeProvider: () -> PanelNotice = { .none }
     @ObservationIgnored var onResolveNotice: (PanelNotice) -> Void = { _ in }
+    /// 用户关掉的提示在本次运行期间不再出现；状态没修复的话下次启动会再次提示。
+    @ObservationIgnored private var dismissedNotices: Set<PanelNotice> = []
 
     init(store: ClipboardHistoryStore) {
         self.store = store
@@ -83,12 +85,23 @@ final class ClipboardPanelModel {
     func prepareForPresentation() {
         query = ""
         selectedID = nil
-        notice = noticeProvider()
+        refreshNotice()
         presentationCount += 1
+    }
+
+    /// 授权状态可能在面板打开期间改变（例如从系统设置切回来）。
+    func refreshNotice() {
+        let current = noticeProvider()
+        notice = dismissedNotices.contains(current) ? .none : current
     }
 
     func resolveNotice() {
         onResolveNotice(notice)
+    }
+
+    func dismissNotice() {
+        dismissedNotices.insert(notice)
+        notice = .none
     }
 
     func select(_ item: HistoryItem) {

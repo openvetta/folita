@@ -1,7 +1,7 @@
 import AppKit
 
 /// 面板顶部的权限提示。
-enum PanelNotice: Equatable {
+enum PanelNotice: Hashable {
     case none
     /// 开启了自动粘贴但缺少辅助功能授权，此时只会写回剪贴板。
     case accessibilityNeeded

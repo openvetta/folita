@@ -91,6 +91,7 @@ struct LocalizationTests {
     @Test func panelNoticeCopyIsLocalized() {
         #expect(localized("Auto-paste needs permission", "zh-Hans") == "自动粘贴需要授权")
         #expect(localized("Clipboard access is denied", "zh-Hans") == "剪贴板访问被拒绝")
+        #expect(localized("Not Now", "zh-Hans") == "以后再说")
         #expect(localized("Selected items are copied — press ⌘V to paste. Click to grant permission in System Settings.", "zh-Hans")
             == "选中的内容会先复制，按 ⌘V 即可粘贴。点击前往系统设置授权。")
         #expect(localized("Folita can't record new copies. Click to allow clipboard access in System Settings.", "zh-Hans")

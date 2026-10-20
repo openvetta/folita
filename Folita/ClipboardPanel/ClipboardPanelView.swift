@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct ClipboardPanelView: View {
@@ -11,7 +12,7 @@ struct ClipboardPanelView: View {
         SiriGlassContainer {
             VStack(alignment: .leading, spacing: 14) {
                 dragRegion
-                PanelNoticeBanner(notice: model.notice, action: model.resolveNotice)
+                PanelNoticeBanner(notice: model.notice, action: model.resolveNotice, onDismiss: model.dismissNotice)
                 ClipboardHistoryList(model: model)
                     .frame(maxHeight: .infinity, alignment: .top)
             }
@@ -28,6 +29,10 @@ struct ClipboardPanelView: View {
         .defaultFocus($isSearchFocused, true)
         .onChange(of: model.presentationCount) {
             isSearchFocused = true
+        }
+        // 从系统设置授权后切回来，提示应立即消失。
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            model.refreshNotice()
         }
         // 焦点始终在搜索框里，固定按键在此统一拦截，其余按键照常输入搜索词。
         .onKeyPress(phases: .down) { press in

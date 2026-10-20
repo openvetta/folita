@@ -46,6 +46,44 @@ struct PanelNoticeTests {
         #expect(resolved == [.accessibilityNeeded])
     }
 
+    @Test func dismissedNoticeStaysHiddenForThisRunOnly() {
+        let model = makePanelModel()
+        var current = PanelNotice.accessibilityNeeded
+        model.noticeProvider = { current }
+
+        model.prepareForPresentation()
+        model.dismissNotice()
+        #expect(model.notice == .none)
+
+        model.prepareForPresentation()
+        #expect(model.notice == .none)
+
+        // 另一种问题出现时仍然提示。
+        current = .pasteboardDenied
+        model.refreshNotice()
+        #expect(model.notice == .pasteboardDenied)
+
+        // 新的一次运行（新模型）会重新提示。
+        let nextLaunch = makePanelModel()
+        nextLaunch.noticeProvider = { .accessibilityNeeded }
+        nextLaunch.prepareForPresentation()
+        #expect(nextLaunch.notice == .accessibilityNeeded)
+    }
+
+    @Test func grantingPermissionClearsNoticeWithoutReopening() {
+        let model = makePanelModel()
+        var trusted = false
+        model.noticeProvider = {
+            PanelNotice.resolve(autoPaste: true, accessibilityTrusted: trusted, pasteboardBehavior: .alwaysAllow)
+        }
+        model.prepareForPresentation()
+        #expect(model.notice == .accessibilityNeeded)
+
+        trusted = true
+        model.refreshNotice()
+        #expect(model.notice == .none)
+    }
+
     @Test(arguments: [
         ("zh-Hans", ColorScheme.light), ("zh-Hans", .dark), ("en", .light), ("en", .dark),
     ])

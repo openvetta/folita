@@ -472,6 +472,16 @@
         }
       }
     },
+    "Not Now" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以后再说"
+          }
+        }
+      }
+    },
     "Nothing here yet" : {
       "localizations" : {
         "zh-Hans" : {
