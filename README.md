@@ -35,6 +35,8 @@ make test      # 运行测试
 make run       # 构建并启动
 ```
 
+默认使用临时签名，无需证书即可构建和测试。维护者可复制 `Configs/Local.xcconfig.example` 为 `Configs/Local.xcconfig`（不入库）并填入团队，使签名身份稳定，避免每次重新构建后辅助功能等系统授权失效。
+
 Debug 构建可用 `open .build/DerivedData/Build/Products/Debug/Folita.app --args -FolitaShowClipboardPanel YES` 启动即弹出剪贴面板。
 
 ## 许可证

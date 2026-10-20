@@ -1,0 +1,8 @@
+// 默认临时签名：没有团队证书的贡献者也能构建和运行测试。
+// 维护者在不入库的 Local.xcconfig 中覆盖为团队签名，使代码签名身份稳定，
+// 否则每次重新构建后系统都会让辅助功能等授权失效。
+CODE_SIGN_STYLE = Manual
+CODE_SIGN_IDENTITY = -
+DEVELOPMENT_TEAM =
+
+#include? "Local.xcconfig"

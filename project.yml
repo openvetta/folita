@@ -13,9 +13,6 @@ settings:
     SWIFT_STRICT_CONCURRENCY: complete
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
-    CODE_SIGN_STYLE: Manual
-    CODE_SIGN_IDENTITY: "-"
-    DEVELOPMENT_TEAM: ""
     ENABLE_HARDENED_RUNTIME: YES
     LOCALIZATION_PREFERS_STRING_CATALOGS: YES
     SWIFT_EMIT_LOC_STRINGS: YES
@@ -26,6 +23,9 @@ targets:
     platform: macOS
     sources:
       - path: Folita
+    configFiles:
+      Debug: Configs/Signing.xcconfig
+      Release: Configs/Signing.xcconfig
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.folita.Folita
@@ -40,6 +40,9 @@ targets:
       - path: FolitaTests
     dependencies:
       - target: Folita
+    configFiles:
+      Debug: Configs/Signing.xcconfig
+      Release: Configs/Signing.xcconfig
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.folita.FolitaTests

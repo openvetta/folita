@@ -10,3 +10,6 @@ xcuserdata/
 build/
 DerivedData/
 *.xcresult
+
+# 本地签名配置（含个人/团队信息）
+Configs/Local.xcconfig
