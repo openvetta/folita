@@ -28,6 +28,7 @@ targets:
       Release: Configs/Signing.xcconfig
     settings:
       base:
+        CODE_SIGN_ENTITLEMENTS: Folita/Folita.entitlements
         PRODUCT_BUNDLE_IDENTIFIER: app.folita.Folita
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Folita
