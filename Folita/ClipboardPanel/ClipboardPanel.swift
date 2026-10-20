@@ -41,6 +41,11 @@ final class ClipboardPanelController {
     @ObservationIgnored private(set) var panel: ClipboardPanel?
 
     @ObservationIgnored private var eventMonitors: [Any] = []
+    @ObservationIgnored private let languageSettings: LanguageSettings
+
+    init(languageSettings: LanguageSettings = .shared) {
+        self.languageSettings = languageSettings
+    }
 
     func toggle() {
         isVisible ? hide() : show()
@@ -114,13 +119,28 @@ final class ClipboardPanelController {
     private func makePanel() -> ClipboardPanel {
         let panel = ClipboardPanel()
         let hostingView = NSHostingView(
-            rootView: ClipboardPanelView(onClose: { [weak self] in self?.hide() })
+            rootView: ClipboardPanelHostView(
+                controller: self,
+                languageSettings: languageSettings
+            )
         )
         hostingView.sizingOptions = []
         panel.contentView = hostingView
         panel.onCancel = { [weak self] in self?.hide() }
         self.panel = panel
         return panel
+    }
+}
+
+/// 包裹 ClipboardPanelView 并绑定 LanguageSettings，在切换语言时动态刷新 Locale。
+private struct ClipboardPanelHostView: View {
+    let controller: ClipboardPanelController
+    @Bindable var languageSettings: LanguageSettings
+
+    var body: some View {
+        ClipboardPanelView(onClose: { [weak controller] in controller?.hide() })
+            .environment(languageSettings)
+            .environment(\.locale, languageSettings.effectiveLocale)
     }
 }
 

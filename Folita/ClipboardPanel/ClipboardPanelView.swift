@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ClipboardPanelView: View {
+    @Environment(LanguageSettings.self) private var languageSettings: LanguageSettings?
     var onClose: () -> Void = {}
 
     @State private var filter: ClipboardFilter = .all
@@ -71,7 +72,13 @@ struct ClipboardPanelView: View {
         .help(Text("Filter"))
         .accessibilityLabel(Text("Filter"))
         .popover(isPresented: $isFilterPresented, arrowEdge: .bottom) {
-            ClipboardFilterMenu(selection: $filter)
+            if let languageSettings {
+                ClipboardFilterMenu(selection: $filter)
+                    .environment(languageSettings)
+                    .environment(\.locale, languageSettings.effectiveLocale)
+            } else {
+                ClipboardFilterMenu(selection: $filter)
+            }
         }
     }
 
@@ -79,9 +86,15 @@ struct ClipboardPanelView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Clipboard")
                 .font(.system(size: 26, weight: .semibold))
-            Text(filter == .all ? "Recent copies" : String(localized: filter.title))
-                .font(.system(size: 15))
-                .foregroundStyle(.secondary)
+            if filter == .all {
+                Text("Recent copies")
+                    .font(.system(size: 15))
+                    .foregroundStyle(.secondary)
+            } else {
+                Text(filter.title)
+                    .font(.system(size: 15))
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(.horizontal, 6)
     }

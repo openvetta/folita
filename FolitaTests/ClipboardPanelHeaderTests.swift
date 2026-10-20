@@ -14,10 +14,16 @@ struct ClipboardPanelHeaderTests {
         #expect(Set(symbols).count == symbols.count)
     }
 
-    @Test(arguments: [ColorScheme.dark, .light])
-    func filterMenuLaysOut(colorScheme: ColorScheme) {
+    @Test(arguments: [
+        ("zh-Hans", ColorScheme.light),
+        ("zh-Hans", ColorScheme.dark),
+        ("en", ColorScheme.light),
+        ("en", ColorScheme.dark),
+    ])
+    func filterMenuLaysOut(localeIdentifier: String, colorScheme: ColorScheme) {
         let host = NSHostingView(
             rootView: ClipboardFilterMenu(selection: .constant(.text))
+                .environment(\.locale, Locale(identifier: localeIdentifier))
                 .environment(\.colorScheme, colorScheme)
         )
         host.layoutSubtreeIfNeeded()

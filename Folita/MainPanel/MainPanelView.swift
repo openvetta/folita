@@ -20,7 +20,7 @@ struct MainPanelView: View {
             }
             .navigationSplitViewColumnWidth(min: 180, ideal: 200, max: 240)
         } detail: {
-            SectionPlaceholderView(section: currentSection)
+            detailView(for: currentSection)
                 .navigationTitle(Text(currentSection.title))
         }
         .toolbar {
@@ -34,6 +34,16 @@ struct MainPanelView: View {
             }
         }
         .frame(minWidth: 680, minHeight: 440)
+    }
+
+    @ViewBuilder
+    private func detailView(for section: MainSection) -> some View {
+        switch section {
+        case .general:
+            GeneralSettingsView()
+        default:
+            SectionPlaceholderView(section: section)
+        }
     }
 }
 

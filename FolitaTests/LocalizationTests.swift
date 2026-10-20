@@ -24,6 +24,8 @@ struct LocalizationTests {
         #expect(localized("Clipboard", "zh-Hans") == "剪贴板")
         #expect(localized("Close", "zh-Hans") == "关闭")
         #expect(localized("Filter", "zh-Hans") == "筛选")
+        #expect(localized("Search…", "en") == "Search…")
+        #expect(localized("Search…", "zh-Hans") == "搜索…")
     }
 
     @Test func filterTitlesInEnglish() {
@@ -40,5 +42,24 @@ struct LocalizationTests {
             "全部类型", "仅文本", "仅图片", "仅文件",
             "仅链接", "仅颜色", "仅邮箱",
         ])
+    }
+
+    @Test func languageOptionTitlesInEnglish() {
+        let titles = AppLanguage.allCases.map { localized($0.title, "en") }
+        #expect(titles == ["System Default", "English", "Simplified Chinese"])
+    }
+
+    @Test func languageOptionTitlesInSimplifiedChinese() {
+        let titles = AppLanguage.allCases.map { localized($0.title, "zh-Hans") }
+        #expect(titles == ["跟随系统", "英文", "简体中文"])
+    }
+
+    @Test func generalSettingsCopyIsLocalized() {
+        #expect(localized("Language", "en") == "Language")
+        #expect(localized("Language", "zh-Hans") == "语言")
+        #expect(localized("Follow system language settings by default.", "en") == "Follow system language settings by default.")
+        #expect(localized("Follow system language settings by default.", "zh-Hans") == "默认跟随系统语言设置。")
+        #expect(localized("Choose your preferred display language for Folita.", "en") == "Choose your preferred display language for Folita.")
+        #expect(localized("Choose your preferred display language for Folita.", "zh-Hans") == "选择 Folita 的显示语言。")
     }
 }
