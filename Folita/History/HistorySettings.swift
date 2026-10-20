@@ -10,9 +10,14 @@ final class HistorySettings {
     static let limitKey = "FolitaHistoryLimit"
 
     @ObservationIgnored private let userDefaults: UserDefaults
+    /// 调小上限后由存储立即淘汰多出的记录，而不是等下一次复制。
+    @ObservationIgnored var onLimitChange: () -> Void = {}
 
     var limit: Int {
-        didSet { userDefaults.set(limit, forKey: Self.limitKey) }
+        didSet {
+            userDefaults.set(limit, forKey: Self.limitKey)
+            onLimitChange()
+        }
     }
 
     init(userDefaults: UserDefaults = .standard) {

@@ -34,6 +34,21 @@ enum HistoryStorage {
         }
     }
 
+    /// 历史目录占用的磁盘空间（含外置的大数据），目录不存在时为 0。
+    static func diskUsage(of directory: URL = defaultDirectory) -> Int64 {
+        guard let enumerator = FileManager.default.enumerator(
+            at: directory,
+            includingPropertiesForKeys: [.totalFileAllocatedSizeKey, .isRegularFileKey]
+        ) else { return 0 }
+        var total: Int64 = 0
+        for case let url as URL in enumerator {
+            let values = try? url.resourceValues(forKeys: [.totalFileAllocatedSizeKey, .isRegularFileKey])
+            guard values?.isRegularFile == true else { continue }
+            total += Int64(values?.totalFileAllocatedSize ?? 0)
+        }
+        return total
+    }
+
     static func makeInMemoryContainer() -> ModelContainer {
         do {
             return try ModelContainer(

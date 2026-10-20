@@ -22,6 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             ? HistoryStorage.Opened(container: HistoryStorage.makeInMemoryContainer(), backupURL: nil)
             : HistoryStorage.open()
         let historyStore = ClipboardHistoryStore(container: opened.container, limit: { historySettings.limit })
+        historySettings.onLimitChange = { historyStore.enforceLimit() }
 
         self.historySettings = historySettings
         self.privacySettings = privacySettings

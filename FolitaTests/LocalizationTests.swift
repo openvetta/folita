@@ -120,4 +120,12 @@ struct LocalizationTests {
             #expect(localized(hint.action, "zh-Hans") != hint.action.key)
         }
     }
+
+    @Test func historySettingsCopyIsLocalized() {
+        let limit = 500
+        #expect(localized("\(limit) items", "en") == "500 items")
+        #expect(localized("\(limit) items", "zh-Hans") == "500 条")
+        #expect(localized("Clear all clipboard history?", "zh-Hans") == "要清空全部剪贴历史吗？")
+        #expect(localized("Storage Used", "zh-Hans") == "占用空间")
+    }
 }
