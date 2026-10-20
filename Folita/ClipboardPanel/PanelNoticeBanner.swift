@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 面板标题下方的权限提示，点击前往系统设置修复。
+/// 面板标题下方的权限提示：点击卡片前往系统设置修复，右上角关闭。
 struct PanelNoticeBanner: View {
     let notice: PanelNotice
     let action: () -> Void
@@ -22,11 +22,7 @@ struct PanelNoticeBanner: View {
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    Spacer(minLength: 24)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.tertiary)
-                        .accessibilityHidden(true)
+                    Spacer(minLength: 28)
                 }
                 .padding(12)
                 .contentShape(.rect)
