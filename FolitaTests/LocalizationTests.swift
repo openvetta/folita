@@ -22,6 +22,23 @@ struct LocalizationTests {
     @Test func clipboardPanelCopyIsLocalized() {
         #expect(localized("Clipboard", "en") == "Clipboard")
         #expect(localized("Clipboard", "zh-Hans") == "剪贴板")
-        #expect(localized("No clipboard history yet", "zh-Hans") == "还没有剪贴记录")
+        #expect(localized("Close", "zh-Hans") == "关闭")
+        #expect(localized("Filter", "zh-Hans") == "筛选")
+    }
+
+    @Test func filterTitlesInEnglish() {
+        let titles = ClipboardFilter.allCases.map { localized($0.title, "en") }
+        #expect(titles == [
+            "All Types", "Text Only", "Images Only", "Files Only",
+            "Link Only", "Colors Only", "Emails Only",
+        ])
+    }
+
+    @Test func filterTitlesInSimplifiedChinese() {
+        let titles = ClipboardFilter.allCases.map { localized($0.title, "zh-Hans") }
+        #expect(titles == [
+            "全部类型", "仅文本", "仅图片", "仅文件",
+            "仅链接", "仅颜色", "仅邮箱",
+        ])
     }
 }

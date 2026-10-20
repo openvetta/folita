@@ -60,7 +60,9 @@ final class ClipboardPanelController {
 
     private func makePanel() -> ClipboardPanel {
         let panel = ClipboardPanel()
-        let hostingView = NSHostingView(rootView: ClipboardPanelView())
+        let hostingView = NSHostingView(
+            rootView: ClipboardPanelView(onClose: { [weak self] in self?.hide() })
+        )
         hostingView.sizingOptions = []
         panel.contentView = hostingView
         panel.onCancel = { [weak self] in self?.hide() }
