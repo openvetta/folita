@@ -112,9 +112,18 @@ struct ClipboardPanelModelTests {
         copy("b", "https://a.com")
         model.filter = .links
         model.query = "a"
+        let count = model.presentationCount
         model.prepareForPresentation()
         #expect(model.query.isEmpty)
         #expect(model.filter == .links)
+        #expect(model.presentationCount == count + 1)
+    }
+
+    @Test func escapeDismisses() {
+        var dismissed = false
+        model.onDismiss = { dismissed = true }
+        model.perform(.dismiss)
+        #expect(dismissed)
     }
 
     @Test func keyMapping() {
@@ -129,6 +138,7 @@ struct ClipboardPanelModelTests {
         #expect(C.command(for: "0", modifiers: .command) == nil)
         #expect(C.command(for: "1", modifiers: []) == nil)
         #expect(C.command(for: .delete, modifiers: []) == nil)
+        #expect(C.command(for: .escape, modifiers: []) == .dismiss)
         // 大写锁定等非组合修饰键不影响判断。
         #expect(C.command(for: .return, modifiers: [.capsLock]) == .paste(.original))
     }

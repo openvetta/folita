@@ -6,7 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let privacySettings: PrivacySettings
     let historyStore: ClipboardHistoryStore
     /// 剪贴面板是独立于 SwiftUI Scene 的 NSPanel，由 AppDelegate 持有整个生命周期。
-    let clipboardPanel = ClipboardPanelController()
+    let clipboardPanel: ClipboardPanelController
 
     private let clipboardMonitor: ClipboardMonitor
     private let historyBackupURL: URL?
@@ -23,6 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.privacySettings = privacySettings
         self.historyStore = historyStore
         historyBackupURL = opened.backupURL
+        clipboardPanel = ClipboardPanelController(model: ClipboardPanelModel(store: historyStore))
         clipboardMonitor = ClipboardMonitor(privacy: privacySettings) { historyStore.record($0) }
         super.init()
     }

@@ -40,7 +40,7 @@ struct ClipboardPanelTests {
     }
 
     @Test func toggleShowsAndHidesPanel() {
-        let controller = ClipboardPanelController()
+        let controller = ClipboardPanelController(model: makePanelModel())
         #expect(controller.isVisible == false)
 
         controller.toggle()
@@ -51,7 +51,7 @@ struct ClipboardPanelTests {
     }
 
     @Test func escapeHidesPanel() throws {
-        let controller = ClipboardPanelController()
+        let controller = ClipboardPanelController(model: makePanelModel())
         controller.show()
         let panel = try #require(controller.panel)
         #expect(panel.isVisible)
@@ -64,7 +64,7 @@ struct ClipboardPanelTests {
 
     @Test(arguments: [ColorScheme.dark, .light])
     func panelViewLaysOutAtWindowSize(colorScheme: ColorScheme) {
-        let view = NSHostingView(rootView: ClipboardPanelView().environment(\.colorScheme, colorScheme))
+        let view = NSHostingView(rootView: ClipboardPanelView(model: makePanelModel(copying: ["a", "https://folita.app"])).environment(\.colorScheme, colorScheme))
         view.layoutSubtreeIfNeeded()
 
         #expect(view.fittingSize == ClipboardPanelMetrics.windowSize)

@@ -97,7 +97,7 @@ struct LanguageSettingsTests {
     func mainPanelViewLaysOutInBothLocales(localeIdentifier: String) {
         let defaults = makeIsolatedDefaults()
         let settings = LanguageSettings(userDefaults: defaults)
-        let clipboard = ClipboardPanelController(languageSettings: settings)
+        let clipboard = ClipboardPanelController(model: makePanelModel(), languageSettings: settings)
 
         let view = MainPanelView()
             .environment(clipboard)

@@ -72,4 +72,19 @@ struct LocalizationTests {
         #expect(localized("Folita started a new history. The previous data was moved to \(path).", "zh-Hans")
             == "Folita 已新建历史记录，原有数据已移至 /tmp/History-corrupted。")
     }
+
+    @Test func historyListCopyIsLocalized() {
+        let expected: [(LocalizedStringResource, String)] = [
+            ("No matches", "没有匹配项"),
+            ("Try a different search or filter.", "换个关键词或筛选条件试试。"),
+            ("Paste", "粘贴"),
+            ("Paste as Plain Text", "以纯文本粘贴"),
+            ("Delete", "删除"),
+            ("Image", "图片"),
+        ]
+        for (key, chinese) in expected {
+            #expect(localized(key, "zh-Hans") == chinese)
+            #expect(localized(key, "en") == key.key)
+        }
+    }
 }

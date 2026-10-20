@@ -81,6 +81,16 @@
         }
       }
     },
+    "Delete" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除"
+          }
+        }
+      }
+    },
     "Emails Only" : {
       "localizations" : {
         "zh-Hans" : {
@@ -161,6 +171,16 @@
         }
       }
     },
+    "Image" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图片"
+          }
+        }
+      }
+    },
     "Images Only" : {
       "localizations" : {
         "zh-Hans" : {
@@ -212,6 +232,16 @@
         }
       }
     },
+    "No matches" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有匹配项"
+          }
+        }
+      }
+    },
     "Nothing here yet" : {
       "localizations" : {
         "zh-Hans" : {
@@ -228,6 +258,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开主面板"
+          }
+        }
+      }
+    },
+    "Paste" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "粘贴"
+          }
+        }
+      }
+    },
+    "Paste as Plain Text" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以纯文本粘贴"
           }
         }
       }
@@ -338,6 +388,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "该部分尚未实现。"
+          }
+        }
+      }
+    },
+    "Try a different search or filter." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "换个关键词或筛选条件试试。"
           }
         }
       }

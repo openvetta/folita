@@ -59,7 +59,7 @@ struct ClipboardPanelHeaderTests {
 
     @Test(arguments: [ColorScheme.dark, .light])
     func panelViewStillLaysOutAtWindowSize(colorScheme: ColorScheme) {
-        let view = NSHostingView(rootView: ClipboardPanelView().environment(\.colorScheme, colorScheme))
+        let view = NSHostingView(rootView: ClipboardPanelView(model: makePanelModel(copying: ["a", "https://folita.app"])).environment(\.colorScheme, colorScheme))
         view.layoutSubtreeIfNeeded()
 
         #expect(view.fittingSize == ClipboardPanelMetrics.windowSize)

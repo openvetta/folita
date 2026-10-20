@@ -18,6 +18,7 @@ enum ClipboardPanelCommand: Equatable {
     /// 直接回填当前列表中第 n 条（从 0 开始）。
     case pasteAt(Int)
     case deleteSelected
+    case dismiss
 
     /// 面板内的固定按键。`⌘1`–`⌘9` 对应列表前 9 条。
     static func command(for key: KeyEquivalent, modifiers: EventModifiers) -> ClipboardPanelCommand? {
@@ -28,6 +29,7 @@ enum ClipboardPanelCommand: Equatable {
         case (.return, []): return .paste(.original)
         case (.return, [.shift]): return .paste(.plainText)
         case (.delete, [.command]): return .deleteSelected
+        case (.escape, []): return .dismiss
         case (_, [.command]):
             guard let digit = Int(String(key.character)), (1...9).contains(digit) else { return nil }
             return .pasteAt(digit - 1)
@@ -51,8 +53,12 @@ final class ClipboardPanelModel {
     /// 按 ID 记录选中项，面板打开期间有新复制进来时选中位置不跳动。
     private(set) var selectedID: UUID?
 
+    /// 每次呼出面板递增，视图据此把焦点放回搜索框。
+    private(set) var presentationCount = 0
+
     @ObservationIgnored let store: ClipboardHistoryStore
     @ObservationIgnored var onPaste: (HistoryItem, PasteMode) -> Void = { _, _ in }
+    @ObservationIgnored var onDismiss: () -> Void = {}
 
     init(store: ClipboardHistoryStore) {
         self.store = store
@@ -72,6 +78,7 @@ final class ClipboardPanelModel {
     func prepareForPresentation() {
         query = ""
         selectedID = nil
+        presentationCount += 1
     }
 
     func select(_ item: HistoryItem) {
@@ -101,6 +108,8 @@ final class ClipboardPanelModel {
             let neighbor = items.indices.contains(index + 1) ? items[index + 1] : (index > 0 ? items[index - 1] : nil)
             store.delete(item)
             selectedID = neighbor?.id
+        case .dismiss:
+            onDismiss()
         }
     }
 

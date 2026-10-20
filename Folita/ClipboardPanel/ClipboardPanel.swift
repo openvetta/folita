@@ -42,9 +42,12 @@ final class ClipboardPanelController {
 
     @ObservationIgnored private var eventMonitors: [Any] = []
     @ObservationIgnored private let languageSettings: LanguageSettings
+    @ObservationIgnored let model: ClipboardPanelModel
 
-    init(languageSettings: LanguageSettings = .shared) {
+    init(model: ClipboardPanelModel, languageSettings: LanguageSettings = .shared) {
+        self.model = model
         self.languageSettings = languageSettings
+        model.onDismiss = { [weak self] in self?.hide() }
     }
 
     func toggle() {
@@ -52,6 +55,7 @@ final class ClipboardPanelController {
     }
 
     func show() {
+        model.prepareForPresentation()
         let panel = panel ?? makePanel()
         if let screen = NSScreen.screenContainingMouse ?? NSScreen.main {
             panel.setFrame(ClipboardPanelMetrics.windowFrame(in: screen.visibleFrame), display: false)
@@ -120,7 +124,7 @@ final class ClipboardPanelController {
         let panel = ClipboardPanel()
         let hostingView = NSHostingView(
             rootView: ClipboardPanelHostView(
-                controller: self,
+                model: model,
                 languageSettings: languageSettings
             )
         )
@@ -134,11 +138,11 @@ final class ClipboardPanelController {
 
 /// 包裹 ClipboardPanelView 并绑定 LanguageSettings，在切换语言时动态刷新 Locale。
 private struct ClipboardPanelHostView: View {
-    let controller: ClipboardPanelController
+    let model: ClipboardPanelModel
     @Bindable var languageSettings: LanguageSettings
 
     var body: some View {
-        ClipboardPanelView()
+        ClipboardPanelView(model: model)
             .environment(languageSettings)
             .environment(\.locale, languageSettings.effectiveLocale)
     }
