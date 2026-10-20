@@ -1,0 +1,113 @@
+import Foundation
+import Observation
+import SwiftUI
+
+/// 回填时写回剪贴板的方式。
+enum PasteMode: Equatable, Sendable {
+    /// 原样写回全部格式，保留富文本样式。
+    case original
+    /// 只写回纯文本。
+    case plainText
+}
+
+/// 面板内键盘与菜单操作对应的命令。
+enum ClipboardPanelCommand: Equatable {
+    case moveUp
+    case moveDown
+    case paste(PasteMode)
+    /// 直接回填当前列表中第 n 条（从 0 开始）。
+    case pasteAt(Int)
+    case deleteSelected
+
+    /// 面板内的固定按键。`⌘1`–`⌘9` 对应列表前 9 条。
+    static func command(for key: KeyEquivalent, modifiers: EventModifiers) -> ClipboardPanelCommand? {
+        let modifiers = modifiers.intersection([.command, .shift, .option, .control])
+        switch (key, modifiers) {
+        case (.upArrow, []): return .moveUp
+        case (.downArrow, []): return .moveDown
+        case (.return, []): return .paste(.original)
+        case (.return, [.shift]): return .paste(.plainText)
+        case (.delete, [.command]): return .deleteSelected
+        case (_, [.command]):
+            guard let digit = Int(String(key.character)), (1...9).contains(digit) else { return nil }
+            return .pasteAt(digit - 1)
+        default: return nil
+        }
+    }
+}
+
+/// 剪贴面板的界面状态：搜索、筛选与选中项。
+@MainActor
+@Observable
+final class ClipboardPanelModel {
+    var query = "" {
+        didSet { selectedID = nil }
+    }
+
+    var filter: ClipboardFilter = .all {
+        didSet { selectedID = nil }
+    }
+
+    /// 按 ID 记录选中项，面板打开期间有新复制进来时选中位置不跳动。
+    private(set) var selectedID: UUID?
+
+    @ObservationIgnored let store: ClipboardHistoryStore
+    @ObservationIgnored var onPaste: (HistoryItem, PasteMode) -> Void = { _, _ in }
+
+    init(store: ClipboardHistoryStore) {
+        self.store = store
+    }
+
+    var visibleItems: [HistoryItem] {
+        Self.filter(store.items, filter: filter, query: query)
+    }
+
+    /// 未显式选中或选中项已不在列表中时，默认选中第一条。
+    var selectedItem: HistoryItem? {
+        let items = visibleItems
+        return items.first { $0.id == selectedID } ?? items.first
+    }
+
+    /// 每次呼出面板时调用：清空搜索并回到第一条，保留用户选择的筛选类型。
+    func prepareForPresentation() {
+        query = ""
+        selectedID = nil
+    }
+
+    func select(_ item: HistoryItem) {
+        selectedID = item.id
+    }
+
+    func perform(_ command: ClipboardPanelCommand) {
+        let items = visibleItems
+        switch command {
+        case .moveUp, .moveDown:
+            guard let current = selectedItem, let index = items.firstIndex(where: { $0.id == current.id }) else { return }
+            let next = command == .moveUp ? index - 1 : index + 1
+            if items.indices.contains(next) {
+                selectedID = items[next].id
+            }
+        case .paste(let mode):
+            if let item = selectedItem {
+                onPaste(item, mode)
+            }
+        case .pasteAt(let index):
+            if items.indices.contains(index) {
+                onPaste(items[index], .original)
+            }
+        case .deleteSelected:
+            guard let item = selectedItem, let index = items.firstIndex(where: { $0.id == item.id }) else { return }
+            // 删除后选中原位置的下一条，删的是最后一条则选中上一条。
+            let neighbor = items.indices.contains(index + 1) ? items[index + 1] : (index > 0 ? items[index - 1] : nil)
+            store.delete(item)
+            selectedID = neighbor?.id
+        }
+    }
+
+    static func filter(_ items: [HistoryItem], filter: ClipboardFilter, query: String) -> [HistoryItem] {
+        let query = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        return items.filter { item in
+            filter.matches(item.category) && (query.isEmpty || item.title.localizedStandardContains(query))
+        }
+    }
+}

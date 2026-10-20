@@ -1,6 +1,6 @@
 import Foundation
 
-/// 剪贴面板的筛选类型。仅描述界面可选项，真正的过滤在接入剪贴记录后生效。
+/// 剪贴面板的筛选类型。
 enum ClipboardFilter: String, CaseIterable, Identifiable, Hashable {
     case all
     case text
@@ -33,6 +33,18 @@ enum ClipboardFilter: String, CaseIterable, Identifiable, Hashable {
         case .links: "link"
         case .colors: "paintpalette"
         case .emails: "at"
+        }
+    }
+
+    func matches(_ category: ClipCategory) -> Bool {
+        switch self {
+        case .all: true
+        case .text: category.isTextual
+        case .images: category == .image
+        case .files: category == .file
+        case .links: category == .link
+        case .colors: category == .color
+        case .emails: category == .email
         }
     }
 }
