@@ -21,6 +21,16 @@
         }
       }
     },
+    "Add App…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加应用…"
+          }
+        }
+      }
+    },
     "All Types" : {
       "localizations" : {
         "zh-Hans" : {
@@ -151,12 +161,32 @@
         }
       }
     },
+    "Content that password managers mark as hidden or temporary is never recorded." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "密码管理器标记为隐藏或临时的内容始终不会被记录。"
+          }
+        }
+      }
+    },
     "Copied text, images and files will appear here." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "复制的文本、图片和文件会出现在这里。"
+          }
+        }
+      }
+    },
+    "Copies made in these apps are not recorded." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在这些应用中复制的内容不会被记录。"
           }
         }
       }
@@ -281,6 +311,16 @@
         }
       }
     },
+    "Ignored Apps" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "忽略的应用"
+          }
+        }
+      }
+    },
     "Image" : {
       "localizations" : {
         "zh-Hans" : {
@@ -368,6 +408,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "还没有剪贴记录"
+          }
+        }
+      }
+    },
+    "No ignored apps" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有忽略的应用"
           }
         }
       }
@@ -462,6 +512,16 @@
         }
       }
     },
+    "Pause Recording" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂停记录"
+          }
+        }
+      }
+    },
     "Permission" : {
       "localizations" : {
         "zh-Hans" : {
@@ -498,6 +558,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最近复制"
+          }
+        }
+      }
+    },
+    "Recording" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "记录"
+          }
+        }
+      }
+    },
+    "Remove" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除"
           }
         }
       }

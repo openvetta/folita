@@ -45,6 +45,8 @@ struct MainPanelView: View {
             ShortcutsSettingsView()
         case .history:
             HistorySettingsView()
+        case .privacy:
+            PrivacySettingsView()
         default:
             SectionPlaceholderView(section: section)
         }

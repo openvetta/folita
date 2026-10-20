@@ -128,4 +128,17 @@ struct LocalizationTests {
         #expect(localized("Clear all clipboard history?", "zh-Hans") == "要清空全部剪贴历史吗？")
         #expect(localized("Storage Used", "zh-Hans") == "占用空间")
     }
+
+    @Test func privacyCopyIsLocalized() {
+        let expected: [(LocalizedStringResource, String)] = [
+            ("Pause Recording", "暂停记录"),
+            ("Ignored Apps", "忽略的应用"),
+            ("Add App…", "添加应用…"),
+            ("Content that password managers mark as hidden or temporary is never recorded.", "密码管理器标记为隐藏或临时的内容始终不会被记录。"),
+        ]
+        for (key, chinese) in expected {
+            #expect(localized(key, "zh-Hans") == chinese)
+            #expect(localized(key, "en") == key.key)
+        }
+    }
 }
