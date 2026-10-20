@@ -13,7 +13,7 @@
 ## 决策
 
 - **[`sindresorhus/KeyboardShortcuts`](https://github.com/sindresorhus/KeyboardShortcuts)**（MIT）负责全局快捷键注册、录制控件和持久化。只在 `GlobalHotKeyService` 内部使用，其余模块和视图不直接 `import`，录制控件由设置页通过该服务提供的视图使用。
-- **[Sparkle 2](https://github.com/sparkle-project/Sparkle)**（MIT 风格许可）负责自动更新。`appcast.xml` 作为 GitHub Release 附件发布，更新包用 EdDSA 签名，私钥只存放在发布环境。沙盒下按 Sparkle 文档声明安装器 XPC 所需的 `mach-lookup` 临时例外（`$(PRODUCT_BUNDLE_IDENTIFIER)-spks` / `-spki`），与 Maccy 的做法一致。
+- **[Sparkle 2](https://github.com/sparkle-project/Sparkle)**（MIT 风格许可）负责自动更新。`appcast.xml` 作为 GitHub Release 附件发布，更新包用 EdDSA 签名，私钥只存放在发布环境。沙盒下按 Sparkle 文档声明安装器 XPC 所需的 `mach-lookup` 临时例外（`$(PRODUCT_BUNDLE_IDENTIFIER)-spks` / `-spki`），与 Maccy 的做法一致；同时开启 `SUEnableDownloaderService`，由 Sparkle 的下载器 XPC 服务联网，应用本身不申请网络权限。未配置 EdDSA 公钥（构建设置 `SPARKLE_PUBLIC_ED_KEY`）的构建不启动更新器。
 - 两者通过 SPM 在 `project.yml` 的 `packages:` 中引入，锁定到 minor 版本，在实际集成对应功能时再加入工程。
 - 除此之外仍默认不引入第三方依赖，新增依赖需另行记录。
 

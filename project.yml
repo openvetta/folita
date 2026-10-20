@@ -21,6 +21,9 @@ packages:
   KeyboardShortcuts:
     url: https://github.com/sindresorhus/KeyboardShortcuts
     minorVersion: 3.1.0
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    minorVersion: 2.10.0
 
 targets:
   Folita:
@@ -30,12 +33,16 @@ targets:
       - path: Folita
     dependencies:
       - package: KeyboardShortcuts
+      - package: Sparkle
     configFiles:
       Debug: Configs/Signing.xcconfig
       Release: Configs/Signing.xcconfig
     settings:
       base:
         CODE_SIGN_ENTITLEMENTS: Folita/Folita.entitlements
+        INFOPLIST_FILE: Folita/Info.plist
+        # Sparkle 更新包签名的 EdDSA 公钥（由 generate_keys 生成，可公开）；为空时应用内更新保持禁用。
+        SPARKLE_PUBLIC_ED_KEY: ""
         PRODUCT_BUNDLE_IDENTIFIER: app.folita.Folita
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Folita

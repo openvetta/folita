@@ -148,4 +148,10 @@ struct LocalizationTests {
         #expect(localized("Version \(version) (\(build))", "zh-Hans") == "版本 0.1.0（1）")
         #expect(localized("Source Code", "zh-Hans") == "源代码")
     }
+
+    @Test func updatesCopyIsLocalized() {
+        #expect(localized("Check for updates automatically", "zh-Hans") == "自动检查更新")
+        #expect(localized("Check for Updates…", "zh-Hans") == "检查更新…")
+        #expect(localized("Updates are not configured for this build.", "zh-Hans") == "此版本未配置自动更新。")
+    }
 }

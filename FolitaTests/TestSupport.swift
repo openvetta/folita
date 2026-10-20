@@ -25,6 +25,7 @@ final class TestServices {
     let store: ClipboardHistoryStore
     let panel: ClipboardPanelController
     var loginItemStatus: SMAppService.Status = .notRegistered
+    var updater = UpdaterService(backend: nil)
     var accessibilityTrusted = false
     lazy var launchAtLogin = LaunchAtLogin(backend: .init(
         status: { [unowned self] in loginItemStatus },
@@ -60,6 +61,7 @@ extension View {
             .environment(services.privacy)
             .environment(services.paste)
             .environment(services.launchAtLogin)
+            .environment(services.updater)
             .environment(services.language)
             .environment(\.accessibilityAccess, services.accessibility)
             .environment(\.locale, Locale(identifier: locale))

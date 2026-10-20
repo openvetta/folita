@@ -36,6 +36,7 @@ private extension View {
             .environment(app.privacySettings)
             .environment(app.pasteSettings)
             .environment(app.launchAtLogin)
+            .environment(app.updater)
             .environment(languageSettings)
             .environment(\.locale, languageSettings.effectiveLocale)
     }

@@ -3,6 +3,7 @@ import SwiftUI
 struct MenuBarContent: View {
     @Environment(ClipboardPanelController.self) private var clipboardPanel
     @Environment(PrivacySettings.self) private var privacySettings
+    @Environment(UpdaterService.self) private var updater
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
@@ -19,6 +20,9 @@ struct MenuBarContent: View {
             NSApp.activate()
         }
         .keyboardShortcut(",")
+
+        Button("Check for Updates…", action: updater.checkForUpdates)
+            .disabled(!updater.isConfigured)
 
         Divider()
 

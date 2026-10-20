@@ -7,6 +7,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let historyStore: ClipboardHistoryStore
     let pasteSettings: PasteSettings
     let launchAtLogin = LaunchAtLogin()
+    /// 测试宿主中不启动 Sparkle。
+    let updater = AppEnvironment.isRunningTests ? UpdaterService(backend: nil) : UpdaterService.live()
     /// 剪贴面板是独立于 SwiftUI Scene 的 NSPanel，由 AppDelegate 持有整个生命周期。
     let clipboardPanel: ClipboardPanelController
 

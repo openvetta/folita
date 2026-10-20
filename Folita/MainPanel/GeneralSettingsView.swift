@@ -6,6 +6,7 @@ struct GeneralSettingsView: View {
     @Environment(LanguageSettings.self) private var languageSettings
     @Environment(LaunchAtLogin.self) private var launchAtLogin
     @Environment(PasteSettings.self) private var pasteSettings
+    @Environment(UpdaterService.self) private var updater
     @Environment(\.accessibilityAccess) private var accessibility
 
     @State private var isAccessibilityTrusted = false
@@ -13,6 +14,7 @@ struct GeneralSettingsView: View {
     var body: some View {
         @Bindable var settings = languageSettings
         @Bindable var paste = pasteSettings
+        @Bindable var updates = updater
         Form {
             Section {
                 Picker("Language", selection: $settings.selectedLanguage) {
@@ -64,6 +66,20 @@ struct GeneralSettingsView: View {
             } footer: {
                 Text("Selected items are pasted into the app you were using. Without permission they are only copied, and you press ⌘V to paste.")
                     .foregroundStyle(.secondary)
+            }
+
+            Section {
+                Toggle("Check for updates automatically", isOn: $updates.automaticallyChecks)
+                    .disabled(!updates.isConfigured)
+                Button("Check for Updates…", action: updates.checkForUpdates)
+                    .disabled(!updates.isConfigured)
+            } header: {
+                Text("Updates")
+            } footer: {
+                if !updates.isConfigured {
+                    Text("Updates are not configured for this build.")
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .formStyle(.grouped)
