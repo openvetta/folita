@@ -3,7 +3,7 @@ SCHEME := Folita
 DERIVED := .build/DerivedData
 APP := $(DERIVED)/Build/Products/Debug/Folita.app
 
-.PHONY: project build test run clean check-release-notes
+.PHONY: project build test run clean check-release-notes app-icons
 
 project:
 	xcodegen generate
@@ -19,6 +19,9 @@ run: build
 
 clean:
 	rm -rf .build $(PROJECT)
+
+app-icons:
+	scripts/icons/export-app-icons.sh
 
 check-release-notes:
 	scripts/release/test-check-release-notes.sh

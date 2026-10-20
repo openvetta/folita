@@ -23,9 +23,11 @@ Folita/
   Updates/          应用内更新（封装 Sparkle）
   MainPanel/        主面板及其设置分区
   DesignSystem/     Siri 风格玻璃容器与取色
-  Resources/        Localizable.xcstrings（en / zh-Hans）
+  Resources/        Localizable.xcstrings（en / zh-Hans）、Assets.xcassets（图标缩略图，由脚本生成）
 FolitaTests/        Swift Testing 单元、视图与流程测试
 Configs/            签名配置（Local.xcconfig 不入库）
+design/app-icons/   可选应用图标的 Icon Composer 源文件（fox.icon 为默认图标）
+scripts/icons/      把图标源按系统蒙层导出到 Assets.xcassets
 docs/adr/           架构决策记录
 docs/releasing.md   发布流程与所需凭据
 project.yml         XcodeGen 工程定义（.xcodeproj 不入库）
@@ -40,6 +42,7 @@ make project   # 生成 Folita.xcodeproj
 make build     # 构建 Debug
 make test      # 运行测试
 make run       # 构建并启动
+make app-icons # 修改 design/app-icons 后重新导出图标图片
 ```
 
 默认使用临时签名，无需证书即可构建和测试。维护者可复制 `Configs/Local.xcconfig.example` 为 `Configs/Local.xcconfig`（不入库）并填入团队，使签名身份稳定，避免每次重新构建后辅助功能等系统授权失效。
