@@ -3,7 +3,7 @@ SCHEME := Folita
 DERIVED := .build/DerivedData
 APP := $(DERIVED)/Build/Products/Debug/Folita.app
 
-.PHONY: project build test run clean
+.PHONY: project build test run clean check-release-notes
 
 project:
 	xcodegen generate
@@ -19,3 +19,7 @@ run: build
 
 clean:
 	rm -rf .build $(PROJECT)
+
+check-release-notes:
+	scripts/release/test-check-release-notes.sh
+	scripts/release/check-release-notes.sh
