@@ -55,7 +55,8 @@ enum ClipboardCapture {
     }
 
     /// 把各剪贴板项读出的格式合并成一次复制。
-    /// 部分应用（BBEdit、Edge）一次复制会放两个剪贴板项，合并后同一类型只保留第一份。
+    /// 部分应用（BBEdit、Edge）一次复制会放两个剪贴板项，合并后同一类型只保留第一份；
+    /// 文件例外：Finder 复制多个文件时每个文件各占一项，必须全部保留。
     static func makeClip(
         items: [[ClipContent]],
         sourceBundleID: String?
@@ -63,8 +64,12 @@ enum ClipboardCapture {
         var seen = Set<NSPasteboard.PasteboardType>()
         var contents: [ClipContent] = []
         for content in items.joined() where supportedTypes.contains(content.type) {
-            guard !seen.contains(content.type) else { continue }
-            seen.insert(content.type)
+            if content.type == .fileURL {
+                guard !contents.contains(content) else { continue }
+            } else {
+                guard !seen.contains(content.type) else { continue }
+                seen.insert(content.type)
+            }
             contents.append(content)
         }
 

@@ -48,6 +48,17 @@ struct ClipboardCaptureTests {
         #expect(clip.sourceBundleID == "com.microsoft.edgemac")
     }
 
+    @Test func keepsEveryFileWhenCopyingMultipleFiles() throws {
+        let a = ClipContent(type: .fileURL, data: URL(filePath: "/tmp/a.txt").dataRepresentation)
+        let b = ClipContent(type: .fileURL, data: URL(filePath: "/tmp/b.txt").dataRepresentation)
+        let clip = try #require(ClipboardCapture.makeClip(
+            items: [[a, text("a.txt")], [b, text("b.txt")]],
+            sourceBundleID: "com.apple.finder"
+        ))
+        #expect(clip.contents == [a, text("a.txt"), b])
+        #expect(ClipClassification.title(for: clip.contents) == "/tmp/a.txt\n/tmp/b.txt")
+    }
+
     @Test func dropsBlankText() {
         #expect(ClipboardCapture.makeClip(items: [[text("  \n\t ")]], sourceBundleID: nil) == nil)
     }
