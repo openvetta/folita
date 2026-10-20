@@ -27,4 +27,12 @@ enum ClipPreviewImages {
         appIcons[bundleID] = icon
         return icon
     }
+
+    /// 来源应用名称；应用已卸载时返回 nil。
+    @MainActor
+    static func appName(bundleID: String) -> String? {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else { return nil }
+        let name = FileManager.default.displayName(atPath: url.path(percentEncoded: false))
+        return name.hasSuffix(".app") ? String(name.dropLast(4)) : name
+    }
 }

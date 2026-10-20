@@ -1,6 +1,26 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%lld characters" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 个字符"
+          }
+        }
+      }
+    },
+    "%lld files" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 个文件"
+          }
+        }
+      }
+    },
     "%lld items" : {
       "localizations" : {
         "zh-Hans" : {
@@ -171,6 +191,16 @@
         }
       }
     },
+    "Color" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "颜色"
+          }
+        }
+      }
+    },
     "Colors Only" : {
       "localizations" : {
         "zh-Hans" : {
@@ -211,12 +241,32 @@
         }
       }
     },
+    "Copy" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制"
+          }
+        }
+      }
+    },
     "Delete" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除"
+          }
+        }
+      }
+    },
+    "Email" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "邮箱"
           }
         }
       }
@@ -237,6 +287,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "英文"
+          }
+        }
+      }
+    },
+    "File" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件"
           }
         }
       }
@@ -411,6 +471,16 @@
         }
       }
     },
+    "Link" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "链接"
+          }
+        }
+      }
+    },
     "Link Only" : {
       "localizations" : {
         "zh-Hans" : {
@@ -552,6 +622,16 @@
         }
       }
     },
+    "Paste to %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "粘贴到 %@"
+          }
+        }
+      }
+    },
     "Pause Recording" : {
       "localizations" : {
         "zh-Hans" : {
@@ -568,6 +648,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "权限"
+          }
+        }
+      }
+    },
+    "Plain Text" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "纯文本"
           }
         }
       }
@@ -628,6 +718,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "保留策略"
+          }
+        }
+      }
+    },
+    "Rich Text" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "富文本"
           }
         }
       }
@@ -762,6 +862,16 @@
         }
       }
     },
+    "Text" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文本"
+          }
+        }
+      }
+    },
     "Text Only" : {
       "localizations" : {
         "zh-Hans" : {
@@ -838,6 +948,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在任何应用中都可使用。部分应用用 ⌘⇧V 表示「粘贴并匹配样式」，如有冲突请换一个快捷键。"
+          }
+        }
+      }
+    },
+    "and %lld more" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等另外 %lld 个"
           }
         }
       }

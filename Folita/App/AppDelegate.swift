@@ -44,6 +44,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 pasteboardBehavior: NSPasteboard.general.accessBehavior
             )
         }
+        clipboardPanel.model.targetAppProvider = {
+            let app = NSWorkspace.shared.frontmostApplication
+            return app?.bundleIdentifier == Bundle.main.bundleIdentifier ? nil : app?.localizedName
+        }
+        clipboardPanel.model.autoPasteProvider = {
+            pasteSettings.autoPaste && AccessibilityAccess.system.isTrusted()
+        }
         clipboardPanel.model.onResolveNotice = { [weak clipboardPanel] notice in
             clipboardPanel?.hide()
             // 先请求一次授权，系统会把应用加入授权列表，用户只需打开开关。
