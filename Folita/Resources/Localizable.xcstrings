@@ -1,0 +1,71 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "About" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "关于" } }
+      }
+    },
+    "Clipboard" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "剪贴板" } }
+      }
+    },
+    "Copied text, images and files will appear here." : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "复制的文本、图片和文件会出现在这里。" } }
+      }
+    },
+    "General" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "通用" } }
+      }
+    },
+    "History" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "历史记录" } }
+      }
+    },
+    "No clipboard history yet" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "还没有剪贴记录" } }
+      }
+    },
+    "Open Main Panel" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "打开主面板" } }
+      }
+    },
+    "Privacy" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "隐私" } }
+      }
+    },
+    "Quit Folita" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "退出 Folita" } }
+      }
+    },
+    "Recent copies" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "最近复制" } }
+      }
+    },
+    "Shortcuts" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "快捷键" } }
+      }
+    },
+    "Show Clipboard Panel" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "显示剪贴面板" } }
+      }
+    },
+    "This section is not implemented yet." : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "该部分尚未实现。" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

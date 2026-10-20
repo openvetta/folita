@@ -1,0 +1,59 @@
+name: Folita
+
+options:
+  bundleIdPrefix: app.folita
+  deploymentTarget:
+    macOS: "26.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    DEVELOPMENT_TEAM: ""
+    ENABLE_HARDENED_RUNTIME: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+
+targets:
+  Folita:
+    type: application
+    platform: macOS
+    sources:
+      - path: Folita
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.folita.Folita
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Folita
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+
+  FolitaTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: FolitaTests
+    dependencies:
+      - target: Folita
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.folita.FolitaTests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Folita:
+    build:
+      targets:
+        Folita: all
+        FolitaTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - FolitaTests
