@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private let clipboardMonitor: ClipboardMonitor
     private let pasteService: PasteService
+    private let hotKeys: GlobalHotKeyService
     private let historyBackupURL: URL?
 
     override init() {
@@ -53,6 +54,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.pasteSettings = pasteSettings
         self.pasteService = pasteService
         self.clipboardPanel = clipboardPanel
+        hotKeys = GlobalHotKeyService { [weak clipboardPanel] in clipboardPanel?.toggle() }
         clipboardMonitor = ClipboardMonitor(privacy: privacySettings) { historyStore.record($0) }
         super.init()
     }
@@ -60,6 +62,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard !AppEnvironment.isRunningTests else { return }
         clipboardMonitor.start()
+        hotKeys.start()
         if let historyBackupURL {
             presentHistoryRecoveredAlert(backupURL: historyBackupURL)
         }

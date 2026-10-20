@@ -8,7 +8,7 @@ struct MenuBarContent: View {
         Button("Show Clipboard Panel") {
             clipboardPanel.toggle()
         }
-        .keyboardShortcut("v", modifiers: [.command, .shift])
+        .togglePanelShortcutHint()
 
         Button("Open Main Panel") {
             openWindow(id: SceneID.main)

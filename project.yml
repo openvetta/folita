@@ -17,12 +17,19 @@ settings:
     LOCALIZATION_PREFERS_STRING_CATALOGS: YES
     SWIFT_EMIT_LOC_STRINGS: YES
 
+packages:
+  KeyboardShortcuts:
+    url: https://github.com/sindresorhus/KeyboardShortcuts
+    minorVersion: 3.1.0
+
 targets:
   Folita:
     type: application
     platform: macOS
     sources:
       - path: Folita
+    dependencies:
+      - package: KeyboardShortcuts
     configFiles:
       Debug: Configs/Signing.xcconfig
       Release: Configs/Signing.xcconfig
