@@ -96,4 +96,19 @@ struct LocalizationTests {
         #expect(localized("Folita can't record new copies. Click to allow clipboard access in System Settings.", "zh-Hans")
             == "Folita 无法记录新的复制内容。点击前往系统设置允许访问剪贴板。")
     }
+
+    @Test func generalStartupAndPasteCopyIsLocalized() {
+        let expected: [(LocalizedStringResource, String)] = [
+            ("Launch at login", "登录时启动"),
+            ("Startup", "启动"),
+            ("Paste automatically", "自动粘贴"),
+            ("Granted", "已授权"),
+            ("Open System Settings", "打开系统设置"),
+            ("Permission", "权限"),
+        ]
+        for (key, chinese) in expected {
+            #expect(localized(key, "zh-Hans") == chinese)
+            #expect(localized(key, "en") == key.key)
+        }
+    }
 }

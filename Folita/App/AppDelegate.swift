@@ -6,6 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let privacySettings: PrivacySettings
     let historyStore: ClipboardHistoryStore
     let pasteSettings: PasteSettings
+    let launchAtLogin = LaunchAtLogin()
     /// 剪贴面板是独立于 SwiftUI Scene 的 NSPanel，由 AppDelegate 持有整个生命周期。
     let clipboardPanel: ClipboardPanelController
 

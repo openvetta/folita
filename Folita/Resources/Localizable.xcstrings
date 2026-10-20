@@ -21,6 +21,16 @@
         }
       }
     },
+    "Approve Folita under Login Items in System Settings." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在系统设置的「登录项」中允许 Folita。"
+          }
+        }
+      }
+    },
     "Auto-paste needs permission" : {
       "localizations" : {
         "zh-Hans" : {
@@ -191,6 +201,16 @@
         }
       }
     },
+    "Granted" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已授权"
+          }
+        }
+      }
+    },
     "History" : {
       "localizations" : {
         "zh-Hans" : {
@@ -227,6 +247,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "语言"
+          }
+        }
+      }
+    },
+    "Launch at login" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录时启动"
           }
         }
       }
@@ -292,6 +322,16 @@
         }
       }
     },
+    "Open System Settings" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开系统设置"
+          }
+        }
+      }
+    },
     "Paste" : {
       "localizations" : {
         "zh-Hans" : {
@@ -308,6 +348,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "以纯文本粘贴"
+          }
+        }
+      }
+    },
+    "Paste automatically" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动粘贴"
+          }
+        }
+      }
+    },
+    "Permission" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "权限"
           }
         }
       }
@@ -372,6 +432,16 @@
         }
       }
     },
+    "Selected items are pasted into the app you were using. Without permission they are only copied, and you press ⌘V to paste." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选中的内容会直接粘贴到你正在使用的应用。未授权时只会复制，需要自己按 ⌘V 粘贴。"
+          }
+        }
+      }
+    },
     "Shortcuts" : {
       "localizations" : {
         "zh-Hans" : {
@@ -398,6 +468,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "简体中文"
+          }
+        }
+      }
+    },
+    "Startup" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启动"
           }
         }
       }

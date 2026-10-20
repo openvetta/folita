@@ -80,14 +80,8 @@ struct LanguageSettingsTests {
         ("en", ColorScheme.dark),
     ])
     func generalSettingsViewLaysOut(localeIdentifier: String, colorScheme: ColorScheme) {
-        let defaults = makeIsolatedDefaults()
-        let settings = LanguageSettings(userDefaults: defaults)
-        let view = GeneralSettingsView()
-            .environment(settings)
-            .environment(\.locale, Locale(identifier: localeIdentifier))
-            .environment(\.colorScheme, colorScheme)
-
-        let host = NSHostingView(rootView: view)
+        let services = TestServices()
+        let host = NSHostingView(rootView: GeneralSettingsView().testServices(services, locale: localeIdentifier, scheme: colorScheme))
         host.layoutSubtreeIfNeeded()
         #expect(host.fittingSize.width >= 0)
         #expect(host.fittingSize.height >= 0)
@@ -95,14 +89,8 @@ struct LanguageSettingsTests {
 
     @Test(arguments: ["zh-Hans", "en"])
     func mainPanelViewLaysOutInBothLocales(localeIdentifier: String) {
-        let defaults = makeIsolatedDefaults()
-        let settings = LanguageSettings(userDefaults: defaults)
-        let clipboard = ClipboardPanelController(model: makePanelModel(), languageSettings: settings)
-
-        let view = MainPanelView()
-            .environment(clipboard)
-            .environment(settings)
-            .environment(\.locale, Locale(identifier: localeIdentifier))
+        let services = TestServices()
+        let view = MainPanelView().testServices(services, locale: localeIdentifier)
 
         let host = NSHostingView(rootView: view)
         host.frame = CGRect(x: 0, y: 0, width: 760, height: 520)
