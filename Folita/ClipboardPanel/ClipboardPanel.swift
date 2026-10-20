@@ -138,7 +138,7 @@ private struct ClipboardPanelHostView: View {
     @Bindable var languageSettings: LanguageSettings
 
     var body: some View {
-        ClipboardPanelView(onClose: { [weak controller] in controller?.hide() })
+        ClipboardPanelView()
             .environment(languageSettings)
             .environment(\.locale, languageSettings.effectiveLocale)
     }

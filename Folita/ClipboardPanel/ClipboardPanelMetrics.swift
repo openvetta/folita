@@ -4,6 +4,9 @@ enum ClipboardPanelMetrics {
     /// 玻璃容器本体尺寸。
     static let containerSize = CGSize(width: 440, height: 560)
     static let cornerRadius: CGFloat = 34
+    /// 顶栏圆形按钮与搜索胶囊的高度。
+    static let controlHeight: CGFloat = 30
+    static let searchFieldWidth: CGFloat = 220
     /// 窗口四周为 SwiftUI 阴影预留的透明边距。
     static let shadowInset: CGFloat = 28
     /// 容器顶边距离屏幕可见区域顶部（菜单栏下沿）的距离。

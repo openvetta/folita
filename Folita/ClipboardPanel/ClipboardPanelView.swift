@@ -2,10 +2,11 @@ import SwiftUI
 
 struct ClipboardPanelView: View {
     @Environment(LanguageSettings.self) private var languageSettings: LanguageSettings?
-    var onClose: () -> Void = {}
 
     @State private var filter: ClipboardFilter = .all
+    @State private var query = ""
     @State private var isFilterPresented = false
+    @FocusState private var isSearchFocused: Bool
 
     var body: some View {
         SiriGlassContainer {
@@ -24,9 +25,10 @@ struct ClipboardPanelView: View {
         )
         .shadow(color: .black.opacity(0.28), radius: 22, y: 10)
         .padding(ClipboardPanelMetrics.shadowInset)
+        .defaultFocus($isSearchFocused, true)
     }
 
-    /// 顶部可拖拽区域：按钮之间的空白与标题都可拖动面板，按钮自身保持点击。
+    /// 顶部可拖拽区域：控件之间的空白与标题都可拖动面板，控件自身保持交互。
     private var dragRegion: some View {
         VStack(alignment: .leading, spacing: 18) {
             topBar
@@ -36,27 +38,17 @@ struct ClipboardPanelView: View {
         .gesture(WindowDragGesture())
     }
 
-    /// 左侧关闭、右侧筛选，两端圆形控件，标题在其下方。
+    /// 左侧筛选、右侧搜索。面板靠点击外部或 Esc 收起，不需要关闭按钮。
+    /// 两个控件放进同一个 GlassEffectContainer，让液态玻璃在相邻时统一取样与融合。
     private var topBar: some View {
-        HStack(spacing: 0) {
-            closeButton
-            Spacer(minLength: 0)
-            filterButton
+        GlassEffectContainer(spacing: 12) {
+            HStack(spacing: 12) {
+                filterButton
+                Spacer(minLength: 0)
+                ClipboardSearchField(query: $query, isFocused: $isSearchFocused)
+            }
         }
-        .frame(height: 30)
-    }
-
-    /// 左上角关闭按钮，使用系统 Liquid Glass 按钮样式，位置对齐 macOS 窗口红绿灯。
-    private var closeButton: some View {
-        Button(action: onClose) {
-            Image(systemName: "xmark")
-                .font(.system(size: 11, weight: .bold))
-                .frame(width: 30, height: 30)
-        }
-        .buttonStyle(.glass)
-        .buttonBorderShape(.circle)
-        .help(Text("Close"))
-        .accessibilityLabel(Text("Close"))
+        .frame(height: ClipboardPanelMetrics.controlHeight)
     }
 
     private var filterButton: some View {
@@ -65,7 +57,7 @@ struct ClipboardPanelView: View {
         } label: {
             Image(systemName: filter.symbolName)
                 .font(.system(size: 12, weight: .semibold))
-                .frame(width: 30, height: 30)
+                .frame(width: ClipboardPanelMetrics.controlHeight, height: ClipboardPanelMetrics.controlHeight)
         }
         .buttonStyle(.glass)
         .buttonBorderShape(.circle)

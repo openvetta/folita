@@ -1,20 +1,12 @@
 import SwiftUI
 
-/// 筛选类型气泡菜单：顶部搜索框 + 类型列表，与 iOS 27 Siri 风格一致地只用图标与文字。
+/// 筛选类型气泡菜单，与 iOS 27 Siri 风格一致地只用图标与文字。
 struct ClipboardFilterMenu: View {
     @Binding var selection: ClipboardFilter
-
-    @State private var query = ""
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            TextField("Search…", text: $query)
-                .textFieldStyle(.plain)
-                .font(.system(size: 17))
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-
             ForEach(ClipboardFilter.allCases) { filter in
                 row(for: filter)
             }
