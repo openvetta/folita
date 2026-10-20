@@ -41,6 +41,8 @@ struct MainPanelView: View {
         switch section {
         case .general:
             GeneralSettingsView()
+        case .shortcuts:
+            ShortcutsSettingsView()
         default:
             SectionPlaceholderView(section: section)
         }

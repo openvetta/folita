@@ -91,6 +91,16 @@
         }
       }
     },
+    "Close the panel" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收起面板"
+          }
+        }
+      }
+    },
     "Colors Only" : {
       "localizations" : {
         "zh-Hans" : {
@@ -201,6 +211,16 @@
         }
       }
     },
+    "Global" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全局"
+          }
+        }
+      }
+    },
     "Granted" : {
       "localizations" : {
         "zh-Hans" : {
@@ -237,6 +257,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "仅图片"
+          }
+        }
+      }
+    },
+    "In the Clipboard Panel" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "剪贴面板内"
           }
         }
       }
@@ -362,6 +392,16 @@
         }
       }
     },
+    "Paste one of the first nine items" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "粘贴前 9 条中的一条"
+          }
+        }
+      }
+    },
     "Permission" : {
       "localizations" : {
         "zh-Hans" : {
@@ -418,6 +458,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "搜索…"
+          }
+        }
+      }
+    },
+    "Select previous or next item" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择上一条或下一条"
           }
         }
       }
@@ -518,6 +568,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "换个关键词或筛选条件试试。"
+          }
+        }
+      }
+    },
+    "Works in any app. Some apps use ⌘⇧V for “Paste and Match Style”; choose another shortcut if it conflicts." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在任何应用中都可使用。部分应用用 ⌘⇧V 表示「粘贴并匹配样式」，如有冲突请换一个快捷键。"
           }
         }
       }

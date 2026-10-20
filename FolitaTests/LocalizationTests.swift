@@ -111,4 +111,13 @@ struct LocalizationTests {
             #expect(localized(key, "en") == key.key)
         }
     }
+
+    @Test func shortcutsCopyIsLocalized() {
+        #expect(localized("Global", "zh-Hans") == "全局")
+        #expect(localized("In the Clipboard Panel", "zh-Hans") == "剪贴面板内")
+        for hint in PanelKeyHint.all {
+            #expect(localized(hint.action, "en") == hint.action.key)
+            #expect(localized(hint.action, "zh-Hans") != hint.action.key)
+        }
+    }
 }
