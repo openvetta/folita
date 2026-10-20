@@ -15,7 +15,7 @@
 
 ```text
 Folita/
-  App/              应用入口、AppDelegate（装配各服务）、菜单栏菜单、开机自启
+  App/              应用入口、AppDelegate（装配各服务）、菜单栏菜单、开机自启、应用图标设置
   ClipboardPanel/   剪贴面板窗口、控制器、状态模型、历史列表与搜索
   History/          剪贴板监听、采集规则、SwiftData 模型与存储、保留与隐私设置
   Paste/            写回剪贴板、自动粘贴与权限提示

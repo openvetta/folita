@@ -61,6 +61,16 @@
         }
       }
     },
+    "App Icon" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "应用图标"
+          }
+        }
+      }
+    },
     "Approve Folita under Login Items in System Settings." : {
       "localizations" : {
         "zh-Hans" : {
@@ -81,6 +91,26 @@
         }
       }
     },
+    "Bear" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小熊"
+          }
+        }
+      }
+    },
+    "Black Cat" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小黑猫"
+          }
+        }
+      }
+    },
     "Check for Updates…" : {
       "localizations" : {
         "zh-Hans" : {
@@ -97,6 +127,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "自动检查更新"
+          }
+        }
+      }
+    },
+    "Chick" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小鸡"
           }
         }
       }
@@ -261,6 +301,16 @@
         }
       }
     },
+    "Dog" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小狗"
+          }
+        }
+      }
+    },
     "Email" : {
       "localizations" : {
         "zh-Hans" : {
@@ -347,6 +397,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "默认跟随系统语言设置。"
+          }
+        }
+      }
+    },
+    "Fox" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "狐狸"
+          }
+        }
+      }
+    },
+    "Frog" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "青蛙"
           }
         }
       }
@@ -447,6 +517,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "保留"
+          }
+        }
+      }
+    },
+    "Koala" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "考拉"
           }
         }
       }
@@ -582,6 +662,16 @@
         }
       }
     },
+    "Panda" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "熊猫"
+          }
+        }
+      }
+    },
     "Paste" : {
       "localizations" : {
         "zh-Hans" : {
@@ -642,12 +732,32 @@
         }
       }
     },
+    "Penguin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "企鹅"
+          }
+        }
+      }
+    },
     "Permission" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "权限"
+          }
+        }
+      }
+    },
+    "Pig" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小猪"
           }
         }
       }
@@ -678,6 +788,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "退出 Folita"
+          }
+        }
+      }
+    },
+    "Rabbit" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "兔子"
           }
         }
       }
@@ -812,6 +932,16 @@
         }
       }
     },
+    "Snake" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小蛇"
+          }
+        }
+      }
+    },
     "Source Code" : {
       "localizations" : {
         "zh-Hans" : {
@@ -878,6 +1008,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "仅文本"
+          }
+        }
+      }
+    },
+    "The Dock shows the selected icon while Folita is running. Finder and other places keep the default fox." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folita 运行期间，程序坞显示所选图标；访达等其他位置仍显示默认的狐狸图标。"
           }
         }
       }

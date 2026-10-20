@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// 通用设置页面：语言、开机自启与自动粘贴。
+/// 通用设置页面：语言、应用图标、开机自启与自动粘贴。
 struct GeneralSettingsView: View {
     @Environment(LanguageSettings.self) private var languageSettings
     @Environment(LaunchAtLogin.self) private var launchAtLogin
@@ -27,6 +27,15 @@ struct GeneralSettingsView: View {
                 Text("Language")
             } footer: {
                 Text(footerText)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                AppIconPicker()
+            } header: {
+                Text("App Icon")
+            } footer: {
+                Text("The Dock shows the selected icon while Folita is running. Finder and other places keep the default fox.")
                     .foregroundStyle(.secondary)
             }
 

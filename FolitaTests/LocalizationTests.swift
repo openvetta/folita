@@ -55,6 +55,22 @@ struct LocalizationTests {
         #expect(titles == ["跟随系统", "英文", "简体中文"])
     }
 
+    @Test func appIconCopyIsLocalized() {
+        #expect(AppIconOption.allCases.map { localized($0.title, "en") } == [
+            "Fox", "Dog", "Chick", "Black Cat", "Panda", "Rabbit",
+            "Frog", "Pig", "Bear", "Penguin", "Koala", "Snake",
+        ])
+        #expect(AppIconOption.allCases.map { localized($0.title, "zh-Hans") } == [
+            "狐狸", "小狗", "小鸡", "小黑猫", "熊猫", "兔子",
+            "青蛙", "小猪", "小熊", "企鹅", "考拉", "小蛇",
+        ])
+        #expect(localized("App Icon", "en") == "App Icon")
+        #expect(localized("App Icon", "zh-Hans") == "应用图标")
+        let footer: LocalizedStringResource = "The Dock shows the selected icon while Folita is running. Finder and other places keep the default fox."
+        #expect(localized(footer, "en") == "The Dock shows the selected icon while Folita is running. Finder and other places keep the default fox.")
+        #expect(localized(footer, "zh-Hans") == "Folita 运行期间，程序坞显示所选图标；访达等其他位置仍显示默认的狐狸图标。")
+    }
+
     @Test func generalSettingsCopyIsLocalized() {
         #expect(localized("Language", "en") == "Language")
         #expect(localized("Language", "zh-Hans") == "语言")

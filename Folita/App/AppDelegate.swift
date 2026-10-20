@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let historyStore: ClipboardHistoryStore
     let pasteSettings: PasteSettings
     let launchAtLogin = LaunchAtLogin()
+    let appIconSettings = AppIconSettings()
     /// 测试宿主中不启动 Sparkle。
     let updater = AppEnvironment.isRunningTests ? UpdaterService(backend: nil) : UpdaterService.live()
     /// 剪贴面板是独立于 SwiftUI Scene 的 NSPanel，由 AppDelegate 持有整个生命周期。
@@ -72,6 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard !AppEnvironment.isRunningTests else { return }
+        appIconSettings.apply()
         clipboardMonitor.start()
         hotKeys.start()
         if let historyBackupURL {

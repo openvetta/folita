@@ -22,6 +22,9 @@ final class TestServices {
     let history: HistorySettings
     let privacy: PrivacySettings
     let paste: PasteSettings
+    /// 交给系统的 Dock 图标，nil 表示恢复默认图标。
+    var appliedIcons: [NSImage?] = []
+    lazy var appIcon = AppIconSettings(userDefaults: defaults) { [unowned self] in appliedIcons.append($0) }
     let store: ClipboardHistoryStore
     let panel: ClipboardPanelController
     var loginItemStatus: SMAppService.Status = .notRegistered
@@ -61,6 +64,7 @@ extension View {
             .environment(services.privacy)
             .environment(services.paste)
             .environment(services.launchAtLogin)
+            .environment(services.appIcon)
             .environment(services.updater)
             .environment(services.language)
             .environment(\.accessibilityAccess, services.accessibility)
