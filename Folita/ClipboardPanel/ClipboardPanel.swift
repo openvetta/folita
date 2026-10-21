@@ -94,7 +94,28 @@ final class ClipboardPanelController {
             }
         }
 
-        eventMonitors = [local, global].compactMap { $0 }
+        // 搜索框获得焦点时 TextField 会先处理方向键与 ⌘⌫，视图层的 onKeyPress 收不到，
+        // 因此在窗口分发前拦截：属于面板快捷键的按键被消费，其余键照常输入搜索词。
+        let keys = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self else { return event }
+            return MainActor.assumeIsolated { self.handleKeyDown(event) } ? nil : event
+        }
+
+        eventMonitors = [local, global, keys].compactMap { $0 }
+    }
+
+    /// 返回是否已消费该按键；面板收起、按键不属于面板或事件来自其他窗口（如筛选气泡）时返回 false。
+    @discardableResult
+    func handleKeyDown(_ event: NSEvent) -> Bool {
+        guard let panel, panel.isVisible else { return false }
+        if let window = event.window {
+            guard window === panel else { return false }
+            // 输入法组字期间方向键属于候选选择，交给输入法处理。
+            guard !ClipboardPanelCommand.isComposing(in: window.firstResponder) else { return false }
+        }
+        guard let command = ClipboardPanelCommand.command(for: event) else { return false }
+        model.perform(command)
+        return true
     }
 
     private func removeEventMonitors() {

@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Observation
 import SwiftUI
@@ -21,20 +22,61 @@ enum ClipboardPanelCommand: Equatable {
     case dismiss
 
     /// 面板内的固定按键。`⌘1`–`⌘9` 对应列表前 9 条。
+    /// 说明页与按键提示使用的 `KeyEquivalent` 入口，统一转发到字符入口。
     static func command(for key: KeyEquivalent, modifiers: EventModifiers) -> ClipboardPanelCommand? {
+        // `KeyEquivalent.delete` 的字符是退格 U+0008，而 AppKit 事件里 ⌫ 是 U+007F。
+        command(for: key == .delete ? "\u{7F}" : String(key.character), modifiers: modifiers)
+    }
+
+    /// 以字符而非 `KeyEquivalent` 作为入口：AppKit 事件只给到字符，而 `KeyEquivalent(Character)`
+    /// 对方向键等特殊字符的相等判断与静态常量不一致，字符串比对才可靠。
+    static func command(for characters: String, modifiers: EventModifiers) -> ClipboardPanelCommand? {
         let modifiers = modifiers.intersection([.command, .shift, .option, .control])
-        switch (key, modifiers) {
-        case (.upArrow, []): return .moveUp
-        case (.downArrow, []): return .moveDown
-        case (.return, []): return .paste(.original)
-        case (.return, [.shift]): return .paste(.plainText)
-        case (.delete, [.command]): return .deleteSelected
-        case (.escape, []): return .dismiss
+        switch (characters, modifiers) {
+        case (Key.upArrow, []): return .moveUp
+        case (Key.downArrow, []): return .moveDown
+        case (Key.return, []): return .paste(.original)
+        case (Key.return, [.shift]): return .paste(.plainText)
+        case (Key.delete, [.command]): return .deleteSelected
+        case (Key.escape, []): return .dismiss
         case (_, [.command]):
-            guard let digit = Int(String(key.character)), (1...9).contains(digit) else { return nil }
+            guard characters.count == 1, let digit = Int(characters), (1...9).contains(digit) else { return nil }
             return .pasteAt(digit - 1)
         default: return nil
         }
+    }
+
+    /// 从 AppKit 按键事件映射命令。搜索框聚焦时 TextField 会先吃掉方向键，
+    /// 因此面板在窗口分发前用本地监视器拦一层，再走这里。
+    static func command(for event: NSEvent) -> ClipboardPanelCommand? {
+        guard event.type == .keyDown, let characters = event.charactersIgnoringModifiers else { return nil }
+        return command(for: characters, modifiers: EventModifiers(event.modifierFlags))
+    }
+
+    /// 输入法正在组字时，方向键用于选词，不能被面板快捷键截走。
+    static func isComposing(in responder: NSResponder?) -> Bool {
+        (responder as? NSTextView)?.hasMarkedText() ?? false
+    }
+
+    /// 功能键在 `charactersIgnoringModifiers` 里的字符值。
+    private enum Key {
+        static let upArrow = "\u{F700}"
+        static let downArrow = "\u{F701}"
+        static let `return` = "\r"
+        static let delete = "\u{7F}"
+        static let escape = "\u{1B}"
+    }
+}
+
+extension EventModifiers {
+    /// 只保留面板快捷键关心的四个修饰键。
+    init(_ flags: NSEvent.ModifierFlags) {
+        var modifiers: EventModifiers = []
+        if flags.contains(.command) { modifiers.insert(.command) }
+        if flags.contains(.shift) { modifiers.insert(.shift) }
+        if flags.contains(.option) { modifiers.insert(.option) }
+        if flags.contains(.control) { modifiers.insert(.control) }
+        self = modifiers
     }
 }
 

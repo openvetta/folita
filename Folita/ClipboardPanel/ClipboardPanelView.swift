@@ -34,14 +34,8 @@ struct ClipboardPanelView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             model.refreshNotice()
         }
-        // 焦点始终在搜索框里，固定按键在此统一拦截，其余按键照常输入搜索词。
-        .onKeyPress(phases: .down) { press in
-            guard let command = ClipboardPanelCommand.command(for: press.key, modifiers: press.modifiers) else {
-                return .ignored
-            }
-            model.perform(command)
-            return .handled
-        }
+        // 固定按键由 ClipboardPanelController 在窗口分发前拦截：搜索框聚焦时
+        // TextField 会先消费方向键，视图层的 onKeyPress 收不到这些按键。
     }
 
     /// 顶部可拖拽区域：控件之间的空白与标题都可拖动面板，控件自身保持交互。
