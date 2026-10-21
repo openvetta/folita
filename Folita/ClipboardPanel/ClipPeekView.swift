@@ -236,6 +236,7 @@ struct ClipPeekCard: View {
         case .link:
             if let target = details.linkTarget, let url = details.link {
                 LinkBrandCard(target: target, url: url)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             } else {
                 linkPreview(details, style: style)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

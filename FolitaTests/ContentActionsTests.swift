@@ -317,6 +317,24 @@ struct ContentActionsTests {
         #expect(ClipPeekCard.hasActionButtons(details("#1E90FF")))
     }
 
+    /// 站点卡片固定高度，不撑满预览区。
+    @Test(arguments: appearances)
+    func brandCardIsShorterThanThePreview(locale: String, scheme: ColorScheme) throws {
+        let size = ClipboardPanelMetrics.peekDetailFrame(in: ClipboardPanelMetrics.containerSize(isPeeking: true)).size
+        let host = NSHostingView(
+            rootView: LinkBrandCard(
+                target: LinkTarget(brand: .github, kind: .repository, title: "openvetta/folita"),
+                url: URL(string: "https://github.com/openvetta/folita")!
+            )
+            .frame(width: size.width)
+            .environment(\.locale, Locale(identifier: locale))
+            .environment(\.colorScheme, scheme)
+        )
+        host.layoutSubtreeIfNeeded()
+        #expect(host.fittingSize.height == LinkBrandCard.height)
+        #expect(LinkBrandCard.height < size.height / 2)
+    }
+
     @Test func repositoryTitleSplitsOwnerAndName() {
         let target = LinkTarget(brand: .github, kind: .repository, title: "openvetta/folita")
         let title = LinkBrandCard.title(of: target)

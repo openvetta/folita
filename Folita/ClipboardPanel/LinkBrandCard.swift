@@ -6,6 +6,9 @@ struct LinkBrandCard: View {
     let target: LinkTarget
     let url: URL
 
+    /// 卡片固定高度：内容只有标题、网址与站点标识，不需要占满整个预览区。
+    static let height: CGFloat = 184
+
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
@@ -16,11 +19,12 @@ struct LinkBrandCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text(Self.title(of: target))
                     .lineLimit(2)
+                    .minimumScaleFactor(0.8)
                     .truncationMode(.middle)
                 Text(verbatim: url.absoluteString)
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
-                    .lineLimit(3)
+                    .lineLimit(1)
                     .truncationMode(.middle)
             }
             .padding(.top, ClipPeekCard.actionButtonsInset)
@@ -41,12 +45,14 @@ struct LinkBrandCard: View {
                     .accessibilityHidden(true)
             }
         }
-        .padding([.horizontal, .top], 20)
-        .padding(.bottom, 16)
+        .padding(.horizontal, 20)
+        .padding(.bottom, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             Rectangle().fill(target.brand.accent).frame(height: 8)
         }
+        // 高度含底部色条。
+        .frame(height: Self.height)
         .background(style.linkCardBackground, in: shape)
         .clipShape(shape)
         .overlay { shape.strokeBorder(style.iconRim, lineWidth: 1) }
@@ -55,10 +61,10 @@ struct LinkBrandCard: View {
 
     /// 仓库显示成「所有者/」细体加「仓库名」粗体，其余整段粗体。
     static func title(of target: LinkTarget) -> AttributedString {
-        let bold = Font.system(size: 26, weight: .bold)
+        let bold = Font.system(size: 22, weight: .bold)
         if target.kind == .repository, let slash = target.title.firstIndex(of: "/") {
             var owner = AttributedString(String(target.title[...slash]))
-            owner.font = .system(size: 26, weight: .light)
+            owner.font = .system(size: 22, weight: .light)
             var name = AttributedString(String(target.title[target.title.index(after: slash)...]))
             name.font = bold
             return owner + name
