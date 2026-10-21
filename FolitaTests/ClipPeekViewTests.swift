@@ -147,6 +147,23 @@ struct ClipPeekViewTests {
         #expect(await ClipPreviewImages.thumbnail(for: single, maxPixelSize: 64) == nil)
     }
 
+    /// 微信式复制：文件地址指向不可读的位置，但同时带有图片数据，缩略图应取自图片数据而不是退回文件图标。
+    @Test func imageFileClipFallsBackToStoredImageData() async throws {
+        let model = makePanelModel()
+        let missing = URL(filePath: "/nonexistent-\(UUID().uuidString)/wechat.png")
+        model.store.record(CapturedClip(
+            contents: [
+                ClipContent(type: .fileURL, data: missing.dataRepresentation),
+                ClipContent(type: .png, data: Self.png(width: 48, height: 24)),
+            ],
+            sourceBundleID: nil
+        ))
+        let item = try #require(model.visibleItems.first)
+        #expect(item.category == .file)
+        let thumbnail = await ClipPreviewImages.thumbnail(for: item, maxPixelSize: 48)
+        #expect(thumbnail?.width == 48)
+    }
+
     @Test(arguments: appearances)
     func imageFileDetailLaysOut(locale: String, scheme: ColorScheme) throws {
         let model = makePanelModel()

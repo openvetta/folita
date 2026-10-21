@@ -145,7 +145,7 @@ struct ClipPeekCard: View {
             }
         case .file:
             // 图片文件显示图片本身，其余文件显示图标与路径。
-            if details.imageFileURL != nil, image != nil {
+            if image != nil {
                 imagePreview(style: style, shape: shape)
             } else {
                 filePreview(details)

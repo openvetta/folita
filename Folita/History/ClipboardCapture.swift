@@ -74,8 +74,24 @@ enum ClipboardCapture {
         }
 
         guard !contents.isEmpty, hasMeaningfulContent(contents) else { return nil }
-        guard contents.reduce(0, { $0 + $1.data.count }) <= maxClipBytes else { return nil }
-        return CapturedClip(contents: contents, sourceBundleID: sourceBundleID)
+        guard let fitted = fittingLimit(contents) else { return nil }
+        return CapturedClip(contents: fitted, sourceBundleID: sourceBundleID)
+    }
+
+    /// 图片在剪贴板里常以 PNG 与未压缩的 TIFF 并存（微信、截图工具），后者会让总量轻易超限。
+    /// 超限时先只保留一种图片格式；仍超限但带有文件地址时，丢弃图片数据、保留文件引用。
+    private static func fittingLimit(_ contents: [ClipContent]) -> [ClipContent]? {
+        func total(_ list: [ClipContent]) -> Int { list.reduce(0) { $0 + $1.data.count } }
+        guard total(contents) > maxClipBytes else { return contents }
+
+        let images = contents.filter { imageTypes.contains($0.type) }
+        guard let keep = images.min(by: { $0.data.count < $1.data.count }) else { return nil }
+        let single = contents.filter { !imageTypes.contains($0.type) || $0 == keep }
+        if total(single) <= maxClipBytes { return single }
+
+        let withoutImages = contents.filter { !imageTypes.contains($0.type) }
+        guard withoutImages.contains(where: { $0.type == .fileURL }), total(withoutImages) <= maxClipBytes else { return nil }
+        return withoutImages
     }
 
     /// 只有空白纯文本的复制没有意义（例如部分应用清空剪贴板的方式）。

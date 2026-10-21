@@ -70,6 +70,22 @@ struct ClipboardCaptureTests {
         let fits = ClipContent(type: .png, data: Data(count: ClipboardCapture.maxClipBytes))
         #expect(ClipboardCapture.makeClip(items: [[fits]], sourceBundleID: nil) != nil)
     }
+
+    /// 微信复制图片时 PNG 与未压缩 TIFF 并存，合计超限但单一格式并不大：只保留较小的一种而不是整条丢弃。
+    @Test func keepsSmallestImageFormatWhenRedundantFormatsExceedLimit() throws {
+        let png = ClipContent(type: .png, data: Data(count: 1_000))
+        let tiff = ClipContent(type: .tiff, data: Data(count: ClipboardCapture.maxClipBytes))
+        let clip = try #require(ClipboardCapture.makeClip(items: [[tiff, png]], sourceBundleID: nil))
+        #expect(clip.contents == [png])
+    }
+
+    /// 图片文件的图片数据仍然超限时保留文件地址，历史里至少能看到并打开这个文件。
+    @Test func keepsFileReferenceWhenImageDataIsTooLarge() throws {
+        let fileURL = ClipContent(type: .fileURL, data: URL(filePath: "/tmp/a.png").dataRepresentation)
+        let big = ClipContent(type: .png, data: Data(count: ClipboardCapture.maxClipBytes + 1))
+        let clip = try #require(ClipboardCapture.makeClip(items: [[fileURL, big]], sourceBundleID: nil))
+        #expect(clip.contents == [fileURL])
+    }
 }
 
 struct ClipClassificationTests {

@@ -23,6 +23,12 @@ enum ClipPreviewImages {
             return await thumbnail(from: data, maxPixelSize: maxPixelSize)
         case .file:
             guard let url = ClipDetails.imageFileURL(in: contents) else { return nil }
+            // 微信等应用复制图片时同时给出文件地址和图片数据；文件可能位于其他应用的容器内无法读取，
+            // 也可能很快被清理，所以优先用已保存的图片数据。
+            if let data = contents.first(where: { ClipboardCapture.imageTypes.contains($0.type) })?.data,
+               let image = await thumbnail(from: data, maxPixelSize: maxPixelSize) {
+                return image
+            }
             return await thumbnail(ofFileAt: url, maxPixelSize: maxPixelSize)
         default:
             return nil
