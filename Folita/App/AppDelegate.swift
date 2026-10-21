@@ -43,6 +43,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             clipboardPanel?.hide()
             pasteService.paste(item, mode: mode)
         }
+        // ⌥↩：面板不收起，⌘V 直接投递给原来的应用，方便连续粘贴多条。
+        clipboardPanel.model.onPasteKeepingPanelOpen = { item, mode in
+            pasteService.paste(item, mode: mode, keepingPanelOpen: true)
+        }
         clipboardPanel.model.onRevealInFinder = { [weak clipboardPanel] urls in
             clipboardPanel?.hide()
             NSWorkspace.shared.activateFileViewerSelecting(urls)

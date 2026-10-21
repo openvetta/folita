@@ -16,9 +16,14 @@ enum ClipboardPanelCommand: Equatable {
     case moveUp
     case moveDown
     case paste(PasteMode)
+    /// 粘贴到之前的应用但保持面板打开（⌥↩），方便连续粘贴多条。
+    case pasteKeepingPanelOpen
     /// 直接回填当前列表中第 n 条（从 0 开始）。
     case pasteAt(Int)
     case deleteSelected
+    case deleteAll
+    /// 打开或收起选中项的「更多操作」菜单（⌘K，右键也能打开）。
+    case toggleActionsMenu
     /// 打开详情预览（peek）：面板加宽，右侧显示选中项详情。
     case peek
     /// 收起详情预览，面板恢复原宽度。
@@ -43,7 +48,11 @@ enum ClipboardPanelCommand: Equatable {
         case (Key.leftArrow, []): return .endPeek
         case (Key.return, []): return .paste(.original)
         case (Key.return, [.shift]): return .paste(.plainText)
+        case (Key.return, [.option]): return .pasteKeepingPanelOpen
         case (Key.delete, [.command]): return .deleteSelected
+        case ("x", [.control]): return .deleteSelected
+        case ("x", [.control, .shift]): return .deleteAll
+        case ("k", [.command]): return .toggleActionsMenu
         case (Key.escape, []): return .dismiss
         case (_, [.command]):
             guard characters.count == 1, let digit = Int(characters), (1...9).contains(digit) else { return nil }
@@ -129,6 +138,20 @@ final class ClipboardPanelModel {
     /// 按 ID 记录选中项，面板打开期间有新复制进来时选中位置不跳动。
     private(set) var selectedID: UUID?
 
+    /// 「更多操作」菜单锚定在哪一条上；nil 表示菜单未打开。锚在条目而不是行位置上，
+    /// 列表重排或滚动时卡片跟着那一行走。
+    private(set) var actionsMenuItemID: UUID?
+
+    /// 菜单里高亮第几项，↑↓ 改它、↩ 执行它，鼠标悬停也同步。
+    private(set) var actionsMenuIndex = 0
+
+    /// 各历史行在容器坐标系（原点在容器左上角）中的位置，由列表在布局后写回。
+    /// 菜单定位与右键命中都靠它。
+    private(set) var rowFrames: [UUID: CGRect] = [:]
+
+    /// 呼出面板时那个前台应用的名字，用作「粘贴到 XXX」的菜单标题。
+    private(set) var targetAppName: String?
+
     /// 是否处于详情预览。预览是一种浏览模式而非弹窗：上下键、搜索、筛选、删除都只换右侧
     /// 显示的条目，只有 ← 会退出；每次重新呼出面板时复位。
     private(set) var isPeeking = false {
@@ -148,6 +171,12 @@ final class ClipboardPanelModel {
 
     @ObservationIgnored let store: ClipboardHistoryStore
     @ObservationIgnored var onPaste: (HistoryItem, PasteMode) -> Void = { _, _ in }
+    /// ⌥↩：粘贴到之前的应用并保持面板打开；由宿主装配（不收起面板，直接把 ⌘V 投给目标应用）。
+    @ObservationIgnored var onPasteKeepingPanelOpen: (HistoryItem, PasteMode) -> Void = { _, _ in }
+    /// 呼出面板时的前台应用名；测试里替换为固定值。
+    @ObservationIgnored var targetAppNameProvider: () -> String? = {
+        NSWorkspace.shared.frontmostApplication?.localizedName
+    }
     /// 在访达中显示文件；由宿主装配（收起面板并调用系统接口）。
     @ObservationIgnored var onRevealInFinder: ([URL]) -> Void = { _ in }
     @ObservationIgnored var onDismiss: () -> Void = {}
@@ -177,6 +206,8 @@ final class ClipboardPanelModel {
         query = ""
         selectedID = nil
         isPeeking = false
+        actionsMenuItemID = nil
+        targetAppName = targetAppNameProvider()
         refreshNotice()
         presentationCount += 1
         searchFocusRequest += 1
@@ -213,7 +244,91 @@ final class ClipboardPanelModel {
         selectedID = item.id
     }
 
+    // MARK: 更多操作菜单
+
+    var isShowingActionsMenu: Bool { actionsMenuItemID != nil }
+
+    /// 菜单卡片在容器坐标中的位置；还没量到那一行时返回 nil，菜单等布局完成后再出现。
+    var actionsMenuFrame: CGRect? {
+        guard let actionsMenuItemID, let row = rowFrames[actionsMenuItemID] else { return nil }
+        return ClipboardPanelMetrics.actionsMenuFrame(
+            anchoredTo: row,
+            entryCount: ClipboardActionsMenuEntry.allCases.count,
+            in: CGRect(origin: .zero, size: ClipboardPanelMetrics.containerSize(isPeeking: isPeeking))
+        )
+    }
+
+    /// 菜单里当前高亮的条目，↑↓ 移动，↩ 执行。
+    var highlightedActionsMenuEntry: ClipboardActionsMenuEntry? {
+        ClipboardActionsMenuEntry.entry(at: actionsMenuIndex)
+    }
+
+    /// 右键或 ⌘K 打开：菜单锚在选中条目上，高亮回到第一项。
+    func showActions(for item: HistoryItem) {
+        selectedID = item.id
+        actionsMenuItemID = item.id
+        actionsMenuIndex = 0
+    }
+
+    func hideActions() {
+        actionsMenuItemID = nil
+        actionsMenuIndex = 0
+    }
+
+    /// ↑↓：在菜单项之间移动，到头就停住，不回绕。
+    func moveActionsMenuSelection(by offset: Int) {
+        guard isShowingActionsMenu else { return }
+        let count = ClipboardActionsMenuEntry.allCases.count
+        actionsMenuIndex = min(max(actionsMenuIndex + offset, 0), count - 1)
+    }
+
+    /// 鼠标悬停到某一项上：高亮跟过去，↩ 执行的就是它。
+    func highlightActionsMenuEntry(_ entry: ClipboardActionsMenuEntry) {
+        guard isShowingActionsMenu,
+              let index = ClipboardActionsMenuEntry.allCases.firstIndex(of: entry)
+        else { return }
+        actionsMenuIndex = index
+    }
+
+    /// ↩ 执行当前高亮项；执行的命令会先收起菜单（粘贴动作本身可能再收起面板）。
+    func confirmActionsMenuSelection() {
+        guard let entry = highlightedActionsMenuEntry else { return }
+        perform(entry.command)
+    }
+
+    func setRowFrame(_ frame: CGRect, for id: UUID) {
+        guard rowFrames[id] != frame else { return }
+        rowFrames[id] = frame
+    }
+
+    /// 容器坐标中命中哪一条历史；点在行间空隙或列表外时返回 nil。
+    func item(at point: CGPoint) -> HistoryItem? {
+        visibleItems.first { rowFrames[$0.id]?.contains(point) ?? false }
+    }
+
     func perform(_ command: ClipboardPanelCommand) {
+        switch command {
+        case .toggleActionsMenu:
+            toggleActionsMenu()
+            return
+        case .dismiss where isShowingActionsMenu:
+            // 菜单打开时 Esc 先收起菜单，再按一次才收起面板。
+            hideActions()
+            return
+        case .moveUp where isShowingActionsMenu:
+            moveActionsMenuSelection(by: -1)
+            return
+        case .moveDown where isShowingActionsMenu:
+            moveActionsMenuSelection(by: 1)
+            return
+        case .paste(.original) where isShowingActionsMenu:
+            confirmActionsMenuSelection()
+            return
+        default:
+            // 其他命令不经过菜单：先收起菜单再执行。
+            if isShowingActionsMenu { hideActions() }
+        }
+
         let items = visibleItems
         switch command {
         case .moveUp, .moveDown:
@@ -226,6 +341,10 @@ final class ClipboardPanelModel {
             if let item = selectedItem {
                 onPaste(item, mode)
             }
+        case .pasteKeepingPanelOpen:
+            if let item = selectedItem {
+                onPasteKeepingPanelOpen(item, .original)
+            }
         case .pasteAt(let index):
             if items.indices.contains(index) {
                 onPaste(items[index], .original)
@@ -236,6 +355,9 @@ final class ClipboardPanelModel {
             let neighbor = items.indices.contains(index + 1) ? items[index + 1] : (index > 0 ? items[index - 1] : nil)
             store.delete(item)
             selectedID = neighbor?.id
+        case .deleteAll:
+            store.clearAll()
+            selectedID = nil
         case .peek:
             // 列表为空时没有可看的内容，不进入预览。
             if selectedItem != nil {
@@ -245,6 +367,19 @@ final class ClipboardPanelModel {
             isPeeking = false
         case .dismiss:
             onDismiss()
+        case .toggleActionsMenu:
+            // 菜单命令已在上面处理完，不会走到这里。
+            break
+        }
+    }
+
+    private func toggleActionsMenu() {
+        guard !isShowingActionsMenu else {
+            hideActions()
+            return
+        }
+        if let item = selectedItem {
+            showActions(for: item)
         }
     }
 

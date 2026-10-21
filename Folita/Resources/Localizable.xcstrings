@@ -341,6 +341,26 @@
         }
       }
     },
+    "Delete All Entries" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除全部"
+          }
+        }
+      }
+    },
+    "Delete Entry" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除此条"
+          }
+        }
+      }
+    },
     "Dimensions" : {
       "localizations" : {
         "zh-Hans" : {
@@ -651,6 +671,16 @@
         }
       }
     },
+    "More Actions" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更多操作"
+          }
+        }
+      }
+    },
     "MIT License" : {
       "localizations" : {
         "zh-Hans" : {
@@ -792,6 +822,16 @@
         }
       }
     },
+    "Paste and Keep Window Open" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "粘贴并保持窗口打开"
+          }
+        }
+      }
+    },
     "Paste as Plain Text" : {
       "localizations" : {
         "zh-Hans" : {
@@ -818,6 +858,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "粘贴前 9 条中的一条"
+          }
+        }
+      }
+    },
+    "Paste to %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "粘贴到 %@"
           }
         }
       }

@@ -16,6 +16,10 @@ struct SiriGlassStyle: Equatable {
     var iconBackground: Color
     var iconForeground: Color
     var iconRim: Color
+    /// 「更多操作」卡片：描边、分组分割线与高亮项底色。卡片本身用原生液态玻璃，不再叠一层不透明衬底。
+    var menuRim: Color
+    var menuDivider: Color
+    var menuHighlight: Color
     /// 详情预览：两栏之间的分割线、预览区与信息行的衬底、大图投影。
     var peekDivider: Color
     var peekWell: Color
@@ -50,6 +54,9 @@ struct SiriGlassStyle: Equatable {
                 iconBackground: Color(white: 0.84),
                 iconForeground: Color(white: 0.30),
                 iconRim: .black.opacity(0.08),
+                menuRim: .black.opacity(0.10),
+                menuDivider: .black.opacity(0.08),
+                menuHighlight: .black.opacity(0.08),
                 peekDivider: .black.opacity(0.10),
                 peekWell: .black.opacity(0.05),
                 peekStripe: .black.opacity(0.045),
@@ -71,6 +78,9 @@ struct SiriGlassStyle: Equatable {
                 iconBackground: Color(white: 0.36),
                 iconForeground: Color(white: 0.97),
                 iconRim: .white.opacity(0.12),
+                menuRim: .white.opacity(0.12),
+                menuDivider: .white.opacity(0.10),
+                menuHighlight: .white.opacity(0.16),
                 peekDivider: .white.opacity(0.12),
                 peekWell: .white.opacity(0.06),
                 peekStripe: .white.opacity(0.06),

@@ -53,10 +53,15 @@ struct PanelKeyHint: Identifiable {
         PanelKeyHint(keys: "↑ ↓", action: "Select previous or next item"),
         PanelKeyHint(keys: "→", action: "Preview the selected item"),
         PanelKeyHint(keys: "←", action: "Close the preview"),
-        PanelKeyHint(keys: "↩", action: "Paste"),
-        PanelKeyHint(keys: "⇧↩", action: "Paste as Plain Text"),
+        PanelKeyHint(keys: ClipboardActionsMenuEntry.pasteToTarget.shortcut, action: "Paste"),
+        PanelKeyHint(keys: ClipboardActionsMenuEntry.pasteAsPlainText.shortcut, action: "Paste as Plain Text"),
+        PanelKeyHint(keys: ClipboardActionsMenuEntry.pasteKeepingPanelOpen.shortcut, action: "Paste and Keep Window Open"),
         PanelKeyHint(keys: "⌘1 – ⌘9", action: "Paste one of the first nine items"),
+        // 菜单提示与菜单内的键位同源，改键位时设置页自动跟着变。
+        PanelKeyHint(keys: ClipboardActionsMenuEntry.menuHintKeyCaps.joined(), action: "More Actions"),
         PanelKeyHint(keys: "⌘⌫", action: "Delete"),
+        PanelKeyHint(keys: ClipboardActionsMenuEntry.deleteEntry.shortcut, action: "Delete Entry"),
+        PanelKeyHint(keys: ClipboardActionsMenuEntry.deleteAll.shortcut, action: "Delete All Entries"),
         PanelKeyHint(keys: "Esc", action: "Close the panel"),
     ]
 }

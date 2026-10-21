@@ -28,6 +28,14 @@ enum ClipboardPanelMetrics {
     /// 加宽 / 收窄动画的时长；窗口在收窄动画结束后再缩回，避免裁掉还没收完的容器。
     static let peekAnimationDuration: Double = 0.36
     static let peekCollapseDelay: Duration = .milliseconds(420)
+    /// 「更多操作」菜单：卡片宽度、每行高度、内边距、分组分割线、与行的间距、距容器边缘的最小距离。
+    static let actionsMenuWidth: CGFloat = 264
+    static let actionsMenuEntryHeight: CGFloat = 30
+    static let actionsMenuPadding: CGFloat = 6
+    /// 分割线连同上下留白的高度。
+    static let actionsMenuSeparatorHeight: CGFloat = 9
+    static let actionsMenuGap: CGFloat = 6
+    static let actionsMenuInset: CGFloat = 8
     /// 窗口四周的透明边距，容器在窗口内缩进这一圈，预览伸缩时也用它吸收取整误差。
     static let shadowInset: CGFloat = 28
     /// 容器顶边距离屏幕可见区域顶部（菜单栏下沿）的距离。
@@ -35,7 +43,39 @@ enum ClipboardPanelMetrics {
     /// 光标位置呼出时，容器顶边高出光标的距离，让光标落在容器内部靠近左上角处。
     static let cursorOffset: CGFloat = 12
 
+    /// 面板容器坐标系（原点在容器左上角）的名字：历史行按它上报位置，菜单定位与右键命中都用它。
+    static let contentSpace = "ClipboardPanelContent"
+
     static var windowSize: CGSize { windowSize(isPeeking: false) }
+
+    /// 菜单卡片尺寸：条目按固定高度叠放，与 `ClipboardActionsMenuView` 的行高一致。
+    /// 菜单按“粘贴一组、删除一组”分成两段，中间有一道分割线。
+    static func actionsMenuSize(entryCount: Int) -> CGSize {
+        CGSize(
+            width: actionsMenuWidth,
+            height: actionsMenuPadding * 2 + CGFloat(entryCount) * actionsMenuEntryHeight + actionsMenuSeparatorHeight
+        )
+    }
+
+    /// 菜单在容器内的位置：优先放在那一行下方并与行右对齐；下方放不下就翻到行上方，
+    /// 左右超出容器时向内夹，保证整张卡片都在面板内。
+    static func actionsMenuFrame(anchoredTo row: CGRect, entryCount: Int, in container: CGRect) -> CGRect {
+        let size = actionsMenuSize(entryCount: entryCount)
+        let minX = container.minX + actionsMenuInset
+        let maxX = container.maxX - actionsMenuInset - size.width
+        let x = min(max(row.maxX - size.width, minX), max(minX, maxX))
+
+        let below = row.maxY + actionsMenuGap
+        let above = row.minY - actionsMenuGap - size.height
+        let y = below + size.height <= container.maxY - actionsMenuInset ? below : above
+
+        return CGRect(origin: CGPoint(x: x.rounded(), y: y.rounded()), size: size)
+    }
+
+    /// 窗口坐标（原点在左下，含四周透明边距）→ 容器坐标（原点在左上）。
+    static func containerPoint(fromWindow point: CGPoint, windowHeight: CGFloat) -> CGPoint {
+        CGPoint(x: point.x - shadowInset, y: windowHeight - point.y - shadowInset)
+    }
 
     static func containerSize(isPeeking: Bool) -> CGSize {
         guard isPeeking else { return containerSize }

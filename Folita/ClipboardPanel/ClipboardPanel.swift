@@ -95,7 +95,7 @@ final class ClipboardPanelController {
         closeAttachedWindows()
         panel?.orderOut(nil)
         isVisible = false
-        resetPeekWhileHidden()
+        resetTransientStateWhileHidden()
         removeEventMonitors()
     }
 
@@ -105,13 +105,7 @@ final class ClipboardPanelController {
         removeEventMonitors()
 
         let local = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
-            MainActor.assumeIsolated {
-                guard let self, let window = self.panel else { return }
-                // 事件已经落在面板窗口上，交给视图自己处理。
-                guard window.isVisible, event.window !== window else { return }
-                self.dismissIfClickIsOutside(NSEvent.mouseLocation)
-            }
-            return event
+            MainActor.assumeIsolated { self?.handleMouseDown(event) ?? false } ? nil : event
         }
 
         let global = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
@@ -130,6 +124,41 @@ final class ClipboardPanelController {
         eventMonitors = [local, global, keys].compactMap { $0 }
     }
 
+    /// 返回是否已消费该鼠标事件。点面板外照旧收起面板；面板内的按下换算到容器坐标后，
+    /// 交给 `handleMouseDown(at:isRightClick:)`。
+    func handleMouseDown(_ event: NSEvent) -> Bool {
+        guard let panel, panel.isVisible else { return false }
+        guard event.window === panel else {
+            dismissIfClickIsOutside(NSEvent.mouseLocation)
+            return false
+        }
+
+        let height = panel.contentView?.bounds.height ?? panel.frame.height
+        let point = ClipboardPanelMetrics.containerPoint(fromWindow: event.locationInWindow, windowHeight: height)
+        return handleMouseDown(at: point, isRightClick: event.type == .rightMouseDown)
+    }
+
+    /// 面板内的一次鼠标按下（容器坐标）：右键打开「更多操作」菜单；菜单打开时点卡片以外
+    /// 只收起菜单，不把这一下当成点条目（否则会误粘贴并收起面板）。
+    @discardableResult
+    func handleMouseDown(at point: CGPoint, isRightClick: Bool) -> Bool {
+        guard let panel, panel.isVisible else { return false }
+        if isRightClick {
+            guard let item = model.item(at: point) else {
+                // 没点在条目上（如搜索框）：收起菜单后把右键还给系统，文本编辑仍能用系统菜单。
+                model.hideActions()
+                return false
+            }
+            model.showActions(for: item)
+            return true
+        }
+        guard model.isShowingActionsMenu else { return false }
+        // 点卡片交给 SwiftUI 的按钮。
+        guard model.actionsMenuFrame?.contains(point) != true else { return false }
+        model.hideActions()
+        return true
+    }
+
     /// 返回是否已消费该按键；面板收起、按键不属于面板或事件来自其他窗口（如筛选气泡）时返回 false。
     @discardableResult
     func handleKeyDown(_ event: NSEvent) -> Bool {
@@ -139,6 +168,12 @@ final class ClipboardPanelController {
             // 输入法组字期间方向键属于候选选择，交给输入法处理。
             guard !ClipboardPanelCommand.isComposing(in: window.firstResponder) else { return false }
         }
+        // 「更多操作」菜单打开时是模态的：只响应 ↑↓、↩、⎋ / ⌘K，面板快捷键与打字搜索
+        // 一律屏蔽，避免误删或把按键漏给搜索框。
+        if model.isShowingActionsMenu {
+            return handleKeyDownInActionsMenu(event)
+        }
+
         guard let command = ClipboardPanelCommand.command(for: event) else {
             // 焦点不在文本编辑器（如点过列表）时，直接打字也应进入搜索。
             guard !(panel.firstResponder is NSTextView), let text = ClipboardPanelCommand.typedText(for: event) else {
@@ -150,6 +185,23 @@ final class ClipboardPanelController {
         guard command.isIntercepted(isPeeking: model.isPeeking, responder: event.window?.firstResponder ?? panel.firstResponder)
         else { return false }
         model.perform(command)
+        return true
+    }
+
+    /// 菜单打开期间的按键：切换高亮、执行、关闭；其余按键被消费但不做任何事。
+    private func handleKeyDownInActionsMenu(_ event: NSEvent) -> Bool {
+        switch ClipboardPanelCommand.command(for: event) {
+        case .moveUp:
+            model.moveActionsMenuSelection(by: -1)
+        case .moveDown:
+            model.moveActionsMenuSelection(by: 1)
+        case .paste(.original):
+            model.confirmActionsMenuSelection()
+        case .dismiss, .toggleActionsMenu:
+            model.hideActions()
+        default:
+            break
+        }
         return true
     }
 
@@ -170,9 +222,10 @@ final class ClipboardPanelController {
         }
     }
 
-    /// 收起时就复位预览并还原窗口尺寸：留到下次呼出再复位，用户会看到从加宽到默认的变形动画。
-    private func resetPeekWhileHidden() {
+    /// 收起时就复位预览与菜单并还原窗口尺寸：留到下次呼出再复位，用户会看到从加宽到默认的变形动画。
+    private func resetTransientStateWhileHidden() {
         model.perform(.endPeek)
+        model.hideActions()
         resizePanel(isPeeking: false)
     }
 

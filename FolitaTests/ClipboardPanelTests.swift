@@ -302,6 +302,21 @@ struct ClipboardPanelTests {
         #expect(view.fittingSize == ClipboardPanelMetrics.windowSize(isPeeking: true))
     }
 
+    /// 「更多操作」卡片画在面板内，不改变面板尺寸。
+    @Test(arguments: [ColorScheme.dark, .light])
+    func panelViewLaysOutWithTheActionsMenu(colorScheme: ColorScheme) throws {
+        let model = makePanelModel(copying: ["a", "https://folita.app"])
+        let first = try #require(model.selectedItem)
+        model.setRowFrame(CGRect(x: 24, y: 88, width: 392, height: 52), for: first.id)
+        model.perform(.toggleActionsMenu)
+        #expect(model.actionsMenuFrame != nil)
+
+        let view = NSHostingView(rootView: ClipboardPanelView(model: model).environment(\.colorScheme, colorScheme))
+        view.layoutSubtreeIfNeeded()
+
+        #expect(view.fittingSize == ClipboardPanelMetrics.windowSize)
+    }
+
     /// 面板收起后不再消费按键，避免影响其他窗口。
     @Test func keysAreIgnoredWhilePanelIsHidden() throws {
         let controller = ClipboardPanelController(model: makePanelModel(copying: ["a", "b"]), placementSettings: makePlacementSettings())

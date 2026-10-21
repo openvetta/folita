@@ -19,11 +19,16 @@ struct ClipboardHistoryList: View {
                         // 悬停只高亮不选中：跟随鼠标改变选中项会让列表在指针下来回跳动。
                         ClipboardHistoryRow(item: item, isSelected: item.id == selectedID, isCompact: model.isPeeking)
                             .id(item.id)
+                            // 行的位置供菜单定位与右键命中使用；滚动或列表变化时重新量。
+                            .onGeometryChange(for: CGRect.self) { proxy in
+                                proxy.frame(in: .named(ClipboardPanelMetrics.contentSpace))
+                            } action: { frame in
+                                model.setRowFrame(frame, for: item.id)
+                            }
                             .onTapGesture {
                                 model.select(item)
                                 model.perform(.paste(.original))
                             }
-                            .contextMenu { contextMenu(for: item) }
                     }
                 }
             }
@@ -75,24 +80,6 @@ struct ClipboardHistoryList: View {
             )
         }
     }
-
-    @ViewBuilder
-    private func contextMenu(for item: HistoryItem) -> some View {
-        Button("Paste") {
-            model.select(item)
-            model.perform(.paste(.original))
-        }
-        Button("Paste as Plain Text") {
-            model.select(item)
-            model.perform(.paste(.plainText))
-        }
-        .disabled(!item.category.isTextual)
-        Divider()
-        Button("Delete", role: .destructive) {
-            model.select(item)
-            model.perform(.deleteSelected)
-        }
-    }
 }
 
 /// 一条历史：左侧是缩略图或类型图标，右侧两行——标题与元信息。所有行同高，选中只换底色，
@@ -119,8 +106,14 @@ struct ClipboardHistoryRow: View {
                 metadata(details)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            if Self.showsPeekHint(isSelected: isSelected, isCompact: isCompact) {
-                KeyCap(systemImage: "arrow.right")
+            if Self.showsShortcutHints(isSelected: isSelected, isCompact: isCompact) {
+                HStack(spacing: 4) {
+                    KeyCap(systemImage: "arrow.right")
+                    Spacer(minLength: 4)
+                    ForEach(ClipboardActionsMenuEntry.menuHintKeyCaps, id: \.self) { key in
+                        KeyCap(key)
+                    }
+                }
             }
         }
         .padding(.horizontal, 10)
@@ -135,8 +128,8 @@ struct ClipboardHistoryRow: View {
         }
     }
 
-    /// 选中行右侧用 → 键帽提示可以展开详情；预览已打开（列表收窄）时不再提示。
-    static func showsPeekHint(isSelected: Bool, isCompact: Bool) -> Bool {
+    /// 选中行右侧提示 → 可看详情、⌘K 可打开更多操作；预览已打开（列表收窄）时不再提示。
+    static func showsShortcutHints(isSelected: Bool, isCompact: Bool) -> Bool {
         isSelected && !isCompact
     }
 

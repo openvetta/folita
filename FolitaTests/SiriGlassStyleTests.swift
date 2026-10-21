@@ -53,4 +53,16 @@ struct SiriGlassStyleTests {
         #expect(style.rim.allSatisfy { NSColor($0).alphaComponent >= 0.08 })
         #expect(NSColor(style.shadow).alphaComponent >= 0.2)
     }
+
+    /// 「更多操作」卡片叠在半透明面板上：高亮底色要看得见，又不能浓到盖住玻璃质感。
+    @Test(arguments: [ColorScheme.dark, .light])
+    func menuHighlightIsVisibleButSoft(colorScheme: ColorScheme) {
+        let style = SiriGlassStyle.resolve(for: colorScheme)
+        let alpha = NSColor(style.menuHighlight).alphaComponent
+
+        #expect(alpha >= 0.06)
+        #expect(alpha <= 0.2)
+        #expect(NSColor(style.menuDivider).alphaComponent > 0)
+        #expect(NSColor(style.menuRim).alphaComponent > 0)
+    }
 }

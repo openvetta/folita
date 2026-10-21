@@ -9,6 +9,8 @@ struct ClipboardPanelModelTests {
     private let store: ClipboardHistoryStore
     private let model: ClipboardPanelModel
     private let pasted: Box
+    /// ⌥↩ 走的是另一条不收起面板的路径，单独记录。
+    private let kept: Box
 
     final class Box {
         var calls: [(String, PasteMode)] = []
@@ -25,9 +27,13 @@ struct ClipboardPanelModelTests {
             return tick
         })
         model = ClipboardPanelModel(store: store)
+        let kept = Box()
+        self.kept = kept
         let pasted = Box()
         self.pasted = pasted
         model.onPaste = { item, mode in pasted.calls.append((item.title, mode)) }
+        model.onPasteKeepingPanelOpen = { item, mode in kept.calls.append((item.title, mode)) }
+        model.targetAppNameProvider = { "Safari" }
     }
 
     /// 依次复制，最后复制的排在最前。
@@ -213,6 +219,10 @@ struct ClipboardPanelModelTests {
         #expect(C.command(for: .downArrow, modifiers: []) == .moveDown)
         #expect(C.command(for: .return, modifiers: []) == .paste(.original))
         #expect(C.command(for: .return, modifiers: .shift) == .paste(.plainText))
+        #expect(C.command(for: .return, modifiers: .option) == .pasteKeepingPanelOpen)
+        #expect(C.command(for: "x", modifiers: .control) == .deleteSelected)
+        #expect(C.command(for: "x", modifiers: [.control, .shift]) == .deleteAll)
+        #expect(C.command(for: "k", modifiers: .command) == .toggleActionsMenu)
         #expect(C.command(for: .delete, modifiers: .command) == .deleteSelected)
         #expect(C.command(for: "1", modifiers: .command) == .pasteAt(0))
         #expect(C.command(for: "9", modifiers: .command) == .pasteAt(8))
@@ -226,5 +236,131 @@ struct ClipboardPanelModelTests {
         #expect(C.command(for: .leftArrow, modifiers: .shift) == nil)
         // 大写锁定等非组合修饰键不影响判断。
         #expect(C.command(for: .return, modifiers: [.capsLock]) == .paste(.original))
+    }
+
+    // MARK: 更多操作
+
+    /// ⌥↩ 粘贴但保持面板打开：走的是不收起面板的那条回调，不会触发普通粘贴。
+    @Test func optionReturnPastesWithoutClosingThePanel() {
+        copy("b", "a")
+        model.perform(.moveDown)
+        model.perform(.pasteKeepingPanelOpen)
+
+        #expect(kept.calls.map(\.0) == ["b"])
+        #expect(pasted.calls.isEmpty)
+    }
+
+    @Test func deleteAllClearsHistoryAndSelection() {
+        copy("c", "b", "a")
+        model.perform(.deleteAll)
+
+        #expect(store.items.isEmpty)
+        #expect(model.visibleItems.isEmpty)
+        #expect(model.selectedItem == nil)
+    }
+
+    /// ⌘K 打开、再按收起；菜单锚在选中条目上，用它的行位置算出卡片位置。
+    @Test func commandKAnchorsTheMenuToTheSelectedItem() throws {
+        copy("c", "b", "a")
+        let item = try #require(model.selectedItem)
+        let row = CGRect(x: 24, y: 100, width: 392, height: 52)
+        model.setRowFrame(row, for: item.id)
+
+        model.perform(.toggleActionsMenu)
+        #expect(model.isShowingActionsMenu)
+        #expect(model.actionsMenuItemID == item.id)
+        #expect(
+            model.actionsMenuFrame == ClipboardPanelMetrics.actionsMenuFrame(
+                anchoredTo: row,
+                entryCount: ClipboardActionsMenuEntry.allCases.count,
+                in: CGRect(origin: .zero, size: ClipboardPanelMetrics.containerSize(isPeeking: false))
+            )
+        )
+
+        model.perform(.toggleActionsMenu)
+        #expect(model.isShowingActionsMenu == false)
+        #expect(model.actionsMenuFrame == nil)
+    }
+
+    /// 还没量到行位置时菜单不出现，避免卡片闪在错误的位置。
+    @Test func menuWaitsForTheRowGeometry() {
+        copy("a")
+        model.perform(.toggleActionsMenu)
+        #expect(model.actionsMenuFrame == nil)
+    }
+
+    @Test func menuDoesNotOpenOnAnEmptyList() {
+        model.perform(.toggleActionsMenu)
+        #expect(model.isShowingActionsMenu == false)
+    }
+
+    /// 右键先选中被点的那一条，再把菜单锚在它上面。
+    @Test func showActionsSelectsTheClickedItem() {
+        copy("c", "b", "a")
+        let oldest = model.visibleItems[2]
+
+        model.showActions(for: oldest)
+        #expect(model.selectedItem?.id == oldest.id)
+        #expect(model.actionsMenuItemID == oldest.id)
+
+        model.hideActions()
+        #expect(model.isShowingActionsMenu == false)
+    }
+
+    /// 菜单打开时 ↑↓ 只移动菜单高亮，不切换列表选中项；不经过菜单的命令先收起菜单再执行。
+    @Test func menuKeysDriveTheMenuNotTheList() {
+        copy("c", "b", "a")
+        let selected = model.selectedItem?.id
+        model.perform(.toggleActionsMenu)
+
+        model.perform(.moveDown)
+        #expect(model.selectedItem?.id == selected)
+        #expect(model.highlightedActionsMenuEntry == .pasteKeepingPanelOpen)
+
+        model.perform(.moveUp)
+        #expect(model.highlightedActionsMenuEntry == .pasteToTarget)
+
+        for command in [ClipboardPanelCommand.peek, .deleteSelected, .paste(.plainText)] {
+            if !model.isShowingActionsMenu { model.perform(.toggleActionsMenu) }
+            model.perform(command)
+            #expect(model.isShowingActionsMenu == false)
+        }
+    }
+
+    /// Esc 先收起菜单，再按一次才收起面板。
+    @Test func escapeClosesTheMenuBeforeThePanel() {
+        var dismissed = false
+        model.onDismiss = { dismissed = true }
+        copy("a")
+
+        model.perform(.toggleActionsMenu)
+        model.perform(.dismiss)
+        #expect(model.isShowingActionsMenu == false)
+        #expect(dismissed == false)
+
+        model.perform(.dismiss)
+        #expect(dismissed)
+    }
+
+    @Test func newPanelPresentationClosesTheMenuAndSnapshotsTheTargetApp() {
+        copy("a")
+        model.perform(.toggleActionsMenu)
+        model.prepareForPresentation()
+
+        #expect(model.isShowingActionsMenu == false)
+        #expect(model.targetAppName == "Safari")
+    }
+
+    @Test func hitTestFindsTheRowUnderThePoint() {
+        copy("c", "b", "a")
+        let items = model.visibleItems
+        model.setRowFrame(CGRect(x: 24, y: 100, width: 392, height: 52), for: items[0].id)
+        model.setRowFrame(CGRect(x: 24, y: 156, width: 392, height: 52), for: items[1].id)
+
+        #expect(model.item(at: CGPoint(x: 30, y: 104))?.id == items[0].id)
+        #expect(model.item(at: CGPoint(x: 400, y: 200))?.id == items[1].id)
+        // 行间空隙与列表外不命中。
+        #expect(model.item(at: CGPoint(x: 100, y: 152)) == nil)
+        #expect(model.item(at: CGPoint(x: 100, y: 400)) == nil)
     }
 }

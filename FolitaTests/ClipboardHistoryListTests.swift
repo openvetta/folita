@@ -85,4 +85,37 @@ struct ClipboardHistoryListTests {
         model.perform(.dismiss)
         #expect(!controller.isVisible)
     }
+
+    /// 列表把每一行的位置写回模型（容器坐标系）：菜单定位与右键命中都靠它。
+    @Test(arguments: [ColorScheme.dark, .light])
+    func listReportsRowFramesInPanelCoordinates(scheme: ColorScheme) async {
+        let model = makePanelModel(copying: ["c", "b", "a"])
+        let view = NSHostingView(rootView: ClipboardPanelView(model: model).environment(\.colorScheme, scheme))
+        view.frame = CGRect(origin: .zero, size: ClipboardPanelMetrics.windowSize)
+        view.layoutSubtreeIfNeeded()
+        // 几何回调在布局事务结束后才到齐。
+        for _ in 0..<5 where model.rowFrames.count < 3 {
+            await Task.yield()
+            view.layoutSubtreeIfNeeded()
+        }
+
+        let items = model.visibleItems
+        #expect(items.count == 3)
+        let frames = try? items.map { item in
+            try #require(model.rowFrames[item.id])
+        }
+        let rows = frames ?? []
+        #expect(rows.count == 3)
+        guard rows.count == 3 else { return }
+
+        // 行在容器内左侧内边距处，自上而下按同一行高排列。
+        #expect(rows.allSatisfy { $0.minX == ClipboardPanelMetrics.contentInset })
+        #expect(rows.allSatisfy { $0.height == ClipboardPanelMetrics.historyRowHeight })
+        #expect(rows[0].minY < rows[1].minY && rows[1].minY < rows[2].minY)
+        #expect(rows.allSatisfy { $0.maxY <= ClipboardPanelMetrics.containerSize.height })
+
+        // 用右键命中验证这份几何确实可用。
+        model.setRowFrame(rows[1], for: items[1].id)
+        #expect(model.item(at: CGPoint(x: rows[1].midX, y: rows[1].midY))?.id == items[1].id)
+    }
 }

@@ -49,6 +49,20 @@ struct LocalizationTests {
         }
     }
 
+    @Test func actionsMenuCopyIsLocalized() {
+        let copy: [(LocalizedStringResource, String, String)] = [
+            ("More Actions", "More Actions", "更多操作"),
+            ("Paste to %@", "Paste to %@", "粘贴到 %@"),
+            ("Paste and Keep Window Open", "Paste and Keep Window Open", "粘贴并保持窗口打开"),
+            ("Delete Entry", "Delete Entry", "删除此条"),
+            ("Delete All Entries", "Delete All Entries", "删除全部"),
+        ]
+        for (resource, en, zh) in copy {
+            #expect(localized(resource, "en") == en)
+            #expect(localized(resource, "zh-Hans") == zh)
+        }
+    }
+
     @Test func filterTitlesInEnglish() {
         let titles = ClipboardFilter.allCases.map { localized($0.title, "en") }
         #expect(titles == [

@@ -31,6 +31,8 @@ struct ClipboardPanelView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
         .frame(width: container.width, height: container.height)
+        // 历史行按这个坐标系上报位置，菜单与右键命中都在容器内换算。
+        .coordinateSpace(.named(ClipboardPanelMetrics.contentSpace))
         // 详情栏画在玻璃容器的内容蒙版之外：容器底部的渐隐会吃掉详情下半部分的信息区。
         .overlay(alignment: .topLeading) {
             if isPeeking {
@@ -46,6 +48,21 @@ struct ClipboardPanelView: View {
                 .transition(.opacity.combined(with: .offset(x: 20)))
             }
         }
+        // 「更多操作」卡片画在所有内容之上，不受容器底部渐隐蒙版影响。
+        .overlay(alignment: .topLeading) {
+            if let frame = model.actionsMenuFrame {
+                ClipboardActionsMenuView(
+                    targetAppName: model.targetAppName,
+                    highlighted: model.highlightedActionsMenuEntry,
+                    perform: model.perform,
+                    highlight: model.highlightActionsMenuEntry
+                )
+                    .frame(width: frame.width, height: frame.height)
+                    .offset(x: frame.minX, y: frame.minY)
+                    .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
+            }
+        }
+        .animation(.snappy(duration: 0.18), value: model.isShowingActionsMenu)
         .animation(.snappy(duration: ClipboardPanelMetrics.peekAnimationDuration), value: isPeeking)
         .padding(ClipboardPanelMetrics.shadowInset)
         .defaultFocus($isSearchFocused, true)
