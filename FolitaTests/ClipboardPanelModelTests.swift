@@ -227,6 +227,8 @@ struct ClipboardPanelModelTests {
         #expect(C.command(for: "1", modifiers: .command) == .pasteAt(0))
         #expect(C.command(for: "9", modifiers: .command) == .pasteAt(8))
         #expect(C.command(for: "0", modifiers: .command) == nil)
+        #expect(C.command(for: ",", modifiers: .command) == .openMainPanel)
+        #expect(C.command(for: ",", modifiers: []) == nil)
         #expect(C.command(for: "1", modifiers: []) == nil)
         #expect(C.command(for: .delete, modifiers: []) == nil)
         #expect(C.command(for: .escape, modifiers: []) == .dismiss)
@@ -257,6 +259,22 @@ struct ClipboardPanelModelTests {
         #expect(store.items.isEmpty)
         #expect(model.visibleItems.isEmpty)
         #expect(model.selectedItem == nil)
+    }
+
+    /// ⌘,：面板里的设置快捷键，先收起「更多操作」菜单再请求打开主面板。
+    @Test func commandCommaOpensTheMainPanel() throws {
+        copy("b", "a")
+        var opened = 0
+        model.onOpenMainPanel = { opened += 1 }
+        let item = try #require(model.selectedItem)
+        model.setRowFrame(CGRect(x: 24, y: 100, width: 392, height: 52), for: item.id)
+        model.perform(.toggleActionsMenu)
+        #expect(model.isShowingActionsMenu)
+
+        model.perform(.openMainPanel)
+
+        #expect(opened == 1)
+        #expect(!model.isShowingActionsMenu)
     }
 
     /// ⌘K 打开、再按收起；菜单锚在选中条目上，用它的行位置算出卡片位置。

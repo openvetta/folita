@@ -1,6 +1,6 @@
 #!/bin/sh
 # 把 design/app-icons/*.icon（Icon Composer 文档）按 macOS 系统蒙层渲染成 PNG，
-# 生成设置页缩略图与运行时 Dock 图标使用的 Folita/Resources/Assets.xcassets/AppIcon-<名称>.imageset。
+# 生成设置页缩略图、菜单栏图标与剪贴面板顶标使用的 Folita/Resources/Assets.xcassets/AppIcon-<名称>.imageset。
 # 修改图标源后运行：make app-icons。
 set -eu
 
@@ -22,7 +22,7 @@ for icon in "$root"/design/app-icons/*.icon; do
     png="$set_dir/$name.png"
     rm -rf "$set_dir"
     mkdir -p "$set_dir"
-    # 512 px 作为 256 pt 的 @2x，足够覆盖 Dock 放大与设置页缩略图。
+    # 512 px 作为 256 pt 的 @2x，足够覆盖菜单栏小图标与设置页缩略图。
     "$ictool" "$icon" --export-image --output-file "$png" \
         --platform macOS --rendition Default --width 512 --height 512 --scale 1 >/dev/null
     swift "$root/scripts/icons/flatten-png.swift" "$png"

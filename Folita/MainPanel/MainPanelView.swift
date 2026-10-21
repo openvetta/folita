@@ -2,6 +2,8 @@ import SwiftUI
 
 struct MainPanelView: View {
     @Environment(ClipboardPanelController.self) private var clipboardPanel
+    /// 主面板窗口打开期间在程序坞显示图标，关闭后恢复菜单栏应用。
+    @Environment(DockIconVisibility.self) private var dockIcon: DockIconVisibility?
     @State private var selection: MainSection?
 
     init(initialSection: MainSection = .general) {
@@ -38,6 +40,9 @@ struct MainPanelView: View {
             }
         }
         .frame(minWidth: 680, minHeight: 440)
+        // 主面板是唯一需要有程序坞图标的界面：打开时切回常规应用，关闭后回到菜单栏常驻。
+        .onAppear { dockIcon?.mainPanelDidAppear() }
+        .onDisappear { dockIcon?.mainPanelDidDisappear() }
     }
 
     @ViewBuilder

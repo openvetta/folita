@@ -59,6 +59,7 @@ struct PanelKeyHint: Identifiable {
         PanelKeyHint(keys: "⌘1 – ⌘9", action: "Paste one of the first nine items"),
         // 菜单提示与菜单内的键位同源，改键位时设置页自动跟着变。
         PanelKeyHint(keys: ClipboardActionsMenuEntry.menuHintKeyCaps.joined(), action: "More Actions"),
+        PanelKeyHint(keys: "⌘,", action: "Open the Main Panel"),
         PanelKeyHint(keys: "⌘⌫", action: "Delete"),
         PanelKeyHint(keys: ClipboardActionsMenuEntry.deleteEntry.shortcut, action: "Delete Entry"),
         PanelKeyHint(keys: ClipboardActionsMenuEntry.deleteAll.shortcut, action: "Delete All Entries"),

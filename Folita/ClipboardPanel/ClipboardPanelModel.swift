@@ -30,6 +30,8 @@ enum ClipboardPanelCommand: Equatable {
     case convertColor(ColorFormat)
     /// 打开或收起选中项的「更多操作」菜单（⌘K，右键也能打开）。
     case toggleActionsMenu
+    /// 打开主面板（⌘,），与菜单栏的「Open Main Panel」一致。
+    case openMainPanel
     /// 打开详情预览（peek）：面板加宽，右侧显示选中项详情。
     case peek
     /// 收起详情预览，面板恢复原宽度。
@@ -59,6 +61,7 @@ enum ClipboardPanelCommand: Equatable {
         case ("x", [.control]): return .deleteSelected
         case ("x", [.control, .shift]): return .deleteAll
         case ("k", [.command]): return .toggleActionsMenu
+        case (",", [.command]): return .openMainPanel
         case (Key.escape, []): return .dismiss
         case (_, [.command]):
             guard characters.count == 1, let digit = Int(characters), (1...9).contains(digit) else { return nil }
@@ -195,6 +198,8 @@ final class ClipboardPanelModel {
     @ObservationIgnored var onOpenURL: (URL) -> Void = { _ in }
     /// 收起面板，把转换后的文本写回剪贴板并粘贴到之前的应用；由宿主装配。
     @ObservationIgnored var onPasteText: (String) -> Void = { _ in }
+    /// 打开主面板（⌘,）；由宿主装配（收起面板并打开主面板窗口）。
+    @ObservationIgnored var onOpenMainPanel: () -> Void = {}
     @ObservationIgnored var onDismiss: () -> Void = {}
     @ObservationIgnored var noticeProvider: () -> PanelNotice = { .none }
     @ObservationIgnored var onResolveNotice: (PanelNotice) -> Void = { _ in }
@@ -484,6 +489,8 @@ final class ClipboardPanelModel {
             }
         case .endPeek:
             isPeeking = false
+        case .openMainPanel:
+            onOpenMainPanel()
         case .dismiss:
             onDismiss()
         case .toggleActionsMenu:

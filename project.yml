@@ -51,6 +51,8 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Folita
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        # 无 Dock 图标：应用只以菜单栏图标常驻，见 docs/adr/0005-menu-bar-only-app.md。
+        INFOPLIST_KEY_LSUIElement: YES
 
   FolitaTests:
     type: bundle.unit-test

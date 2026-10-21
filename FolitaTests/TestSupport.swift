@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import ServiceManagement
 import SwiftUI
@@ -36,14 +37,22 @@ final class TestServices {
     let privacy: PrivacySettings
     let paste: PasteSettings
     let placement: PanelPlacementSettings
-    /// 交给系统的 Dock 图标，nil 表示恢复默认图标。
+    /// 交给系统的应用图标，启动与切换图标时各调用一次。
     var appliedIcons: [NSImage?] = []
     lazy var appIcon = AppIconSettings(userDefaults: defaults) { [unowned self] in appliedIcons.append($0) }
     let store: ClipboardHistoryStore
     let panel: ClipboardPanelController
+    /// 记录程序坞激活策略的盒子：不持有 TestServices，避免视图在测试结束后仍回调已释放的对象。
+    final class PolicyLog {
+        var values: [NSApplication.ActivationPolicy] = []
+    }
+    let policyLog = PolicyLog()
+    let dockIcon: DockIconVisibility
     var loginItemStatus: SMAppService.Status = .notRegistered
     var updater = UpdaterService(backend: nil)
     var accessibilityTrusted = false
+    /// 主面板打开/关闭时设置的激活策略；真实调用会改动测试宿主的程序坞，所以只记录。
+    var policies: [NSApplication.ActivationPolicy] { policyLog.values }
     lazy var launchAtLogin = LaunchAtLogin(backend: .init(
         status: { [unowned self] in loginItemStatus },
         setEnabled: { [unowned self] in loginItemStatus = $0 ? .enabled : .notRegistered }
@@ -59,6 +68,8 @@ final class TestServices {
         let model = makePanelModel(copying: texts)
         store = model.store
         panel = ClipboardPanelController(model: model, placementSettings: placement, languageSettings: language)
+        let policyLog = policyLog
+        dockIcon = DockIconVisibility { policyLog.values.append($0) }
     }
 
     isolated deinit {
@@ -81,6 +92,7 @@ extension View {
             .environment(services.placement)
             .environment(services.launchAtLogin)
             .environment(services.appIcon)
+            .environment(services.dockIcon)
             .environment(services.updater)
             .environment(services.language)
             .environment(\.accessibilityAccess, services.accessibility)

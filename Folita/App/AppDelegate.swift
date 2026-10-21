@@ -9,6 +9,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let placementSettings: PanelPlacementSettings
     let launchAtLogin = LaunchAtLogin()
     let appIconSettings = AppIconSettings()
+    /// 从 AppKit 侧打开 SwiftUI 主面板的入口，动作在启动时由菜单栏标签里的视图注入。
+    let mainWindow: MainWindowRouter
+    /// 主面板打开时显示程序坞图标，关闭后恢复菜单栏应用的形态。
+    let dockIcon = DockIconVisibility()
     /// 测试宿主中不启动 Sparkle。
     let updater = AppEnvironment.isRunningTests ? UpdaterService(backend: nil) : UpdaterService.live()
     /// 剪贴面板是独立于 SwiftUI Scene 的 NSPanel，由 AppDelegate 持有整个生命周期。
@@ -35,6 +39,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let pasteSettings = PasteSettings()
         let placementSettings = PanelPlacementSettings()
         let pasteService = PasteService(store: historyStore, settings: pasteSettings)
+        let mainWindow = MainWindowRouter()
         let clipboardPanel = ClipboardPanelController(
             model: ClipboardPanelModel(store: historyStore),
             placementSettings: placementSettings
@@ -59,6 +64,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             clipboardPanel?.hide()
             pasteService.paste(text: text)
         }
+        // ⌘,：面板里通常是要去改设置，先收起面板再打开主面板。
+        clipboardPanel.model.onOpenMainPanel = { [weak clipboardPanel] in
+            clipboardPanel?.hide()
+            mainWindow.present()
+        }
         clipboardPanel.model.noticeProvider = {
             PanelNotice.resolve(
                 autoPaste: pasteSettings.autoPaste,
@@ -80,6 +90,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.pasteSettings = pasteSettings
         self.placementSettings = placementSettings
         self.pasteService = pasteService
+        self.mainWindow = mainWindow
         self.clipboardPanel = clipboardPanel
         hotKeys = GlobalHotKeyService { [weak clipboardPanel] in clipboardPanel?.toggle() }
         clipboardMonitor = ClipboardMonitor(privacy: privacySettings) { historyStore.record($0) }

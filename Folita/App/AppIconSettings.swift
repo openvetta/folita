@@ -26,22 +26,27 @@ enum AppIconOption: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// 已按系统蒙层裁成圆角矩形、铺满画布的图标，用于设置页缩略图。
+    /// 已按系统蒙层裁成圆角矩形、铺满画布的图标：设置页缩略图、剪贴面板顶标与关于页都用它。
     var image: NSImage? { NSImage(named: "AppIcon-\(rawValue)") }
 
-    /// 运行时 Dock 图标。系统图标网格在 1024 画布中留 100 的透明边距，补齐后才与其他图标等大。
-    var dockImage: NSImage? {
+    /// 菜单栏图标的标准尺寸（点）。菜单栏高度固定，图标按这个边长绘制。
+    static let menuBarSide: CGFloat = 18
+
+    /// 菜单栏图标：把已蒙层的图标按菜单栏尺寸重新绘制。
+    /// 直接交出新原图会让菜单栏按 512 点渲染，状态栏项会撑满整条菜单栏；
+    /// 同时不加模板渲染，保留彩色。
+    var menuBarImage: NSImage? {
         guard let image else { return nil }
-        let canvas = NSSize(width: 1024, height: 1024)
-        return NSImage(size: canvas, flipped: false) { rect in
-            image.draw(in: rect.insetBy(dx: rect.width * 100 / 1024, dy: rect.height * 100 / 1024))
+        let side = Self.menuBarSide
+        return NSImage(size: NSSize(width: side, height: side), flipped: false) { rect in
+            image.draw(in: rect)
             return true
         }
     }
 }
 
-/// 应用图标设置。应用在沙盒内无法改写自身 bundle，所以只替换运行期间的 Dock 图标；
-/// 默认图标交还系统渲染，以保留 Dock 的深色、着色等外观模式。
+/// 应用图标设置。应用在沙盒内无法改写自身 bundle，所以只在运行期间替换应用图标：
+/// 菜单栏图标、剪贴面板顶标与关于页都跟随这份选择。
 @MainActor
 @Observable
 final class AppIconSettings {
@@ -66,8 +71,8 @@ final class AppIconSettings {
         selection = userDefaults.string(forKey: Self.userDefaultsKey).flatMap(AppIconOption.init) ?? .defaultOption
     }
 
-    /// 启动时与切换后调用；传 nil 让系统恢复 bundle 中的默认图标。
+    /// 启动时与切换后调用：把所选图标交给系统，应用内的弹窗也跟随这份选择。
     func apply() {
-        setApplicationIcon(selection == .defaultOption ? nil : selection.dockImage)
+        setApplicationIcon(selection.image)
     }
 }
