@@ -67,6 +67,20 @@ struct ClipboardHistoryRowTests {
         }
     }
 
+    /// 只有选中且未进入预览的行显示 → 键帽。
+    @Test func peekHintShowsOnlyOnSelectedRowOutsidePeek() {
+        #expect(ClipboardHistoryRow.showsPeekHint(isSelected: true, isCompact: false))
+        #expect(!ClipboardHistoryRow.showsPeekHint(isSelected: false, isCompact: false))
+        #expect(!ClipboardHistoryRow.showsPeekHint(isSelected: true, isCompact: true))
+    }
+
+    @Test(arguments: [ColorScheme.dark, .light])
+    func keyCapLaysOutAtFixedSize(scheme: ColorScheme) {
+        let host = NSHostingView(rootView: KeyCap(systemImage: "arrow.right").environment(\.colorScheme, scheme))
+        host.layoutSubtreeIfNeeded()
+        #expect(host.fittingSize == CGSize(width: KeyCap.size, height: KeyCap.size))
+    }
+
     /// 图片的标题显示像素尺寸，中英文都要带上单位，且不出现千位分隔符。
     @Test func imageTitleShowsPixelSize() {
         let size = CGSize(width: 1024, height: 768)

@@ -119,6 +119,9 @@ struct ClipboardHistoryRow: View {
                 metadata(details)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            if Self.showsPeekHint(isSelected: isSelected, isCompact: isCompact) {
+                KeyCap(systemImage: "arrow.right")
+            }
         }
         .padding(.horizontal, 10)
         .frame(height: ClipboardPanelMetrics.historyRowHeight)
@@ -133,6 +136,11 @@ struct ClipboardHistoryRow: View {
             else { return }
             thumbnail = await ClipPreviewImages.thumbnail(from: data, maxPixelSize: 64)
         }
+    }
+
+    /// 选中行右侧用 → 键帽提示可以展开详情；预览已打开（列表收窄）时不再提示。
+    static func showsPeekHint(isSelected: Bool, isCompact: Bool) -> Bool {
+        isSelected && !isCompact
     }
 
     // MARK: 背景
