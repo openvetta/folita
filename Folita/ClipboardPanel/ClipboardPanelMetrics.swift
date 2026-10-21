@@ -33,6 +33,8 @@ enum ClipboardPanelMetrics {
     static let shadowInset: CGFloat = 28
     /// 容器顶边距离屏幕可见区域顶部（菜单栏下沿）的距离。
     static let topSpacing: CGFloat = 8
+    /// 光标位置呼出时，容器顶边高出光标的距离，让光标落在容器内部靠近左上角处。
+    static let cursorOffset: CGFloat = 12
 
     static var windowSize: CGSize { windowSize(isPeeking: false) }
 
@@ -79,6 +81,34 @@ enum ClipboardPanelMetrics {
             x = min(max(x, visibleFrame.minX - shadowInset), visibleFrame.maxX + shadowInset - size.width)
         }
         return CGRect(x: x, y: frame.maxY - size.height, width: size.width, height: size.height)
+    }
+
+    /// 按用户选择的位置呼出；`cursor` 是鼠标指针的屏幕坐标。
+    static func windowFrame(placement: PanelPlacement, in visibleFrame: CGRect, cursor: CGPoint) -> CGRect {
+        switch placement {
+        case .topCenter:
+            return windowFrame(in: visibleFrame)
+        case .center:
+            let size = windowSize
+            return CGRect(
+                x: (visibleFrame.midX - size.width / 2).rounded(),
+                y: (visibleFrame.midY - size.height / 2).rounded(),
+                width: size.width,
+                height: size.height
+            )
+        case .cursor:
+            // 容器左上角略高于光标、与光标左对齐；贴近屏幕边缘时整体向内挪，阴影边距允许伸出屏幕。
+            let size = windowSize
+            let x = min(
+                max(cursor.x - shadowInset, visibleFrame.minX - shadowInset),
+                visibleFrame.maxX + shadowInset - size.width
+            )
+            let y = min(
+                max(cursor.y + cursorOffset + shadowInset - size.height, visibleFrame.minY - shadowInset),
+                visibleFrame.maxY + shadowInset - size.height
+            )
+            return CGRect(x: x.rounded(), y: y.rounded(), width: size.width, height: size.height)
+        }
     }
 
     /// 面板贴近屏幕顶部居中弹出，与 Siri 自顶部展开的位置一致。
