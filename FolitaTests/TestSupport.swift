@@ -14,6 +14,8 @@ func makePanelModel(copying texts: [String] = []) -> ClipboardPanelModel {
 }
 
 /// 使用隔离 UserDefaults 的呼出位置设置，避免读到开发者真实的偏好。
+/// 参数默认值固定为 `.topCenter` 而非应用默认值：`.topCenter` 不依赖鼠标位置，
+/// 测试里的面板窗口坐标才可重复。应用自身的默认值见 `PanelPlacementSettings.defaultPlacement`。
 @MainActor
 func makePlacementSettings(_ placement: PanelPlacement = .topCenter) -> PanelPlacementSettings {
     let suite = "FolitaTests.Placement.\(UUID().uuidString)"
