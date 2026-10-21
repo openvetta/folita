@@ -17,6 +17,19 @@
 
 Folita 记录你复制过的内容，并用一个快捷键把它们找回来。在任何应用中按 <kbd>⌘</kbd><kbd>⇧</kbd><kbd>V</kbd>，选中一条，内容会直接粘贴回你刚才所在的应用。
 
+## 截图
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/assets/screenshot-panel.png" alt="剪贴面板"><br><sub>剪贴面板</sub></td>
+    <td width="50%"><img src="docs/assets/screenshot-preview.png" alt="详情预览"><br><sub>详情预览</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/assets/screenshot-actions.png" alt="更多操作（<kbd>⌘K</kbd>）"><br><sub>更多操作（<kbd>⌘K</kbd>）</sub></td>
+    <td width="50%"><img src="docs/assets/screenshot-settings.png" alt="设置与应用图标"><br><sub>设置与应用图标</sub></td>
+  </tr>
+</table>
+
 ## 功能
 
 - **液态玻璃面板。** 通透的面板可从屏幕顶部、正中心或鼠标位置弹出，适配浅色与深色外观。

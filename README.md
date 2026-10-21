@@ -17,6 +17,19 @@
 
 Folita keeps what you copy and brings it back with a shortcut. Press <kbd>⌘</kbd><kbd>⇧</kbd><kbd>V</kbd> in any app, pick an item, and it is pasted into the app you came from.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/assets/screenshot-panel.png" alt="Clipboard panel"><br><sub>Clipboard panel</sub></td>
+    <td width="50%"><img src="docs/assets/screenshot-preview.png" alt="Detail preview"><br><sub>Detail preview</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/assets/screenshot-actions.png" alt="More actions (<kbd>⌘K</kbd>)"><br><sub>More actions (<kbd>⌘K</kbd>)</sub></td>
+    <td width="50%"><img src="docs/assets/screenshot-settings.png" alt="Settings and app icons"><br><sub>Settings and app icons</sub></td>
+  </tr>
+</table>
+
 ## Features
 
 - **Liquid Glass panel.** A translucent panel pops up from the top of the screen, the center, or at the cursor, in light and dark appearances.
