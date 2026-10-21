@@ -65,7 +65,11 @@ final class ClipboardMonitor {
                 item.types.contains(type) ? item.data(forType: type).map { ClipContent(type: type, data: $0) } : nil
             }
         }
-        if let clip = ClipboardCapture.makeClip(items: contents, sourceBundleID: source) {
+        var captured = contents
+        if let image = ImageFileSnapshot.content(from: pasteboard, existing: Array(contents.joined())) {
+            captured.append([image])
+        }
+        if let clip = ClipboardCapture.makeClip(items: captured, sourceBundleID: source) {
             onCapture(clip)
         }
     }

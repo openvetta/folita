@@ -59,6 +59,30 @@ final class ClipboardMonitorTests {
         #expect(store.items.first?.category == .link)
     }
 
+    /// 只复制了图片文件（微信式，无图片数据）：采集时读入文件内容，之后文件不可读也能显示缩略图。
+    @Test func copiedImageFileIsSnapshottedAtCaptureTime() async throws {
+        let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: 40, pixelsHigh: 20, bitsPerSample: 8,
+            samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
+            bytesPerRow: 0, bitsPerPixel: 0
+        )!
+        let url = FileManager.default.temporaryDirectory.appending(path: "FolitaTests-\(UUID().uuidString).png")
+        try rep.representation(using: .png, properties: [:])!.write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        _ = monitor
+        pasteboard.clearContents()
+        #expect(pasteboard.writeObjects([url as NSURL]))
+        monitor.checkNow()
+
+        let item = try #require(store.items.first)
+        #expect(item.category == .file)
+        #expect(item.clipContents.contains { $0.type == .png })
+
+        try FileManager.default.removeItem(at: url)
+        #expect(await ClipPreviewImages.thumbnail(for: item, maxPixelSize: 40)?.width == 40)
+    }
+
     @Test func unchangedPasteboardIsNotRecordedTwice() {
         _ = monitor
         copy("once")
