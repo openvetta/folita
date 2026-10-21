@@ -56,4 +56,21 @@ struct GeneralSettingsTests {
         host.layoutSubtreeIfNeeded()
         #expect(services.paste.autoPaste == false)
     }
+
+    /// 常见流程：打开通用设置 → 选择“光标位置” → 设置落盘，下次启动仍是该选择。
+    @Test(arguments: [
+        ("zh-Hans", ColorScheme.light), ("zh-Hans", .dark),
+        ("en", .light), ("en", .dark),
+    ])
+    func placementPickerLaysOutAndPersistsChoice(locale: String, scheme: ColorScheme) {
+        let services = TestServices()
+        let host = NSHostingView(rootView: GeneralSettingsView().testServices(services, locale: locale, scheme: scheme))
+        host.frame = CGRect(x: 0, y: 0, width: 520, height: 700)
+        host.layoutSubtreeIfNeeded()
+        #expect(services.placement.placement == .topCenter)
+
+        services.placement.placement = .cursor
+        host.layoutSubtreeIfNeeded()
+        #expect(PanelPlacementSettings(userDefaults: services.defaults).placement == .cursor)
+    }
 }

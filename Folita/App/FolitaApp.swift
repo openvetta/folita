@@ -35,6 +35,7 @@ private extension View {
             .environment(app.historySettings)
             .environment(app.privacySettings)
             .environment(app.pasteSettings)
+            .environment(app.placementSettings)
             .environment(app.launchAtLogin)
             .environment(app.appIconSettings)
             .environment(app.updater)

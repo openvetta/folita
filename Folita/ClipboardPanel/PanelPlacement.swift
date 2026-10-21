@@ -8,6 +8,14 @@ enum PanelPlacement: String, CaseIterable, Identifiable {
     case cursor
 
     var id: Self { self }
+
+    var title: LocalizedStringResource {
+        switch self {
+        case .topCenter: "Top of the screen"
+        case .center: "Center of the screen"
+        case .cursor: "At the cursor"
+        }
+    }
 }
 
 /// 呼出位置的用户选择。

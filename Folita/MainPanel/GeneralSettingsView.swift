@@ -1,11 +1,12 @@
 import AppKit
 import SwiftUI
 
-/// 通用设置页面：语言、应用图标、开机自启与自动粘贴。
+/// 通用设置页面：语言、应用图标、开机自启、面板呼出位置与自动粘贴。
 struct GeneralSettingsView: View {
     @Environment(LanguageSettings.self) private var languageSettings
     @Environment(LaunchAtLogin.self) private var launchAtLogin
     @Environment(PasteSettings.self) private var pasteSettings
+    @Environment(PanelPlacementSettings.self) private var placementSettings
     @Environment(UpdaterService.self) private var updater
     @Environment(\.accessibilityAccess) private var accessibility
 
@@ -14,6 +15,7 @@ struct GeneralSettingsView: View {
     var body: some View {
         @Bindable var settings = languageSettings
         @Bindable var paste = pasteSettings
+        @Bindable var placement = placementSettings
         @Bindable var updates = updater
         Form {
             Section {
@@ -54,6 +56,20 @@ struct GeneralSettingsView: View {
                     Text("Approve Folita under Login Items in System Settings.")
                         .foregroundStyle(.secondary)
                 }
+            }
+
+            Section {
+                Picker("Position", selection: $placement.placement) {
+                    ForEach(PanelPlacement.allCases) { placement in
+                        Text(placement.title).tag(placement)
+                    }
+                }
+                .pickerStyle(.menu)
+            } header: {
+                Text("Panel Position")
+            } footer: {
+                Text("Choose where the clipboard panel appears on the screen your mouse is on. Changes apply the next time you open it.")
+                    .foregroundStyle(.secondary)
             }
 
             Section {

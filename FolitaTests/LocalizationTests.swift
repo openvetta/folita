@@ -150,6 +150,22 @@ struct LocalizationTests {
         }
     }
 
+    @Test func panelPlacementCopyIsLocalized() {
+        let expected: [(LocalizedStringResource, String)] = [
+            ("Panel Position", "面板位置"),
+            ("Position", "位置"),
+            (PanelPlacement.topCenter.title, "屏幕顶部居中"),
+            (PanelPlacement.center.title, "屏幕正中心"),
+            (PanelPlacement.cursor.title, "光标位置"),
+            ("Choose where the clipboard panel appears on the screen your mouse is on. Changes apply the next time you open it.",
+             "选择剪贴面板在鼠标所在屏幕上的出现位置，下次呼出时生效。"),
+        ]
+        for (key, chinese) in expected {
+            #expect(localized(key, "zh-Hans") == chinese)
+            #expect(localized(key, "en") == key.key)
+        }
+    }
+
     @Test func shortcutsCopyIsLocalized() {
         #expect(localized("Global", "zh-Hans") == "全局")
         #expect(localized("In the Clipboard Panel", "zh-Hans") == "剪贴面板内")

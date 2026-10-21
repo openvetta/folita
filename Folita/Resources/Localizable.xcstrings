@@ -81,6 +81,16 @@
         }
       }
     },
+    "At the cursor" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "光标位置"
+          }
+        }
+      }
+    },
     "Auto-paste needs permission" : {
       "localizations" : {
         "zh-Hans" : {
@@ -107,6 +117,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "小黑猫"
+          }
+        }
+      }
+    },
+    "Center of the screen" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "屏幕正中心"
           }
         }
       }
@@ -147,6 +167,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "小鸡"
+          }
+        }
+      }
+    },
+    "Choose where the clipboard panel appears on the screen your mouse is on. Changes apply the next time you open it." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择剪贴面板在鼠标所在屏幕上的出现位置，下次呼出时生效。"
           }
         }
       }
@@ -742,6 +772,16 @@
         }
       }
     },
+    "Panel Position" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "面板位置"
+          }
+        }
+      }
+    },
     "Paste" : {
       "localizations" : {
         "zh-Hans" : {
@@ -818,6 +858,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "小猪"
+          }
+        }
+      }
+    },
+    "Position" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "位置"
           }
         }
       }
@@ -1118,6 +1168,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此操作无法撤销。"
+          }
+        }
+      }
+    },
+    "Top of the screen" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "屏幕顶部居中"
           }
         }
       }
