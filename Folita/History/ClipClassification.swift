@@ -94,9 +94,7 @@ enum ClipClassification {
     }
 
     private static func isColor(_ text: String) -> Bool {
-        if text.wholeMatch(of: /#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})/) != nil {
-            return true
-        }
-        return text.wholeMatch(of: /(?i)(rgba?|hsla?)\(\s*[0-9.%]+\s*(,\s*[0-9.%]+\s*){2,3}\)/) != nil
+        // 以解析器为唯一事实源：能解析成颜色的格式都归为颜色，也就都能互相转换。
+        RGBAColor(parsing: text) != nil
     }
 }

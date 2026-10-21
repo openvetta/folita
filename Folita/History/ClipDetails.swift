@@ -17,6 +17,10 @@ struct ClipDetails: Equatable {
     var imageFileURL: URL?
     var color: RGBAColor?
     var link: URL?
+    var colorFormat: ColorFormat?
+    var linkTarget: LinkTarget?
+    /// 文本开头一段里出现的邮件地址（按出现顺序、已去重）。链接与颜色条目不提取：网址里的 @ 不是收件人。
+    var emails: [String] = []
 
     init(contents: [ClipContent], category: ClipCategory) {
         self.category = category
@@ -28,8 +32,16 @@ struct ClipDetails: Equatable {
             characterCount = text.count
             lineCount = text.isEmpty ? 0 : text.split(separator: "\n", omittingEmptySubsequences: false).count
             let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            if category == .color { color = RGBAColor(parsing: trimmed) }
-            if category == .link { link = URL(string: trimmed) }
+            if category == .color {
+                color = RGBAColor(parsing: trimmed)
+                colorFormat = ColorFormat.detect(trimmed)
+            }
+            if category == .link {
+                link = URL(string: trimmed)
+                linkTarget = link.flatMap { LinkTarget(url: $0) }
+            } else if category != .color {
+                emails = EmailAddresses.all(in: text)
+            }
         }
 
         if let url = Self.imageFileURL(in: contents) {
@@ -60,7 +72,7 @@ struct ClipDetails: Equatable {
 }
 
 /// 从颜色文本解析出的分量，取值 0...1。
-struct RGBAColor: Equatable {
+struct RGBAColor: Hashable {
     var red: Double
     var green: Double
     var blue: Double
@@ -73,7 +85,11 @@ struct RGBAColor: Equatable {
             guard let parsed = Self.hex(String(text.dropFirst())) else { return nil }
             self = parsed
         } else if let match = text.wholeMatch(of: /(rgba?|hsla?)\((.*)\)/) {
-            let values = match.2.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            // 逗号分隔与 CSS 新语法（空格分隔、`/` 后跟透明度）都接受。
+            let values = match.2
+                .replacingOccurrences(of: "/", with: " ")
+                .replacingOccurrences(of: ",", with: " ")
+                .split(whereSeparator: \.isWhitespace).map(String.init)
             guard values.count == 3 || values.count == 4 else { return nil }
             let alpha = values.count == 4 ? Self.component(values[3], scale: 1) : 1
             if match.1.hasPrefix("rgb") {
@@ -83,7 +99,8 @@ struct RGBAColor: Equatable {
                       let alpha else { return nil }
                 self.init(red: r, green: g, blue: b, alpha: alpha)
             } else {
-                guard let hue = Double(values[0]),
+                let hueText = values[0].hasSuffix("deg") ? String(values[0].dropLast(3)) : values[0]
+                guard let hue = Double(hueText),
                       let s = Self.component(values[1], scale: 100),
                       let l = Self.component(values[2], scale: 100),
                       let alpha else { return nil }
