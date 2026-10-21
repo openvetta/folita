@@ -16,16 +16,69 @@ enum ClipboardPanelMetrics {
     static let listBottomSafeSpace: CGFloat = 168
     static let historyRowCornerRadius: CGFloat = 12
     static let historyRowSpacing: CGFloat = 4
+    /// 容器内容的左右留白与顶部留白。
+    static let contentInset: CGFloat = 24
+    static let contentTopInset: CGFloat = 16
+    /// 详情预览（peek）时容器加宽的倍数；左侧列表占 1/3，右侧详情占 2/3。
+    static let peekWidthScale: CGFloat = 1.5
+    static let peekListFraction: CGFloat = 1.0 / 3
+    /// 两栏之间的间距（分割线居中其中）、详情栏与顶栏的间距、详情栏底边到容器底边的距离。
+    static let peekColumnGap: CGFloat = 32
+    static let peekDetailTopGap: CGFloat = 14
+    static let peekDetailBottomInset: CGFloat = 26
+    /// 加宽 / 收窄动画的时长；窗口在收窄动画结束后再缩回，避免裁掉还没收完的容器。
+    static let peekAnimationDuration: Double = 0.36
+    static let peekCollapseDelay: Duration = .milliseconds(420)
     /// 窗口四周为 SwiftUI 阴影预留的透明边距。
     static let shadowInset: CGFloat = 28
     /// 容器顶边距离屏幕可见区域顶部（菜单栏下沿）的距离。
     static let topSpacing: CGFloat = 8
 
-    static var windowSize: CGSize {
-        CGSize(
-            width: containerSize.width + shadowInset * 2,
-            height: containerSize.height + shadowInset * 2
+    static var windowSize: CGSize { windowSize(isPeeking: false) }
+
+    static func containerSize(isPeeking: Bool) -> CGSize {
+        guard isPeeking else { return containerSize }
+        return CGSize(width: (containerSize.width * peekWidthScale).rounded(), height: containerSize.height)
+    }
+
+    static func windowSize(isPeeking: Bool) -> CGSize {
+        let container = containerSize(isPeeking: isPeeking)
+        return CGSize(width: container.width + shadowInset * 2, height: container.height + shadowInset * 2)
+    }
+
+    /// 左侧列表列（含左边距）的宽度：预览时为容器的 1/3，否则占满。
+    static func listColumnWidth(isPeeking: Bool) -> CGFloat {
+        let container = containerSize(isPeeking: isPeeking)
+        guard isPeeking else { return container.width - contentInset * 2 }
+        return (container.width * peekListFraction).rounded() - contentInset - peekColumnGap / 2
+    }
+
+    /// 两栏分割线的横坐标：容器宽度的 1/3 处。
+    static func peekDividerX(in container: CGSize) -> CGFloat {
+        (container.width * peekListFraction).rounded()
+    }
+
+    /// 右侧详情栏在加宽后容器内的位置：占右侧 2/3，顶边在顶栏下方，右边与搜索框对齐。
+    static func peekDetailFrame(in container: CGSize) -> CGRect {
+        let minX = peekDividerX(in: container) + peekColumnGap / 2
+        let minY = contentTopInset + controlHeight + peekDetailTopGap
+        return CGRect(
+            x: minX,
+            y: minY,
+            width: container.width - contentInset - minX,
+            height: container.height - peekDetailBottomInset - minY
         )
+    }
+
+    /// 进入或退出预览时的窗口位置：保持顶边与水平中心不动，向两侧等量伸缩，
+    /// 容器在屏幕上的位置不跳；贴近屏幕边缘时向内挪，不让加宽的部分跑出屏幕。
+    static func windowFrame(resizing frame: CGRect, isPeeking: Bool, visibleFrame: CGRect?) -> CGRect {
+        let size = windowSize(isPeeking: isPeeking)
+        var x = (frame.midX - size.width / 2).rounded()
+        if let visibleFrame {
+            x = min(max(x, visibleFrame.minX - shadowInset), visibleFrame.maxX + shadowInset - size.width)
+        }
+        return CGRect(x: x, y: frame.maxY - size.height, width: size.width, height: size.height)
     }
 
     /// 面板贴近屏幕顶部居中弹出，与 Siri 自顶部展开的位置一致。

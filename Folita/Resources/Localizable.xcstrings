@@ -111,6 +111,16 @@
         }
       }
     },
+    "Characters" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字符数"
+          }
+        }
+      }
+    },
     "Check for Updates…" : {
       "localizations" : {
         "zh-Hans" : {
@@ -231,6 +241,16 @@
         }
       }
     },
+    "Close the preview" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭预览"
+          }
+        }
+      }
+    },
     "Color" : {
       "localizations" : {
         "zh-Hans" : {
@@ -261,6 +281,16 @@
         }
       }
     },
+    "Copied" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制时间"
+          }
+        }
+      }
+    },
     "Copied text, images and files will appear here." : {
       "localizations" : {
         "zh-Hans" : {
@@ -287,6 +317,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除"
+          }
+        }
+      }
+    },
+    "Dimensions" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尺寸"
           }
         }
       }
@@ -337,6 +377,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "文件"
+          }
+        }
+      }
+    },
+    "Files" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件数"
           }
         }
       }
@@ -501,6 +551,16 @@
         }
       }
     },
+    "Information" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "信息"
+          }
+        }
+      }
+    },
     "Items Saved" : {
       "localizations" : {
         "zh-Hans" : {
@@ -642,6 +702,16 @@
         }
       }
     },
+    "Nothing to preview" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有可预览的内容"
+          }
+        }
+      }
+    },
     "Open Main Panel" : {
       "localizations" : {
         "zh-Hans" : {
@@ -748,6 +818,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "小猪"
+          }
+        }
+      }
+    },
+    "Preview" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览"
+          }
+        }
+      }
+    },
+    "Preview the selected item" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看选中项详情"
           }
         }
       }
@@ -912,12 +1002,32 @@
         }
       }
     },
+    "Size" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大小"
+          }
+        }
+      }
+    },
     "Snake" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "小蛇"
+          }
+        }
+      }
+    },
+    "Source" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "来源"
           }
         }
       }
@@ -1018,6 +1128,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "换个关键词或筛选条件试试。"
+          }
+        }
+      }
+    },
+    "Type" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "类型"
           }
         }
       }

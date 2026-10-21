@@ -15,7 +15,9 @@ struct ShortcutsSettingsTests {
         #expect(C.command(for: "9", modifiers: .command) == .pasteAt(8))
         #expect(C.command(for: .delete, modifiers: .command) == .deleteSelected)
         #expect(C.command(for: .escape, modifiers: []) == .dismiss)
-        #expect(PanelKeyHint.all.map(\.keys) == ["↑ ↓", "↩", "⇧↩", "⌘1 – ⌘9", "⌘⌫", "Esc"])
+        #expect(C.command(for: .rightArrow, modifiers: []) == .peek)
+        #expect(C.command(for: .leftArrow, modifiers: []) == .endPeek)
+        #expect(PanelKeyHint.all.map(\.keys) == ["↑ ↓", "→", "←", "↩", "⇧↩", "⌘1 – ⌘9", "⌘⌫", "Esc"])
     }
 
     @Test(arguments: [

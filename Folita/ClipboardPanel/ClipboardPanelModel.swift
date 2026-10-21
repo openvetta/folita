@@ -19,6 +19,10 @@ enum ClipboardPanelCommand: Equatable {
     /// 直接回填当前列表中第 n 条（从 0 开始）。
     case pasteAt(Int)
     case deleteSelected
+    /// 打开详情预览（peek）：面板加宽，右侧显示选中项详情。
+    case peek
+    /// 收起详情预览，面板恢复原宽度。
+    case endPeek
     case dismiss
 
     /// 面板内的固定按键。`⌘1`–`⌘9` 对应列表前 9 条。
@@ -35,6 +39,8 @@ enum ClipboardPanelCommand: Equatable {
         switch (characters, modifiers) {
         case (Key.upArrow, []): return .moveUp
         case (Key.downArrow, []): return .moveDown
+        case (Key.rightArrow, []): return .peek
+        case (Key.leftArrow, []): return .endPeek
         case (Key.return, []): return .paste(.original)
         case (Key.return, [.shift]): return .paste(.plainText)
         case (Key.delete, [.command]): return .deleteSelected
@@ -58,10 +64,29 @@ enum ClipboardPanelCommand: Equatable {
         (responder as? NSTextView)?.hasMarkedText() ?? false
     }
 
+    /// ← → 同时是搜索框里移动光标的键，只在不打断编辑时由面板接管：
+    /// → 在光标停在搜索词末尾（光标本就无处可去）或预览已打开时进入预览；← 只在预览打开时用于退出。
+    func isIntercepted(isPeeking: Bool, responder: NSResponder?) -> Bool {
+        switch self {
+        case .peek: isPeeking || Self.isCaretAtEnd(in: responder)
+        case .endPeek: isPeeking
+        default: true
+        }
+    }
+
+    /// 焦点不在文本编辑器里时视为光标在末尾。
+    static func isCaretAtEnd(in responder: NSResponder?) -> Bool {
+        guard let editor = responder as? NSTextView else { return true }
+        let selection = editor.selectedRange()
+        return selection.length == 0 && selection.location == (editor.string as NSString).length
+    }
+
     /// 功能键在 `charactersIgnoringModifiers` 里的字符值。
     private enum Key {
         static let upArrow = "\u{F700}"
         static let downArrow = "\u{F701}"
+        static let leftArrow = "\u{F702}"
+        static let rightArrow = "\u{F703}"
         static let `return` = "\r"
         static let delete = "\u{7F}"
         static let escape = "\u{1B}"
@@ -80,7 +105,7 @@ extension EventModifiers {
     }
 }
 
-/// 剪贴面板的界面状态：搜索、筛选与选中项。
+/// 剪贴面板的界面状态：搜索、筛选、选中项与详情预览（peek）。
 @MainActor
 @Observable
 final class ClipboardPanelModel {
@@ -95,6 +120,14 @@ final class ClipboardPanelModel {
     /// 按 ID 记录选中项，面板打开期间有新复制进来时选中位置不跳动。
     private(set) var selectedID: UUID?
 
+    /// 是否处于详情预览。预览是一种浏览模式而非弹窗：上下键、搜索、筛选、删除都只换右侧
+    /// 显示的条目，只有 ← 会退出；每次重新呼出面板时复位。
+    private(set) var isPeeking = false {
+        didSet {
+            if isPeeking != oldValue { onPeekChange(isPeeking) }
+        }
+    }
+
     /// 每次呼出面板递增，视图据此把焦点放回搜索框。
     private(set) var presentationCount = 0
 
@@ -106,6 +139,8 @@ final class ClipboardPanelModel {
     @ObservationIgnored var onDismiss: () -> Void = {}
     @ObservationIgnored var noticeProvider: () -> PanelNotice = { .none }
     @ObservationIgnored var onResolveNotice: (PanelNotice) -> Void = { _ in }
+    /// 进入或退出详情预览时通知宿主窗口调整宽度。
+    @ObservationIgnored var onPeekChange: (Bool) -> Void = { _ in }
     /// 用户关掉的提示在本次运行期间不再出现；状态没修复的话下次启动会再次提示。
     @ObservationIgnored private var dismissedNotices: Set<PanelNotice> = []
 
@@ -127,6 +162,7 @@ final class ClipboardPanelModel {
     func prepareForPresentation() {
         query = ""
         selectedID = nil
+        isPeeking = false
         refreshNotice()
         presentationCount += 1
     }
@@ -173,6 +209,13 @@ final class ClipboardPanelModel {
             let neighbor = items.indices.contains(index + 1) ? items[index + 1] : (index > 0 ? items[index - 1] : nil)
             store.delete(item)
             selectedID = neighbor?.id
+        case .peek:
+            // 列表为空时没有可看的内容，不进入预览。
+            if selectedItem != nil {
+                isPeeking = true
+            }
+        case .endPeek:
+            isPeeking = false
         case .dismiss:
             onDismiss()
         }

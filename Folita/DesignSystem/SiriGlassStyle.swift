@@ -14,6 +14,11 @@ struct SiriGlassStyle: Equatable {
     var iconBackground: Color
     var iconForeground: Color
     var iconRim: Color
+    /// 详情预览：两栏之间的分割线、预览区与信息行的衬底、大图投影。
+    var peekDivider: Color
+    var peekWell: Color
+    var peekStripe: Color
+    var peekShadow: Color
 
     /// 内容在容器底部开始渐隐的位置（从容器顶部按比例计）。列表用它在底部留出安全空间。
     static let contentFadeStart: CGFloat = 0.70
@@ -41,7 +46,11 @@ struct SiriGlassStyle: Equatable {
                 selectionRim: .black.opacity(0.06),
                 iconBackground: Color(white: 0.84),
                 iconForeground: Color(white: 0.30),
-                iconRim: .black.opacity(0.08)
+                iconRim: .black.opacity(0.08),
+                peekDivider: .black.opacity(0.10),
+                peekWell: .black.opacity(0.05),
+                peekStripe: .black.opacity(0.045),
+                peekShadow: .black.opacity(0.12)
             )
         default:
             SiriGlassStyle(
@@ -57,7 +66,11 @@ struct SiriGlassStyle: Equatable {
                 selectionRim: .white.opacity(0.10),
                 iconBackground: Color(white: 0.36),
                 iconForeground: Color(white: 0.97),
-                iconRim: .white.opacity(0.12)
+                iconRim: .white.opacity(0.12),
+                peekDivider: .white.opacity(0.12),
+                peekWell: .white.opacity(0.06),
+                peekStripe: .white.opacity(0.06),
+                peekShadow: .black.opacity(0.35)
             )
         }
     }

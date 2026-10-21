@@ -126,6 +126,87 @@ struct ClipboardPanelModelTests {
         #expect(dismissed)
     }
 
+    // MARK: 详情预览
+
+    /// 常见流程：→ 进入预览 → ↓↑ 切换条目（预览保持打开、详情跟着选中项）→ ← 退出。
+    @Test func arrowKeysBrowseWhilePeekingAndLeftArrowCloses() {
+        var changes: [Bool] = []
+        model.onPeekChange = { changes.append($0) }
+        copy("c", "b", "a")
+
+        model.perform(.peek)
+        #expect(model.isPeeking)
+        #expect(model.selectedItem?.title == "a")
+
+        model.perform(.moveDown)
+        #expect(model.isPeeking)
+        #expect(model.selectedItem?.title == "b")
+
+        model.perform(.moveDown)
+        model.perform(.moveUp)
+        #expect(model.isPeeking)
+        #expect(model.selectedItem?.title == "b")
+
+        // 已在预览时再按 → 不重复通知窗口加宽。
+        model.perform(.peek)
+        model.perform(.endPeek)
+        #expect(model.isPeeking == false)
+        #expect(model.selectedItem?.title == "b")
+        #expect(changes == [true, false])
+    }
+
+    /// 搜索、筛选、删除只改变右侧显示的条目，不退出预览。
+    @Test func changingTheListKeepsPeekOpen() {
+        copy("apple", "banana", "cherry")
+        model.perform(.peek)
+
+        model.query = "an"
+        #expect(model.isPeeking)
+        #expect(model.selectedItem?.title == "banana")
+
+        model.query = "zzz"
+        #expect(model.isPeeking)
+        #expect(model.selectedItem == nil)
+
+        model.query = ""
+        model.perform(.deleteSelected)
+        #expect(model.isPeeking)
+        #expect(model.selectedItem?.title == "banana")
+
+        model.filter = .text
+        #expect(model.isPeeking)
+    }
+
+    @Test func escapeDismissesEvenWhilePeeking() {
+        var dismissed = false
+        model.onDismiss = { dismissed = true }
+        copy("a")
+        model.perform(.peek)
+        model.perform(.dismiss)
+        #expect(dismissed)
+    }
+
+    @Test func returnWhilePeekingPastesTheSelectedItem() {
+        copy("b", "a")
+        model.perform(.peek)
+        model.perform(.moveDown)
+        model.perform(.paste(.original))
+        #expect(pasted.calls.map(\.0) == ["b"])
+    }
+
+    /// 每次呼出面板都从普通列表开始。
+    @Test func presentationEndsPeek() {
+        copy("a")
+        model.perform(.peek)
+        model.prepareForPresentation()
+        #expect(model.isPeeking == false)
+    }
+
+    @Test func peekOnEmptyListDoesNothing() {
+        model.perform(.peek)
+        #expect(model.isPeeking == false)
+    }
+
     @Test func keyMapping() {
         typealias C = ClipboardPanelCommand
         #expect(C.command(for: .upArrow, modifiers: []) == .moveUp)
@@ -139,6 +220,10 @@ struct ClipboardPanelModelTests {
         #expect(C.command(for: "1", modifiers: []) == nil)
         #expect(C.command(for: .delete, modifiers: []) == nil)
         #expect(C.command(for: .escape, modifiers: []) == .dismiss)
+        #expect(C.command(for: .rightArrow, modifiers: []) == .peek)
+        #expect(C.command(for: .leftArrow, modifiers: []) == .endPeek)
+        #expect(C.command(for: .rightArrow, modifiers: .command) == nil)
+        #expect(C.command(for: .leftArrow, modifiers: .shift) == nil)
         // 大写锁定等非组合修饰键不影响判断。
         #expect(C.command(for: .return, modifiers: [.capsLock]) == .paste(.original))
     }

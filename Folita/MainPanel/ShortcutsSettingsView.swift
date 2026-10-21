@@ -51,6 +51,8 @@ struct PanelKeyHint: Identifiable {
 
     static let all: [PanelKeyHint] = [
         PanelKeyHint(keys: "↑ ↓", action: "Select previous or next item"),
+        PanelKeyHint(keys: "→", action: "Preview the selected item"),
+        PanelKeyHint(keys: "←", action: "Close the preview"),
         PanelKeyHint(keys: "↩", action: "Paste"),
         PanelKeyHint(keys: "⇧↩", action: "Paste as Plain Text"),
         PanelKeyHint(keys: "⌘1 – ⌘9", action: "Paste one of the first nine items"),

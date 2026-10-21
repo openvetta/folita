@@ -43,11 +43,20 @@ final class ClipboardPanelController {
     @ObservationIgnored private var eventMonitors: [Any] = []
     @ObservationIgnored private let languageSettings: LanguageSettings
     @ObservationIgnored let model: ClipboardPanelModel
+    @ObservationIgnored private let peekCollapseDelay: Duration
+    /// 退出预览后等待收窄动画结束再缩回窗口的任务；测试可等待它完成。
+    @ObservationIgnored private(set) var peekCollapse: Task<Void, Never>?
 
-    init(model: ClipboardPanelModel, languageSettings: LanguageSettings = .shared) {
+    init(
+        model: ClipboardPanelModel,
+        languageSettings: LanguageSettings = .shared,
+        peekCollapseDelay: Duration = ClipboardPanelMetrics.peekCollapseDelay
+    ) {
         self.model = model
         self.languageSettings = languageSettings
+        self.peekCollapseDelay = peekCollapseDelay
         model.onDismiss = { [weak self] in self?.hide() }
+        model.onPeekChange = { [weak self] in self?.peekChanged($0) }
     }
 
     func toggle() {
@@ -57,6 +66,7 @@ final class ClipboardPanelController {
     func show() {
         model.prepareForPresentation()
         let panel = panel ?? makePanel()
+        cancelPeekCollapse()
         if let screen = NSScreen.screenContainingMouse ?? NSScreen.main {
             panel.setFrame(ClipboardPanelMetrics.windowFrame(in: screen.visibleFrame), display: false)
         }
@@ -67,6 +77,7 @@ final class ClipboardPanelController {
 
     func hide() {
         guard isVisible else { return }
+        cancelPeekCollapse()
         closeAttachedWindows()
         panel?.orderOut(nil)
         isVisible = false
@@ -113,9 +124,43 @@ final class ClipboardPanelController {
             // 输入法组字期间方向键属于候选选择，交给输入法处理。
             guard !ClipboardPanelCommand.isComposing(in: window.firstResponder) else { return false }
         }
-        guard let command = ClipboardPanelCommand.command(for: event) else { return false }
+        guard let command = ClipboardPanelCommand.command(for: event),
+              command.isIntercepted(isPeeking: model.isPeeking, responder: event.window?.firstResponder ?? panel.firstResponder)
+        else { return false }
         model.perform(command)
         return true
+    }
+
+    /// 加宽时先放大窗口，容器在其中居中并以动画展开；收窄时反过来，等容器动画收完再缩窗口。
+    /// 窗口两侧等量伸缩，容器在屏幕上的位置始终不变。
+    private func peekChanged(_ isPeeking: Bool) {
+        cancelPeekCollapse()
+        guard let panel, panel.isVisible else { return }
+        if isPeeking {
+            resizePanel(isPeeking: true)
+        } else {
+            let delay = peekCollapseDelay
+            peekCollapse = Task { [weak self] in
+                try? await Task.sleep(for: delay)
+                guard let self, !Task.isCancelled, !self.model.isPeeking else { return }
+                self.resizePanel(isPeeking: false)
+            }
+        }
+    }
+
+    private func cancelPeekCollapse() {
+        peekCollapse?.cancel()
+        peekCollapse = nil
+    }
+
+    private func resizePanel(isPeeking: Bool) {
+        guard let panel else { return }
+        let frame = ClipboardPanelMetrics.windowFrame(
+            resizing: panel.frame,
+            isPeeking: isPeeking,
+            visibleFrame: panel.screen?.visibleFrame
+        )
+        panel.setFrame(frame, display: true)
     }
 
     private func removeEventMonitors() {
@@ -164,6 +209,9 @@ private struct ClipboardPanelHostView: View {
 
     var body: some View {
         ClipboardPanelView(model: model)
+            // 铺满窗口并居中：窗口尺寸只由控制器决定。根视图若是固定尺寸，NSHostingView 会在
+            // 预览收起时以左下角为基准把窗口缩到内容大小，面板会向左跳，收窄动画也会被裁掉。
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .environment(languageSettings)
             .environment(\.locale, languageSettings.effectiveLocale)
     }

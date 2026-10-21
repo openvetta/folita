@@ -151,6 +151,95 @@ struct ClipboardPanelTests {
         #expect(ClipboardPanelCommand.isComposing(in: editor))
     }
 
+    // MARK: 详情预览
+
+    /// 常见流程：→ 加宽并预览 → ↓ 切换条目仍在预览 → ← 退出并缩回原宽度 → Esc 收起面板。
+    @Test func peekKeyboardFlowResizesPanel() async throws {
+        let model = makePanelModel(copying: ["third", "second", "first"])
+        let controller = ClipboardPanelController(model: model, peekCollapseDelay: .zero)
+        controller.show()
+        defer { controller.hide() }
+        let panel = try #require(controller.panel)
+        let narrow = panel.frame
+        let items = model.visibleItems
+
+        #expect(controller.handleKeyDown(try key("\u{F703}")))
+        #expect(model.isPeeking)
+        #expect(panel.frame.size == ClipboardPanelMetrics.windowSize(isPeeking: true))
+        // 两侧等量加宽，顶边不动：容器在屏幕上的位置不跳。
+        #expect(abs(panel.frame.midX - narrow.midX) <= 1)
+        #expect(panel.frame.maxY == narrow.maxY)
+
+        #expect(controller.handleKeyDown(try key("\u{F701}")))
+        #expect(model.isPeeking)
+        #expect(model.selectedItem?.id == items[1].id)
+
+        #expect(controller.handleKeyDown(try key("\u{F702}")))
+        #expect(model.isPeeking == false)
+        await controller.peekCollapse?.value
+        // 收窄后回到原位，而不是以左边缘为基准缩回。
+        #expect(panel.frame == narrow)
+
+        // 预览已收起时 ← 交还给搜索框移动光标。
+        #expect(controller.handleKeyDown(try key("\u{F702}")) == false)
+
+        #expect(controller.handleKeyDown(try key("\u{F703}")))
+        #expect(controller.handleKeyDown(try key("\u{1B}")))
+        #expect(controller.isVisible == false)
+
+        // 再次呼出时回到普通宽度。
+        controller.show()
+        #expect(model.isPeeking == false)
+        #expect(panel.frame.size == ClipboardPanelMetrics.windowSize)
+    }
+
+    /// 窗口贴近屏幕边缘时，加宽的部分向内挪，不跑出屏幕。
+    @Test func peekFrameStaysOnScreen() {
+        let visible = CGRect(x: 0, y: 0, width: 1512, height: 944)
+        let inset = ClipboardPanelMetrics.shadowInset
+        let centered = ClipboardPanelMetrics.windowFrame(in: visible)
+        let wide = ClipboardPanelMetrics.windowFrame(resizing: centered, isPeeking: true, visibleFrame: visible)
+        #expect(wide.size == ClipboardPanelMetrics.windowSize(isPeeking: true))
+        #expect(abs(wide.midX - centered.midX) <= 1)
+
+        let nearRight = centered.offsetBy(dx: visible.maxX - centered.maxX + inset, dy: 0)
+        let clamped = ClipboardPanelMetrics.windowFrame(resizing: nearRight, isPeeking: true, visibleFrame: visible)
+        #expect(clamped.maxX - inset == visible.maxX)
+        #expect(clamped.maxY == nearRight.maxY)
+    }
+
+    /// 搜索词中间的光标需要 ← → 移动：只有光标停在末尾时 → 才进入预览。
+    @Test func horizontalArrowsRespectTheSearchCaret() {
+        let editor = NSTextView()
+        editor.string = "query"
+        editor.setSelectedRange(NSRange(location: 2, length: 0))
+        #expect(ClipboardPanelCommand.peek.isIntercepted(isPeeking: false, responder: editor) == false)
+        #expect(ClipboardPanelCommand.peek.isIntercepted(isPeeking: true, responder: editor))
+
+        editor.setSelectedRange(NSRange(location: 0, length: 5))
+        #expect(ClipboardPanelCommand.peek.isIntercepted(isPeeking: false, responder: editor) == false)
+
+        editor.setSelectedRange(NSRange(location: 5, length: 0))
+        #expect(ClipboardPanelCommand.peek.isIntercepted(isPeeking: false, responder: editor))
+        #expect(ClipboardPanelCommand.peek.isIntercepted(isPeeking: false, responder: nil))
+
+        #expect(ClipboardPanelCommand.endPeek.isIntercepted(isPeeking: false, responder: editor) == false)
+        #expect(ClipboardPanelCommand.endPeek.isIntercepted(isPeeking: true, responder: editor))
+        #expect(ClipboardPanelCommand.moveDown.isIntercepted(isPeeking: false, responder: editor))
+    }
+
+    @Test(arguments: [ColorScheme.dark, .light])
+    func panelViewLaysOutWhilePeeking(colorScheme: ColorScheme) {
+        let model = makePanelModel(copying: ["a", "https://folita.app"])
+        model.perform(.peek)
+        #expect(model.isPeeking)
+
+        let view = NSHostingView(rootView: ClipboardPanelView(model: model).environment(\.colorScheme, colorScheme))
+        view.layoutSubtreeIfNeeded()
+
+        #expect(view.fittingSize == ClipboardPanelMetrics.windowSize(isPeeking: true))
+    }
+
     /// 面板收起后不再消费按键，避免影响其他窗口。
     @Test func keysAreIgnoredWhilePanelIsHidden() throws {
         let controller = ClipboardPanelController(model: makePanelModel(copying: ["a", "b"]))

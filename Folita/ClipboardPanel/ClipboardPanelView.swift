@@ -9,21 +9,47 @@ struct ClipboardPanelView: View {
     @FocusState private var isSearchFocused: Bool
 
     var body: some View {
+        let isPeeking = model.isPeeking
+        let container = ClipboardPanelMetrics.containerSize(isPeeking: isPeeking)
+
         SiriGlassContainer {
-            VStack(alignment: .leading, spacing: 14) {
-                dragRegion
-                PanelNoticeBanner(notice: model.notice, action: model.resolveNotice, onDismiss: model.dismissNotice)
-                ClipboardHistoryList(model: model)
-                    .frame(maxHeight: .infinity, alignment: .top)
+            VStack(alignment: .leading, spacing: 18) {
+                // 顶栏与标题都可拖动面板，控件自身保持交互。
+                topBar
+                    .contentShape(.rect)
+                    .gesture(WindowDragGesture())
+                VStack(alignment: .leading, spacing: 14) {
+                    header
+                        .contentShape(.rect)
+                        .gesture(WindowDragGesture())
+                    PanelNoticeBanner(notice: model.notice, action: model.resolveNotice, onDismiss: model.dismissNotice)
+                    ClipboardHistoryList(model: model)
+                        .frame(maxHeight: .infinity, alignment: .top)
+                }
+                // 预览时列表收窄到左侧 1/3，右侧 2/3 留给详情栏。
+                .frame(width: ClipboardPanelMetrics.listColumnWidth(isPeeking: isPeeking), alignment: .leading)
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 16)
+            .padding(.horizontal, ClipboardPanelMetrics.contentInset)
+            .padding(.top, ClipboardPanelMetrics.contentTopInset)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .frame(
-            width: ClipboardPanelMetrics.containerSize.width,
-            height: ClipboardPanelMetrics.containerSize.height
-        )
+        .frame(width: container.width, height: container.height)
+        // 详情栏画在玻璃容器的内容蒙版之外：容器底部的渐隐会吃掉详情下半部分的信息区。
+        .overlay(alignment: .topLeading) {
+            if isPeeking {
+                let detail = ClipboardPanelMetrics.peekDetailFrame(in: container)
+                ZStack(alignment: .topLeading) {
+                    ClipPeekDivider()
+                        .frame(height: detail.height)
+                        .offset(x: ClipboardPanelMetrics.peekDividerX(in: container), y: detail.minY)
+                    ClipPeekPanel(item: model.selectedItem)
+                        .frame(width: detail.width, height: detail.height)
+                        .offset(x: detail.minX, y: detail.minY)
+                }
+                .transition(.opacity.combined(with: .offset(x: 20)))
+            }
+        }
+        .animation(.snappy(duration: ClipboardPanelMetrics.peekAnimationDuration), value: isPeeking)
         .shadow(color: .black.opacity(0.28), radius: 22, y: 10)
         .padding(ClipboardPanelMetrics.shadowInset)
         .defaultFocus($isSearchFocused, true)
@@ -36,16 +62,6 @@ struct ClipboardPanelView: View {
         }
         // 固定按键由 ClipboardPanelController 在窗口分发前拦截：搜索框聚焦时
         // TextField 会先消费方向键，视图层的 onKeyPress 收不到这些按键。
-    }
-
-    /// 顶部可拖拽区域：控件之间的空白与标题都可拖动面板，控件自身保持交互。
-    private var dragRegion: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            topBar
-            header
-        }
-        .contentShape(.rect)
-        .gesture(WindowDragGesture())
     }
 
     /// 左侧筛选、右侧搜索。面板靠点击外部或 Esc 收起，不需要关闭按钮。

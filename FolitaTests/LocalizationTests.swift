@@ -29,6 +29,27 @@ struct LocalizationTests {
         #expect(localized("Search…", "zh-Hans") == "搜索…")
     }
 
+    @Test func peekCopyIsLocalized() {
+        let copy: [(LocalizedStringResource, String, String)] = [
+            ("Preview", "Preview", "预览"),
+            ("Information", "Information", "信息"),
+            ("Source", "Source", "来源"),
+            ("Type", "Type", "类型"),
+            ("Dimensions", "Dimensions", "尺寸"),
+            ("Characters", "Characters", "字符数"),
+            ("Files", "Files", "文件数"),
+            ("Size", "Size", "大小"),
+            ("Copied", "Copied", "复制时间"),
+            ("Preview the selected item", "Preview the selected item", "查看选中项详情"),
+            ("Nothing to preview", "Nothing to preview", "没有可预览的内容"),
+            ("Close the preview", "Close the preview", "关闭预览"),
+        ]
+        for (resource, en, zh) in copy {
+            #expect(localized(resource, "en") == en)
+            #expect(localized(resource, "zh-Hans") == zh)
+        }
+    }
+
     @Test func filterTitlesInEnglish() {
         let titles = ClipboardFilter.allCases.map { localized($0.title, "en") }
         #expect(titles == [

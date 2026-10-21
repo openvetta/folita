@@ -17,7 +17,7 @@ struct ClipboardHistoryList: View {
                 LazyVStack(spacing: ClipboardPanelMetrics.historyRowSpacing) {
                     ForEach(items) { item in
                         // 悬停只高亮不选中：跟随鼠标改变选中项会让列表在指针下来回跳动。
-                        ClipboardHistoryRow(item: item, isSelected: item.id == selectedID)
+                        ClipboardHistoryRow(item: item, isSelected: item.id == selectedID, isCompact: model.isPeeking)
                             .id(item.id)
                             .onTapGesture {
                                 model.select(item)
@@ -100,6 +100,8 @@ struct ClipboardHistoryList: View {
 struct ClipboardHistoryRow: View {
     let item: HistoryItem
     let isSelected: Bool
+    /// 详情预览时列表收窄到 1/3：元信息只留类型与时间，其余都在右侧详情里，避免整行被截成省略号。
+    var isCompact = false
 
     @Environment(\.colorScheme) private var colorScheme
     @State private var isHovering = false
@@ -199,35 +201,47 @@ struct ClipboardHistoryRow: View {
     /// 来源 · 类型 · 字数/文件数 · 大小 · 时间，一行看完；图片的尺寸已在标题里。
     private func metadata(_ details: ClipDetails) -> some View {
         HStack(spacing: 5) {
-            if let bundleID = item.sourceBundleID {
-                if let appIcon = ClipPreviewImages.appIcon(bundleID: bundleID) {
-                    Image(nsImage: appIcon)
-                        .resizable()
-                        .frame(width: 12, height: 12)
-                        .accessibilityHidden(true)
-                }
-                Text(verbatim: ClipPreviewImages.appName(bundleID: bundleID) ?? bundleID)
-                separator
-            }
-            // 图片的尺寸已经在标题里，元信息不再重复类型与尺寸。
-            if item.category != .image {
-                Text(item.category.title)
-                separator
-                if details.fileURLs.count > 1 {
-                    Text("\(details.fileURLs.count) files")
-                    separator
-                } else if let characters = details.characterCount, item.category.isTextual {
-                    Text("\(characters) characters")
+            if isCompact {
+                if item.category != .image {
+                    Text(item.category.title)
                     separator
                 }
+            } else {
+                fullMetadata(details)
             }
-            Text(Int64(details.byteCount), format: .byteCount(style: .file))
-            separator
             Text(item.lastCopiedAt, format: .relative(presentation: .named))
         }
         .font(.system(size: 11))
         .foregroundStyle(.secondary)
         .lineLimit(1)
+    }
+
+    @ViewBuilder
+    private func fullMetadata(_ details: ClipDetails) -> some View {
+        if let bundleID = item.sourceBundleID {
+            if let appIcon = ClipPreviewImages.appIcon(bundleID: bundleID) {
+                Image(nsImage: appIcon)
+                    .resizable()
+                    .frame(width: 12, height: 12)
+                    .accessibilityHidden(true)
+            }
+            Text(verbatim: ClipPreviewImages.appName(bundleID: bundleID) ?? bundleID)
+            separator
+        }
+        // 图片的尺寸已经在标题里，元信息不再重复类型与尺寸。
+        if item.category != .image {
+            Text(item.category.title)
+            separator
+            if details.fileURLs.count > 1 {
+                Text("\(details.fileURLs.count) files")
+                separator
+            } else if let characters = details.characterCount, item.category.isTextual {
+                Text("\(characters) characters")
+                separator
+            }
+        }
+        Text(Int64(details.byteCount), format: .byteCount(style: .file))
+        separator
     }
 
     private var separator: some View {

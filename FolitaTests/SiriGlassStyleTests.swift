@@ -34,4 +34,14 @@ struct SiriGlassStyleTests {
         #expect(NSColor(style.iconForeground).alphaComponent >= 0.99)
         #expect(style.iconBackground != style.selection)
     }
+
+    /// 分栏只靠一条细线：看得见但不抢眼，不能比选中行的描边更重。
+    @Test(arguments: [ColorScheme.dark, .light])
+    func peekDividerIsSubtle(colorScheme: ColorScheme) {
+        let style = SiriGlassStyle.resolve(for: colorScheme)
+        let alpha = NSColor(style.peekDivider).alphaComponent
+
+        #expect(alpha > 0.05)
+        #expect(alpha <= 0.15)
+    }
 }

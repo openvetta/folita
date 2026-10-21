@@ -30,6 +30,24 @@ struct ClipboardHistoryListTests {
         #expect(host.fittingSize == CGSize(width: 392, height: 400))
     }
 
+    /// 详情预览时列表收窄到左侧一列，行仍保持统一高度并完成布局。
+    @Test(arguments: appearances)
+    func compactListLaysOutWhilePeeking(locale: String, scheme: ColorScheme) {
+        let model = makePanelModel(copying: ["https://folita.app", "#1E90FF", "A long paragraph that should truncate"])
+        model.perform(.peek)
+        #expect(model.isPeeking)
+
+        let width = ClipboardPanelMetrics.listColumnWidth(isPeeking: true)
+        let host = NSHostingView(
+            rootView: ClipboardHistoryList(model: model)
+                .frame(width: width, height: 400)
+                .environment(\.locale, Locale(identifier: locale))
+                .environment(\.colorScheme, scheme)
+        )
+        host.layoutSubtreeIfNeeded()
+        #expect(host.fittingSize == CGSize(width: width, height: 400))
+    }
+
     @Test(arguments: appearances)
     func emptyStatesLayOut(locale: String, scheme: ColorScheme) {
         let empty = makePanelModel()
