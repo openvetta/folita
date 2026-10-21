@@ -88,19 +88,24 @@ enum PasteTarget: Equatable, Sendable {
 
 enum PasteKeystroke {
     /// 发送 ⌘V。稍作延迟，等面板收起后焦点回到之前的应用。
+    /// 事件的写法与其他剪贴板工具一致：按当前布局取 V 的键位、不附带字符串、投到带标注的会话事件点。
+    /// 此前附带字符 v 并投到 `.cgSessionEventTap`，Electron 应用（如 Vetta）收不到这个按键。
     @MainActor
     static func post(to target: PasteTarget = .keyWindow) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             let source = CGEventSource(stateID: .combinedSessionState)
+            // 用户此刻还按着修饰键时，本地事件抑制会吞掉合成的按键。
+            source?.setLocalEventsFilterDuringSuppressionState(
+                [.permitLocalMouseEvents, .permitSystemDefinedEvents],
+                state: .eventSuppressionStateSuppressionInterval
+            )
+            let keyCode = KeyboardLayoutKeyCode.keyCode(producing: "v")
             for isKeyDown in [true, false] {
-                // 9 是 ANSI 键盘上 V 的键位；同时写入字符 "v"，非 QWERTY 布局下应用按字符匹配快捷键。
-                guard let event = CGEvent(keyboardEventSource: source, virtualKey: 9, keyDown: isKeyDown) else { continue }
+                guard let event = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: isKeyDown) else { continue }
                 event.flags = .maskCommand
-                var character: UniChar = 0x76
-                event.keyboardSetUnicodeString(stringLength: 1, unicodeString: &character)
                 switch target {
                 case .keyWindow:
-                    event.post(tap: .cgSessionEventTap)
+                    event.post(tap: .cgAnnotatedSessionEventTap)
                 case .process(let pid):
                     event.postToPid(pid)
                 }
