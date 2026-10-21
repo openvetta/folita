@@ -62,10 +62,14 @@ final class PasteService {
         return .pasted
     }
 
-    /// 把转换得到的文本（如另一种颜色格式）作为纯文本写回剪贴板，不粘贴。带 Folita 自己的标记，
-    /// 监听时会跳过，不会作为新的一条入历史。
-    func copy(text: String) {
+    /// 把转换得到的文本（如另一种颜色格式）作为纯文本写回剪贴板并粘贴；带 Folita 自己的标记，
+    /// 监听时会跳过，不会作为新的一条入历史。调用前应先收起面板。
+    @discardableResult
+    func paste(text: String) -> Outcome {
         ClipboardWriter.write([ClipContent(type: .string, data: Data(text.utf8))], mode: .plainText, to: pasteboard)
+        guard settings.autoPaste, accessibility.isTrusted() else { return .copied }
+        sendPasteKeystroke(.keyWindow)
+        return .pasted
     }
 
     private func targetApplication() -> PasteTarget {

@@ -55,8 +55,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             clipboardPanel?.hide()
             NSWorkspace.shared.open(url)
         }
-        clipboardPanel.model.onCopyText = { text in
-            pasteService.copy(text: text)
+        clipboardPanel.model.onPasteText = { [weak clipboardPanel] text in
+            clipboardPanel?.hide()
+            pasteService.paste(text: text)
         }
         clipboardPanel.model.noticeProvider = {
             PanelNotice.resolve(

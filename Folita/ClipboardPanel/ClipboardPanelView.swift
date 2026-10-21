@@ -70,16 +70,6 @@ struct ClipboardPanelView: View {
                     .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
             }
         }
-        // 复制成功的提示浮在底部，不受容器渐隐蒙版影响。
-        .overlay(alignment: .bottom) {
-            if let text = model.copyFeedback {
-                CopyFeedbackToast(text: text)
-                    .padding(.horizontal, ClipboardPanelMetrics.contentInset)
-                    .padding(.bottom, 36)
-                    .transition(.opacity.combined(with: .offset(y: 8)))
-            }
-        }
-        .animation(.snappy(duration: 0.18), value: model.copyFeedback)
         // 二级菜单画在一级卡片旁边，与它同层。
         .overlay(alignment: .topLeading) {
             if let frame = model.actionsSubmenuFrame {

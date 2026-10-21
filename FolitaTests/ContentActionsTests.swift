@@ -199,12 +199,11 @@ struct ContentActionsTests {
         #expect(opened == [URL(string: "mailto:alice@example.com")!])
     }
 
-    /// 颜色：⌘K → 「转换颜色格式」展开成右侧二级菜单（直接写出色值）→ 选 RGB → 复制并提示已复制，面板保持打开。
-    @Test func colorIsConvertedAndCopiedFromTheMenu() async throws {
+    /// 颜色：⌘K → 「转换颜色格式」展开成旁边的二级菜单（直接写出色值）→ 选 RGB → 交给宿主粘贴转换结果。
+    @Test func colorIsConvertedAndPastedFromTheMenu() throws {
         let model = makePanelModel(copying: ["#1E90FF"])
-        var copied: [String] = []
-        model.onCopyText = { copied.append($0) }
-        model.copyFeedbackDuration = .zero
+        var pasted: [String] = []
+        model.onPasteText = { pasted.append($0) }
         let controller = try openMenu(model: model)
         defer { controller.hide() }
 
@@ -231,37 +230,30 @@ struct ContentActionsTests {
         #expect(model.highlightedActionsMenuEntry == .convertTo(.rgb, text: "rgb(30, 144, 255)"))
         #expect(controller.handleKeyDown(try key("\r")))
 
-        #expect(copied == ["rgb(30, 144, 255)"])
+        #expect(pasted == ["rgb(30, 144, 255)"])
         #expect(model.isShowingActionsMenu == false)
-        #expect(controller.isVisible)
-        #expect(model.copyFeedback == "rgb(30, 144, 255)")
-
-        // 提示稍后自行消失。
-        await model.copyFeedbackTask?.value
-        #expect(model.copyFeedback == nil)
     }
 
     /// 详情区的按钮走同一组模型动作；与内容不符的条目不触发。
     @Test func peekActionsOnlyApplyToMatchingItems() throws {
         let model = makePanelModel(copying: ["#1E90FF", "https://folita.app", "plain"])
         var opened: [URL] = []
-        var copied: [String] = []
+        var pasted: [String] = []
         model.onOpenURL = { opened.append($0) }
-        model.onCopyText = { copied.append($0) }
+        model.onPasteText = { pasted.append($0) }
         func item(_ category: ClipCategory) throws -> HistoryItem {
             try #require(model.visibleItems.first { $0.category == category })
         }
 
         model.openInBrowser(try item(.text))
         model.convertColor(of: try item(.link), to: .rgb)
-        #expect(opened.isEmpty && copied.isEmpty && model.copyFeedback == nil)
+        #expect(opened.isEmpty && pasted.isEmpty)
 
         model.openInBrowser(try item(.link))
         model.composeEmail(to: "a@x.com")
         model.convertColor(of: try item(.color), to: .hsl)
         #expect(opened == [URL(string: "https://folita.app")!, URL(string: "mailto:a@x.com")!])
-        #expect(copied == ["hsl(210, 100%, 56%)"])
-        #expect(model.copyFeedback == "hsl(210, 100%, 56%)")
+        #expect(pasted == ["hsl(210, 100%, 56%)"])
     }
 
     // MARK: 详情布局
@@ -287,10 +279,11 @@ struct ContentActionsTests {
 
     // MARK: 粘贴转换结果
 
-    /// 转换结果以纯文本写回剪贴板，只复制不粘贴，并带上自己的标记避免被监听重复入库。
-    @Test func copyingConvertedTextWritesPlainTextWithoutPasting() {
+    /// 转换结果以纯文本写回剪贴板；授权齐全时发送 ⌘V，否则只复制；带自己的标记避免被监听重复入库。
+    @Test func pastingConvertedTextWritesPlainText() {
         let pasteboard = NSPasteboard(name: .init("FolitaTests.Convert.\(UUID().uuidString)"))
         let suite = "FolitaTests.Convert.\(UUID().uuidString)"
+        var trusted = true
         var keystrokes: [PasteTarget] = []
         defer {
             pasteboard.releaseGlobally()
@@ -300,14 +293,18 @@ struct ContentActionsTests {
             pasteboard: pasteboard,
             store: ClipboardHistoryStore(container: HistoryStorage.makeInMemoryContainer(), limit: { 500 }),
             settings: PasteSettings(userDefaults: UserDefaults(suiteName: suite)!),
-            accessibility: AccessibilityAccess(isTrusted: { true }, requestAccess: {}),
+            accessibility: AccessibilityAccess(isTrusted: { trusted }, requestAccess: {}),
             sendPasteKeystroke: { keystrokes.append($0) }
         )
 
-        service.copy(text: "rgb(30, 144, 255)")
+        #expect(service.paste(text: "rgb(30, 144, 255)") == .pasted)
         #expect(pasteboard.string(forType: .string) == "rgb(30, 144, 255)")
         #expect(pasteboard.types?.contains(.folitaOrigin) == true)
-        #expect(keystrokes.isEmpty)
+        #expect(keystrokes == [.keyWindow])
+
+        trusted = false
+        #expect(service.paste(text: "#1E90FF") == .copied)
+        #expect(keystrokes.count == 1)
     }
 
     // MARK: 详情
@@ -328,22 +325,11 @@ struct ContentActionsTests {
         #expect(LinkBrandCard.title(of: LinkTarget(brand: .x, kind: .profile, title: "@jack")).runs.count == 1)
     }
 
-    @Test(arguments: appearances)
-    func copyToastLaysOut(locale: String, scheme: ColorScheme) {
-        let host = NSHostingView(
-            rootView: CopyFeedbackToast(text: "hsla(210, 100%, 56%, 0.5)")
-                .environment(\.locale, Locale(identifier: locale))
-                .environment(\.colorScheme, scheme)
-        )
-        host.layoutSubtreeIfNeeded()
-        #expect(host.fittingSize.width > 0 && host.fittingSize.width <= ClipboardPanelMetrics.containerSize.width)
-    }
-
     // MARK: 本地化
 
     @Test func newCopyIsLocalized() {
         let copy: [(LocalizedStringResource, String)] = [
-            ("Open in Browser", "在浏览器中打开"), ("Copied to Clipboard", "已复制到剪贴板"), ("Send Email", "发送邮件"), ("Convert Color", "转换颜色格式"),
+            ("Open in Browser", "在浏览器中打开"), ("Send Email", "发送邮件"), ("Convert Color", "转换颜色格式"),
             (LinkTarget.Kind.repository.title, "仓库"), (LinkTarget.Kind.profile.title, "个人主页"),
             (LinkTarget.Kind.gist.title, "代码片段"), (LinkTarget.Kind.post.title, "帖子"),
             (LinkTarget.Kind.video.title, "视频"), (LinkTarget.Kind.channel.title, "频道"),

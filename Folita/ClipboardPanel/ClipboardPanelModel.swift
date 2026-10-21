@@ -26,7 +26,7 @@ enum ClipboardPanelCommand: Equatable {
     case openInBrowser
     /// 给指定邮件地址写信。
     case composeEmail(String)
-    /// 把颜色条目转换成另一种格式并复制到剪贴板。
+    /// 把颜色条目转换成另一种格式并粘贴。
     case convertColor(ColorFormat)
     /// 打开或收起选中项的「更多操作」菜单（⌘K，右键也能打开）。
     case toggleActionsMenu
@@ -193,12 +193,8 @@ final class ClipboardPanelModel {
     @ObservationIgnored var onRevealInFinder: ([URL]) -> Void = { _ in }
     /// 用系统默认应用打开网址（http(s) 链接与 mailto）；由宿主装配（收起面板并调用系统接口）。
     @ObservationIgnored var onOpenURL: (URL) -> Void = { _ in }
-    /// 把转换后的文本写回剪贴板（不粘贴、不入历史）；由宿主装配。
-    @ObservationIgnored var onCopyText: (String) -> Void = { _ in }
-    /// 「已复制」提示停留多久；测试替换为可控值。
-    @ObservationIgnored var copyFeedbackDuration: Duration = .milliseconds(1600)
-    /// 「已复制」提示的消隐任务；测试可等待它完成。
-    @ObservationIgnored private(set) var copyFeedbackTask: Task<Void, Never>?
+    /// 收起面板，把转换后的文本写回剪贴板并粘贴到之前的应用；由宿主装配。
+    @ObservationIgnored var onPasteText: (String) -> Void = { _ in }
     @ObservationIgnored var onDismiss: () -> Void = {}
     @ObservationIgnored var noticeProvider: () -> PanelNotice = { .none }
     @ObservationIgnored var onResolveNotice: (PanelNotice) -> Void = { _ in }
@@ -227,7 +223,6 @@ final class ClipboardPanelModel {
         selectedID = nil
         isPeeking = false
         actionsMenuItemID = nil
-        clearCopyFeedback()
         targetAppName = targetAppNameProvider()
         refreshNotice()
         presentationCount += 1
@@ -239,9 +234,6 @@ final class ClipboardPanelModel {
         query += text
         searchFocusRequest += 1
     }
-
-    /// 刚复制到剪贴板的文本，面板据此在底部短暂显示「已复制」；nil 表示没有提示。
-    private(set) var copyFeedback: String?
 
     /// 授权状态可能在面板打开期间改变（例如从系统设置切回来）。
     func refreshNotice() {
@@ -411,29 +403,10 @@ final class ClipboardPanelModel {
         onOpenURL(url)
     }
 
-    /// 把颜色条目转换成指定格式并复制到剪贴板，面板保持打开并提示已复制；不是颜色条目时不做任何事。
+    /// 把颜色条目转换成指定格式并粘贴；不是颜色条目时不做任何事。
     func convertColor(of item: HistoryItem, to format: ColorFormat) {
         guard let color = details(of: item).color else { return }
-        let text = format.string(for: color)
-        onCopyText(text)
-        showCopyFeedback(text)
-    }
-
-    private func showCopyFeedback(_ text: String) {
-        copyFeedbackTask?.cancel()
-        copyFeedback = text
-        let duration = copyFeedbackDuration
-        copyFeedbackTask = Task { [weak self] in
-            try? await Task.sleep(for: duration)
-            guard !Task.isCancelled else { return }
-            self?.copyFeedback = nil
-        }
-    }
-
-    private func clearCopyFeedback() {
-        copyFeedbackTask?.cancel()
-        copyFeedbackTask = nil
-        copyFeedback = nil
+        onPasteText(format.string(for: color))
     }
 
     func setRowFrame(_ frame: CGRect, for id: UUID) {

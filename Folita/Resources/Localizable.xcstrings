@@ -341,16 +341,6 @@
         }
       }
     },
-    "Copied to Clipboard" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已复制到剪贴板"
-          }
-        }
-      }
-    },
     "Copies made in these apps are not recorded." : {
       "localizations" : {
         "zh-Hans" : {
