@@ -186,6 +186,9 @@ struct ClipboardPanelTests {
         #expect(controller.handleKeyDown(try key("\u{F703}")))
         #expect(controller.handleKeyDown(try key("\u{1B}")))
         #expect(controller.isVisible == false)
+        // 收起时就已复位，下次呼出不会再看到从加宽到默认的变形动画。
+        #expect(model.isPeeking == false)
+        #expect(panel.frame.size == ClipboardPanelMetrics.windowSize)
 
         // 再次呼出时回到普通宽度。
         controller.show()

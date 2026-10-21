@@ -81,6 +81,7 @@ final class ClipboardPanelController {
         closeAttachedWindows()
         panel?.orderOut(nil)
         isVisible = false
+        resetPeekWhileHidden()
         removeEventMonitors()
     }
 
@@ -146,6 +147,12 @@ final class ClipboardPanelController {
                 self.resizePanel(isPeeking: false)
             }
         }
+    }
+
+    /// 收起时就复位预览并还原窗口尺寸：留到下次呼出再复位，用户会看到从加宽到默认的变形动画。
+    private func resetPeekWhileHidden() {
+        model.perform(.endPeek)
+        resizePanel(isPeeking: false)
     }
 
     private func cancelPeekCollapse() {
