@@ -69,15 +69,11 @@ struct ClipPeekCard: View {
         VStack(alignment: .leading, spacing: 14) {
             preview(details, style: style)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            if item.category == .file {
-                Button(action: onOpenInFinder) {
-                    Label("Open in Finder", systemImage: "folder")
-                        .font(.system(size: 12, weight: .medium))
-                        .frame(maxWidth: .infinity)
+                .overlay(alignment: .topTrailing) {
+                    if item.category == .file {
+                        openInFinderButton.padding(10)
+                    }
                 }
-                .buttonStyle(.glass)
-                .controlSize(.large)
-            }
             information(details, style: style)
         }
         .accessibilityElement(children: .contain)
@@ -85,6 +81,24 @@ struct ClipPeekCard: View {
         .task(id: item.id) {
             image = await ClipPreviewImages.thumbnail(for: item, maxPixelSize: 1200)
         }
+    }
+
+    /// 预览区右上角的胶囊按钮，左侧带访达图标。
+    private var openInFinderButton: some View {
+        Button(action: onOpenInFinder) {
+            HStack(spacing: 6) {
+                if let finderIcon = ClipPreviewImages.appIcon(bundleID: "com.apple.finder") {
+                    Image(nsImage: finderIcon)
+                        .resizable()
+                        .frame(width: 16, height: 16)
+                        .accessibilityHidden(true)
+                }
+                Text("Open in Finder")
+                    .font(.system(size: 12, weight: .medium))
+            }
+        }
+        .buttonStyle(.glass)
+        .buttonBorderShape(.capsule)
     }
 
     // MARK: 预览
