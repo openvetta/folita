@@ -6,11 +6,13 @@ import SwiftUI
 struct ClipPeekPanel: View {
     /// 当前选中的条目；搜索或筛选后列表为空时为 nil。
     let item: HistoryItem?
+    /// 文件条目的「从访达打开」。
+    var onOpenInFinder: (HistoryItem) -> Void = { _ in }
 
     var body: some View {
         ZStack {
             if let item {
-                ClipPeekCard(item: item)
+                ClipPeekCard(item: item, onOpenInFinder: { onOpenInFinder(item) })
                     .id(item.id)
                     .transition(.opacity)
             } else {
@@ -55,6 +57,7 @@ struct ClipPeekDivider: View {
 /// 详情栏的内容：上半部分是大图或正文，下半部分是信息列表。
 struct ClipPeekCard: View {
     let item: HistoryItem
+    var onOpenInFinder: () -> Void = {}
 
     @Environment(\.colorScheme) private var colorScheme
     @State private var image: CGImage?
@@ -183,6 +186,12 @@ struct ClipPeekCard: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
+                Button(action: onOpenInFinder) {
+                    Label("Open in Finder", systemImage: "folder")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .buttonStyle(.glass)
+                .padding(.top, 4)
             }
             .padding(20)
         } else {

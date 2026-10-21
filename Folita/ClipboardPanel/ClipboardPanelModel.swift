@@ -148,6 +148,8 @@ final class ClipboardPanelModel {
 
     @ObservationIgnored let store: ClipboardHistoryStore
     @ObservationIgnored var onPaste: (HistoryItem, PasteMode) -> Void = { _, _ in }
+    /// 在访达中显示文件；由宿主装配（收起面板并调用系统接口）。
+    @ObservationIgnored var onRevealInFinder: ([URL]) -> Void = { _ in }
     @ObservationIgnored var onDismiss: () -> Void = {}
     @ObservationIgnored var noticeProvider: () -> PanelNotice = { .none }
     @ObservationIgnored var onResolveNotice: (PanelNotice) -> Void = { _ in }
@@ -199,6 +201,12 @@ final class ClipboardPanelModel {
     func dismissNotice() {
         dismissedNotices.insert(notice)
         notice = .none
+    }
+
+    /// 详情中的「从访达打开」：只对带文件的条目生效。
+    func openInFinder(_ item: HistoryItem) {
+        guard let urls = ClipClassification.fileURLs(in: item.clipContents) else { return }
+        onRevealInFinder(urls)
     }
 
     func select(_ item: HistoryItem) {

@@ -39,7 +39,7 @@ struct ClipboardPanelView: View {
                     ClipPeekDivider()
                         .frame(height: detail.height)
                         .offset(x: ClipboardPanelMetrics.peekDividerX(in: container), y: detail.minY)
-                    ClipPeekPanel(item: model.selectedItem)
+                    ClipPeekPanel(item: model.selectedItem, onOpenInFinder: model.openInFinder)
                         .frame(width: detail.width, height: detail.height)
                         .offset(x: detail.minX, y: detail.minY)
                 }

@@ -93,6 +93,19 @@ struct ClipPeekViewTests {
         #expect(host.fittingSize == size)
     }
 
+    /// 文件条目的「从访达打开」把条目里的全部文件交给宿主；非文件条目不触发。
+    @Test func openInFinderPassesAllFilesOfTheItem() throws {
+        let model = makeSampleModel()
+        var revealed: [[URL]] = []
+        model.onRevealInFinder = { revealed.append($0) }
+
+        model.openInFinder(try item(model, .text))
+        #expect(revealed.isEmpty)
+
+        model.openInFinder(try item(model, .file))
+        #expect(revealed == [[URL(filePath: "/tmp/report.pdf"), URL(filePath: "/tmp/notes.txt")]])
+    }
+
     // MARK: 信息区
 
     @Test func imageInformationShowsSourceAndDimensions() throws {

@@ -41,6 +41,7 @@ struct LocalizationTests {
             ("Preview the selected item", "Preview the selected item", "查看选中项详情"),
             ("Nothing to preview", "Nothing to preview", "没有可预览的内容"),
             ("Close the preview", "Close the preview", "关闭预览"),
+            ("Open in Finder", "Open in Finder", "从访达打开"),
         ]
         for (resource, en, zh) in copy {
             #expect(localized(resource, "en") == en)

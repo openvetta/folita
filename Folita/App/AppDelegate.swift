@@ -43,6 +43,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             clipboardPanel?.hide()
             pasteService.paste(item, mode: mode)
         }
+        clipboardPanel.model.onRevealInFinder = { [weak clipboardPanel] urls in
+            clipboardPanel?.hide()
+            NSWorkspace.shared.activateFileViewerSelecting(urls)
+        }
         clipboardPanel.model.noticeProvider = {
             PanelNotice.resolve(
                 autoPaste: pasteSettings.autoPaste,

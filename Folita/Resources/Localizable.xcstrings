@@ -732,6 +732,16 @@
         }
       }
     },
+    "Open in Finder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从访达打开"
+          }
+        }
+      }
+    },
     "Open Main Panel" : {
       "localizations" : {
         "zh-Hans" : {
