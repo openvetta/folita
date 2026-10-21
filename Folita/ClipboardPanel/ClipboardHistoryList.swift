@@ -108,11 +108,14 @@ struct ClipboardHistoryRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             if Self.showsShortcutHints(isSelected: isSelected, isCompact: isCompact) {
                 HStack(spacing: 4) {
-                    KeyCap(systemImage: "arrow.right")
-                    Spacer(minLength: 4)
                     ForEach(ClipboardActionsMenuEntry.menuHintKeyCaps, id: \.self) { key in
                         KeyCap(key)
                     }
+                    Text(verbatim: "/")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .accessibilityHidden(true)
+                    KeyCap(systemImage: "arrow.right")
                 }
             }
         }
@@ -128,7 +131,7 @@ struct ClipboardHistoryRow: View {
         }
     }
 
-    /// 选中行右侧提示 → 可看详情、⌘K 可打开更多操作；预览已打开（列表收窄）时不再提示。
+    /// 选中行右侧提示 ⌘K 打开更多操作、/ 分割、→ 可看详情；预览已打开（列表收窄）时不再提示。
     static func showsShortcutHints(isSelected: Bool, isCompact: Bool) -> Bool {
         isSelected && !isCompact
     }

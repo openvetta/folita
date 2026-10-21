@@ -67,11 +67,23 @@ struct ClipboardHistoryRowTests {
         }
     }
 
-    /// 只有选中且未进入预览的行显示 → 与 ⌘K 两个键帽。
+    /// 只有选中且未进入预览的行在右侧显示 ⌘K、/ 分割与 → 快捷键指示。
     @Test func shortcutHintsShowOnlyOnSelectedRowOutsidePeek() {
         #expect(ClipboardHistoryRow.showsShortcutHints(isSelected: true, isCompact: false))
         #expect(!ClipboardHistoryRow.showsShortcutHints(isSelected: false, isCompact: false))
         #expect(!ClipboardHistoryRow.showsShortcutHints(isSelected: true, isCompact: true))
+    }
+
+    /// 选中行右侧的快捷键指示（⌘K / →）靠右对齐并能稳定完成布局，深浅色与中英文均能正确渲染且行高一致。
+    @Test(arguments: appearances)
+    func selectedRowLaysOutWithShortcutHints(locale: String, scheme: ColorScheme) {
+        let sampleItem = item(Self.samples[0])
+        let height = height(
+            of: ClipboardHistoryRow(item: sampleItem, isSelected: true, isCompact: false),
+            locale: locale,
+            scheme: scheme
+        )
+        #expect(height == ClipboardPanelMetrics.historyRowHeight)
     }
     /// 键帽固定为正方形：组合键靠多个键帽并排，而不是把两个字符塞进同一格。
     @Test(arguments: [ColorScheme.dark, .light])
