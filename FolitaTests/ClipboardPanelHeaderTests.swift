@@ -44,11 +44,13 @@ struct ClipboardPanelHeaderTests {
         ("en", ColorScheme.light),
         ("en", ColorScheme.dark),
     ])
-    func searchFieldKeepsFixedCapsuleSize(localeIdentifier: String, colorScheme: ColorScheme) {
+    func searchFieldFillsAvailableWidth(localeIdentifier: String, colorScheme: ColorScheme) {
         struct Host: View {
             @State var query = "folita"
             @FocusState var focused: Bool
-            var body: some View { ClipboardSearchField(query: $query, isFocused: $focused) }
+            var body: some View {
+                ClipboardSearchField(query: $query, isFocused: $focused).frame(width: 300)
+            }
         }
         let host = NSHostingView(
             rootView: Host()
@@ -57,10 +59,7 @@ struct ClipboardPanelHeaderTests {
         )
         host.layoutSubtreeIfNeeded()
 
-        #expect(host.fittingSize == CGSize(
-            width: ClipboardPanelMetrics.searchFieldWidth,
-            height: ClipboardPanelMetrics.controlHeight
-        ))
+        #expect(host.fittingSize == CGSize(width: 300, height: ClipboardPanelMetrics.controlHeight))
     }
 
     @Test(arguments: [ColorScheme.dark, .light])

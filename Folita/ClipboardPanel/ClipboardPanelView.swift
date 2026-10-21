@@ -63,17 +63,25 @@ struct ClipboardPanelView: View {
         // TextField 会先消费方向键，视图层的 onKeyPress 收不到这些按键。
     }
 
-    /// 左侧筛选、右侧搜索。面板靠点击外部或 Esc 收起，不需要关闭按钮。
-    /// 两个控件放进同一个 GlassEffectContainer，让液态玻璃在相邻时统一取样与融合。
+    /// 左侧应用图标、中间全宽搜索、右侧筛选。面板靠点击外部或 Esc 收起，不需要关闭按钮。
     private var topBar: some View {
         GlassEffectContainer(spacing: 12) {
             HStack(spacing: 12) {
-                filterButton
-                Spacer(minLength: 0)
+                appLogo
                 ClipboardSearchField(query: $model.query, isFocused: $isSearchFocused)
+                filterButton
             }
         }
         .frame(height: ClipboardPanelMetrics.controlHeight)
+    }
+
+    /// 跟随用户所选的应用图标（运行期 Dock 图标）。
+    private var appLogo: some View {
+        Image(nsImage: NSApp?.applicationIconImage ?? NSImage())
+            .resizable()
+            .scaledToFit()
+            .frame(width: ClipboardPanelMetrics.controlHeight, height: ClipboardPanelMetrics.controlHeight)
+            .accessibilityHidden(true)
     }
 
     private var filterButton: some View {

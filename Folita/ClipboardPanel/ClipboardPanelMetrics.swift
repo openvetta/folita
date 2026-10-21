@@ -4,9 +4,8 @@ enum ClipboardPanelMetrics {
     /// 玻璃容器本体尺寸。
     static let containerSize = CGSize(width: 440, height: 560)
     static let cornerRadius: CGFloat = 34
-    /// 顶栏圆形按钮与搜索胶囊的高度。
-    static let controlHeight: CGFloat = 30
-    static let searchFieldWidth: CGFloat = 220
+    /// 顶栏高度，也是应用图标与筛选按钮的边长。
+    static let controlHeight: CGFloat = 36
     /// 历史行的统一高度：两行文字加上下留白，选中不改变高度，列表不会跳动。
     static let historyRowHeight: CGFloat = 52
     /// 历史行左侧图标块的边长，图片缩略图也撑满这块区域。
