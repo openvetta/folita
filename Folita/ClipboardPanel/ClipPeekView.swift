@@ -83,11 +83,13 @@ struct ClipPeekCard: View {
 
         VStack(alignment: .leading, spacing: 14) {
             preview(details, style: style)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // 站点卡片是固定高度，预览区不再撑满，信息列表紧跟在卡片下面。
+                .frame(maxWidth: .infinity, maxHeight: details.linkTarget == nil ? .infinity : nil)
                 .overlay(alignment: .topTrailing) {
                     actionButtons(details).padding(10)
                 }
             information(details, style: style)
+            if details.linkTarget != nil { Spacer(minLength: 0) }
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("Preview"))
@@ -236,7 +238,6 @@ struct ClipPeekCard: View {
         case .link:
             if let target = details.linkTarget, let url = details.link {
                 LinkBrandCard(target: target, url: url)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             } else {
                 linkPreview(details, style: style)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -335,6 +335,31 @@ struct ContentActionsTests {
         #expect(LinkBrandCard.height < size.height / 2)
     }
 
+    /// 站点卡片下面紧跟信息列表，两者之间只有正常间距，不留大片空白。
+    @Test(arguments: appearances)
+    func informationFollowsTheBrandCardClosely(locale: String, scheme: ColorScheme) throws {
+        let model = makePanelModel(copying: ["https://github.com/openvetta/folita"])
+        let item = try #require(model.selectedItem)
+        let size = ClipboardPanelMetrics.peekDetailFrame(in: ClipboardPanelMetrics.containerSize(isPeeking: true)).size
+        let host = NSHostingView(
+            rootView: ClipPeekCard(item: item)
+                .frame(width: size.width, height: size.height, alignment: .top)
+                .environment(\.locale, Locale(identifier: locale))
+                .environment(\.colorScheme, scheme)
+        )
+        host.layoutSubtreeIfNeeded()
+        // 内容自然高度（卡片 + 间距 + 信息区）明显小于详情栏高度时，说明预览区没有被撑满。
+        let natural = NSHostingView(
+            rootView: ClipPeekCard(item: item)
+                .frame(width: size.width)
+                .environment(\.locale, Locale(identifier: locale))
+                .environment(\.colorScheme, scheme)
+        )
+        natural.layoutSubtreeIfNeeded()
+        #expect(natural.fittingSize.height < LinkBrandCard.height + 14 + size.height / 2)
+        #expect(host.fittingSize == size)
+    }
+
     @Test func repositoryTitleSplitsOwnerAndName() {
         let target = LinkTarget(brand: .github, kind: .repository, title: "openvetta/folita")
         let title = LinkBrandCard.title(of: target)
