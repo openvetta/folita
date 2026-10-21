@@ -1,8 +1,7 @@
 import SwiftUI
 
 /// Siri 新 UI 质地的取色：上部高不透明度着色承载文字，下部渐隐露出底层玻璃，
-/// 再以一圈高光描边勾出容器边缘。剪贴面板固定使用深色外观（效果只在深色下成立），
-/// 取色集中在此，禁止在视图中硬编码颜色。
+/// 再以一圈高光描边勾出容器边缘。深浅色外观各自一套，禁止在视图中硬编码颜色。
 struct SiriGlassStyle: Equatable {
     var tint: [Gradient.Stop]
     var rim: [Color]
@@ -31,23 +30,48 @@ struct SiriGlassStyle: Equatable {
         .init(color: .clear, location: 0.94),
     ]
 
-    static let panel = SiriGlassStyle(
-        tint: [
-            .init(color: .black.opacity(0.95), location: 0),
-            .init(color: .black.opacity(0.90), location: 0.55),
-            .init(color: .black.opacity(0.38), location: 0.84),
-            .init(color: .black.opacity(0.06), location: 1),
-        ],
-        rim: [.white.opacity(0.40), .white.opacity(0.08), .white.opacity(0.22)],
-        handle: .white.opacity(0.85),
-        selection: Color(white: 0.24).opacity(0.97),
-        selectionRim: .white.opacity(0.10),
-        iconBackground: Color(white: 0.36),
-        iconForeground: Color(white: 0.97),
-        iconRim: .white.opacity(0.12),
-        peekDivider: .white.opacity(0.12),
-        peekWell: .white.opacity(0.06),
-        peekStripe: .white.opacity(0.06),
-        peekShadow: .black.opacity(0.35)
-    )
+    static func resolve(for colorScheme: ColorScheme) -> SiriGlassStyle {
+        switch colorScheme {
+        case .light:
+            SiriGlassStyle(
+                tint: [
+                    .init(color: .white.opacity(0.94), location: 0),
+                    .init(color: .white.opacity(0.88), location: 0.55),
+                    .init(color: .white.opacity(0.40), location: 0.84),
+                    .init(color: .white.opacity(0.08), location: 1),
+                ],
+                rim: [.white.opacity(0.95), .black.opacity(0.06), .white.opacity(0.7)],
+                handle: .black.opacity(0.35),
+                selection: Color(white: 0.90).opacity(0.97),
+                selectionRim: .black.opacity(0.06),
+                iconBackground: Color(white: 0.84),
+                iconForeground: Color(white: 0.30),
+                iconRim: .black.opacity(0.08),
+                peekDivider: .black.opacity(0.10),
+                peekWell: .black.opacity(0.05),
+                peekStripe: .black.opacity(0.045),
+                peekShadow: .black.opacity(0.12)
+            )
+        default:
+            SiriGlassStyle(
+                tint: [
+                    .init(color: .black.opacity(0.95), location: 0),
+                    .init(color: .black.opacity(0.90), location: 0.55),
+                    .init(color: .black.opacity(0.38), location: 0.84),
+                    .init(color: .black.opacity(0.06), location: 1),
+                ],
+                rim: [.white.opacity(0.40), .white.opacity(0.08), .white.opacity(0.22)],
+                handle: .white.opacity(0.85),
+                selection: Color(white: 0.24).opacity(0.97),
+                selectionRim: .white.opacity(0.10),
+                iconBackground: Color(white: 0.36),
+                iconForeground: Color(white: 0.97),
+                iconRim: .white.opacity(0.12),
+                peekDivider: .white.opacity(0.12),
+                peekWell: .white.opacity(0.06),
+                peekStripe: .white.opacity(0.06),
+                peekShadow: .black.opacity(0.35)
+            )
+        }
+    }
 }

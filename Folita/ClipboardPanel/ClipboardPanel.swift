@@ -13,8 +13,6 @@ final class ClipboardPanel: NSPanel {
             backing: .buffered,
             defer: true
         )
-        // 窗口外观也锁定深色，系统控件、光标与附属气泡与内容一致。
-        appearance = NSAppearance(named: .darkAqua)
         isFloatingPanel = true
         level = .floating
         isOpaque = false

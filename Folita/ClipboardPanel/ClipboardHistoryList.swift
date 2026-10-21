@@ -103,6 +103,7 @@ struct ClipboardHistoryRow: View {
     /// 详情预览时列表收窄到 1/3：元信息只留类型与时间，其余都在右侧详情里，避免整行被截成省略号。
     var isCompact = false
 
+    @Environment(\.colorScheme) private var colorScheme
     @State private var isHovering = false
     @State private var thumbnail: CGImage?
 
@@ -137,7 +138,7 @@ struct ClipboardHistoryRow: View {
     // MARK: 背景
 
     private var background: some View {
-        let style = SiriGlassStyle.panel
+        let style = SiriGlassStyle.resolve(for: colorScheme)
         let shape = RoundedRectangle(cornerRadius: ClipboardPanelMetrics.historyRowCornerRadius, style: .continuous)
         return shape
             .fill(rowFill(style))
@@ -160,7 +161,7 @@ struct ClipboardHistoryRow: View {
     /// 宽图按填充裁切，不会溢出到右侧文字上。
     @ViewBuilder
     private func icon(_ details: ClipDetails) -> some View {
-        let style = SiriGlassStyle.panel
+        let style = SiriGlassStyle.resolve(for: colorScheme)
         let size = ClipboardPanelMetrics.historyIconSize
         let shape = RoundedRectangle(cornerRadius: 6, style: .continuous)
 

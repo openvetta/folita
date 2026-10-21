@@ -28,13 +28,6 @@ struct ClipboardPanelTests {
         #expect(panel.canBecomeMain == false)
     }
 
-    @Test func panelWindowIsLockedToDarkAppearance() {
-        let panel = ClipboardPanel()
-
-        #expect(panel.appearance?.name == .darkAqua)
-        #expect(panel.effectiveAppearance.name == .darkAqua)
-    }
-
     @Test func windowFrameIsTopCenteredInVisibleArea() {
         let visible = CGRect(x: 0, y: 0, width: 1512, height: 944)
         let frame = ClipboardPanelMetrics.windowFrame(in: visible)
@@ -101,7 +94,6 @@ struct ClipboardPanelTests {
         #expect(panel.isVisible == false)
     }
 
-    /// 面板固定深色：宿主处于浅色环境时同样能完成布局。
     @Test(arguments: [ColorScheme.dark, .light])
     func panelViewLaysOutAtWindowSize(colorScheme: ColorScheme) {
         let view = NSHostingView(rootView: ClipboardPanelView(model: makePanelModel(copying: ["a", "https://folita.app"])).environment(\.colorScheme, colorScheme))

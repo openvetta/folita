@@ -9,7 +9,7 @@
 | 主面板 | 传统 macOS 工具布局：侧边栏分区 + 设置内容（SwiftUI `Window` + `NavigationSplitView`） | 菜单栏图标 → 打开主面板 |
 | 剪贴面板 | iOS 27 Siri 新 UI 风格的通透玻璃容器，自屏幕顶部居中弹出（无边框非激活 `NSPanel`） | 菜单栏图标 → 显示剪贴面板；主面板工具栏按钮；`Esc` 关闭 |
 
-剪贴面板的质地由 `SiriGlassContainer` 提供：Liquid Glass 打底，自上而下渐隐的着色，内容在底部淡出，边缘高光描边，底部把手。剪贴面板固定深色，取色集中在 `SiriGlassStyle`；主窗口跟随系统外观。
+剪贴面板的质地由 `SiriGlassContainer` 提供：Liquid Glass 打底，自上而下渐隐的着色，内容在底部淡出，边缘高光描边，底部把手。深浅色外观的取色集中在 `SiriGlassStyle`。
 
 ## 目录
 

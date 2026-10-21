@@ -51,8 +51,6 @@ struct ClipboardPanelView: View {
         }
         .animation(.snappy(duration: ClipboardPanelMetrics.peekAnimationDuration), value: isPeeking)
         .padding(ClipboardPanelMetrics.shadowInset)
-        // 面板固定深色：玻璃质感只在深色下成立，不随系统外观变化（主窗口仍跟随系统）。
-        .environment(\.colorScheme, .dark)
         .defaultFocus($isSearchFocused, true)
         .onChange(of: model.presentationCount) {
             isSearchFocused = true

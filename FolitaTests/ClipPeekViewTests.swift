@@ -6,7 +6,7 @@ import Testing
 @MainActor
 struct ClipPeekViewTests {
     nonisolated private static let appearances: [(String, ColorScheme)] = [
-        ("zh-Hans", .dark), ("en", .dark),
+        ("zh-Hans", .light), ("zh-Hans", .dark), ("en", .light), ("en", .dark),
     ]
 
     private static func png(width: Int, height: Int) -> Data {
