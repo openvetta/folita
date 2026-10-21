@@ -19,14 +19,14 @@ Folita 记录你复制过的内容，并用一个快捷键把它们找回来。�
 
 ## 截图
 
-<table>
+<table width="100%">
   <tr>
-    <td width="50%"><img src="docs/assets/screenshot-panel.png" alt="剪贴面板"><br><sub>剪贴面板</sub></td>
-    <td width="50%"><img src="docs/assets/screenshot-preview.png" alt="详情预览"><br><sub>详情预览</sub></td>
+    <td width="50%" align="center"><img src="docs/assets/screenshot-panel.png" alt="剪贴面板" width="100%"><br><sub>剪贴面板</sub></td>
+    <td width="50%" align="center"><img src="docs/assets/screenshot-actions.png" alt="更多操作（⌘K）" width="100%"><br><sub>更多操作（<kbd>⌘K</kbd>）</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/assets/screenshot-actions.png" alt="更多操作（<kbd>⌘K</kbd>）"><br><sub>更多操作（<kbd>⌘K</kbd>）</sub></td>
-    <td width="50%"><img src="docs/assets/screenshot-settings.png" alt="设置与应用图标"><br><sub>设置与应用图标</sub></td>
+    <td width="45%" align="center"><img src="docs/assets/screenshot-preview.png" alt="详情预览" width="100%"><br><sub>详情预览</sub></td>
+    <td width="55%" align="center"><img src="docs/assets/screenshot-settings.png" alt="设置与应用图标" width="100%"><br><sub>设置与应用图标</sub></td>
   </tr>
 </table>
 

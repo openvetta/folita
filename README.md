@@ -19,14 +19,14 @@ Folita keeps what you copy and brings it back with a shortcut. Press <kbd>⌘</k
 
 ## Screenshots
 
-<table>
+<table width="100%">
   <tr>
-    <td width="50%"><img src="docs/assets/screenshot-panel.png" alt="Clipboard panel"><br><sub>Clipboard panel</sub></td>
-    <td width="50%"><img src="docs/assets/screenshot-preview.png" alt="Detail preview"><br><sub>Detail preview</sub></td>
+    <td width="50%" align="center"><img src="docs/assets/screenshot-panel.png" alt="Clipboard panel" width="100%"><br><sub>Clipboard panel</sub></td>
+    <td width="50%" align="center"><img src="docs/assets/screenshot-actions.png" alt="More actions (⌘K)" width="100%"><br><sub>More actions (<kbd>⌘K</kbd>)</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/assets/screenshot-actions.png" alt="More actions (<kbd>⌘K</kbd>)"><br><sub>More actions (<kbd>⌘K</kbd>)</sub></td>
-    <td width="50%"><img src="docs/assets/screenshot-settings.png" alt="Settings and app icons"><br><sub>Settings and app icons</sub></td>
+    <td width="45%" align="center"><img src="docs/assets/screenshot-preview.png" alt="Detail preview" width="100%"><br><sub>Detail preview</sub></td>
+    <td width="55%" align="center"><img src="docs/assets/screenshot-settings.png" alt="Settings and app icons" width="100%"><br><sub>Settings and app icons</sub></td>
   </tr>
 </table>
 
