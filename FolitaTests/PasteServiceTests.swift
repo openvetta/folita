@@ -11,7 +11,10 @@ final class PasteServiceTests {
     private let settings: PasteSettings
     private let store: ClipboardHistoryStore
     private var trusted = true
-    private var keystrokes = 0
+    /// 每次 ⌘V 的送达方式。
+    private var keystrokes: [PasteTarget] = []
+    /// 呼出面板时所在应用的进程号；nil 表示读不到。
+    private var targetPID: pid_t? = 4242
 
     init() {
         settings = PasteSettings(userDefaults: UserDefaults(suiteName: suiteName)!)
@@ -29,7 +32,8 @@ final class PasteServiceTests {
             store: store,
             settings: settings,
             accessibility: AccessibilityAccess(isTrusted: { [unowned self] in trusted }, requestAccess: {}),
-            sendPasteKeystroke: { [unowned self] in keystrokes += 1 }
+            targetProcessIdentifier: { [unowned self] in targetPID },
+            sendPasteKeystroke: { [unowned self] target in keystrokes.append(target) }
         )
     }
 
@@ -47,10 +51,38 @@ final class PasteServiceTests {
         let item = record(richContents)
 
         #expect(makeService().paste(item, mode: .original) == .pasted)
-        #expect(keystrokes == 1)
+        // 面板已收起：⌘V 仍交给当前键盘焦点。
+        #expect(keystrokes == [.keyWindow])
         #expect(pasteboard.string(forType: .string) == "Bold")
         #expect(pasteboard.data(forType: .rtf) == richContents[1].data)
         #expect(pasteboard.types?.contains(.folitaOrigin) == true)
+    }
+
+    /// ⌥↩：面板保持 key window，⌘V 必须直接投递给呼出面板时的那个应用。
+    @Test func keepingPanelOpenSendsKeystrokeToTheTargetApp() {
+        let item = record(richContents)
+
+        #expect(makeService().paste(item, mode: .original, keepingPanelOpen: true) == .pasted)
+        #expect(keystrokes == [.process(4242)])
+        #expect(pasteboard.string(forType: .string) == "Bold")
+    }
+
+    /// 读不到目标应用时退回正常送达，而不是不发按键。
+    @Test func keepingPanelOpenFallsBackWithoutATargetApp() {
+        targetPID = nil
+        let item = record(richContents)
+
+        #expect(makeService().paste(item, mode: .original, keepingPanelOpen: true) == .pasted)
+        #expect(keystrokes == [.keyWindow])
+    }
+
+    /// 缺少辅助功能授权时保持面板打开也只写回剪贴板。
+    @Test func keepingPanelOpenStillNeedsAuthentication() {
+        trusted = false
+        let item = record(richContents)
+
+        #expect(makeService().paste(item, mode: .original, keepingPanelOpen: true) == .copied)
+        #expect(keystrokes.isEmpty)
     }
 
     @Test func plainTextModeDropsFormatting() {
@@ -84,7 +116,7 @@ final class PasteServiceTests {
         let item = record(richContents)
 
         #expect(makeService().paste(item, mode: .original) == .copied)
-        #expect(keystrokes == 0)
+        #expect(keystrokes.isEmpty)
         #expect(pasteboard.string(forType: .string) == "Bold")
     }
 
@@ -93,7 +125,7 @@ final class PasteServiceTests {
         let item = record(richContents)
 
         #expect(makeService().paste(item, mode: .original) == .copied)
-        #expect(keystrokes == 0)
+        #expect(keystrokes.isEmpty)
         #expect(PasteSettings(userDefaults: UserDefaults(suiteName: suiteName)!).autoPaste == false)
     }
 

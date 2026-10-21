@@ -31,37 +31,55 @@ final class PasteService {
     private let store: ClipboardHistoryStore
     private let settings: PasteSettings
     private let accessibility: AccessibilityAccess
-    private let sendPasteKeystroke: @MainActor () -> Void
+    /// 呼出面板时所在的应用，面板保持打开时 ⌘V 要直接投给它。
+    private let targetProcessIdentifier: () -> pid_t?
+    private let sendPasteKeystroke: @MainActor (PasteTarget) -> Void
 
     init(
         pasteboard: NSPasteboard = .general,
         store: ClipboardHistoryStore,
         settings: PasteSettings,
         accessibility: AccessibilityAccess = .system,
-        sendPasteKeystroke: @escaping @MainActor () -> Void = PasteKeystroke.post
+        targetProcessIdentifier: @escaping () -> pid_t? = { NSWorkspace.shared.frontmostApplication?.processIdentifier },
+        sendPasteKeystroke: @escaping @MainActor (PasteTarget) -> Void = PasteKeystroke.post(to:)
     ) {
         self.pasteboard = pasteboard
         self.store = store
         self.settings = settings
         self.accessibility = accessibility
+        self.targetProcessIdentifier = targetProcessIdentifier
         self.sendPasteKeystroke = sendPasteKeystroke
     }
 
-    /// 调用前应先收起面板，让按键落到之前的应用上。
+    /// 调用前应先收起面板，让按键落到之前的应用上；`keepingPanelOpen` 为 true 时面板保持
+    /// key window，⌘V 改为直接投递给目标应用。
     @discardableResult
-    func paste(_ item: HistoryItem, mode: PasteMode) -> Outcome {
+    func paste(_ item: HistoryItem, mode: PasteMode, keepingPanelOpen: Bool = false) -> Outcome {
         ClipboardWriter.write(item.clipContents, mode: mode, to: pasteboard)
         store.touch(item)
         guard settings.autoPaste, accessibility.isTrusted() else { return .copied }
-        sendPasteKeystroke()
+        sendPasteKeystroke(keepingPanelOpen ? targetApplication() : .keyWindow)
         return .pasted
     }
+
+    private func targetApplication() -> PasteTarget {
+        guard let pid = targetProcessIdentifier() else { return .keyWindow }
+        return .process(pid)
+    }
+}
+
+/// ⌘V 的送达方式。
+enum PasteTarget: Equatable, Sendable {
+    /// 面板已收起：交给当前键盘焦点，也就是原来的应用。
+    case keyWindow
+    /// 面板保持打开：面板仍是 key window，⌘V 直接投递给目标应用自己的事件队列。
+    case process(pid_t)
 }
 
 enum PasteKeystroke {
     /// 发送 ⌘V。稍作延迟，等面板收起后焦点回到之前的应用。
     @MainActor
-    static func post() {
+    static func post(to target: PasteTarget = .keyWindow) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             let source = CGEventSource(stateID: .combinedSessionState)
             for isKeyDown in [true, false] {
@@ -70,7 +88,12 @@ enum PasteKeystroke {
                 event.flags = .maskCommand
                 var character: UniChar = 0x76
                 event.keyboardSetUnicodeString(stringLength: 1, unicodeString: &character)
-                event.post(tap: .cgSessionEventTap)
+                switch target {
+                case .keyWindow:
+                    event.post(tap: .cgSessionEventTap)
+                case .process(let pid):
+                    event.postToPid(pid)
+                }
             }
         }
     }
