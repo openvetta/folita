@@ -29,7 +29,7 @@ enum ClipboardPanelMetrics {
     /// 加宽 / 收窄动画的时长；窗口在收窄动画结束后再缩回，避免裁掉还没收完的容器。
     static let peekAnimationDuration: Double = 0.36
     static let peekCollapseDelay: Duration = .milliseconds(420)
-    /// 窗口四周为 SwiftUI 阴影预留的透明边距。
+    /// 窗口四周的透明边距，容器在窗口内缩进这一圈，预览伸缩时也用它吸收取整误差。
     static let shadowInset: CGFloat = 28
     /// 容器顶边距离屏幕可见区域顶部（菜单栏下沿）的距离。
     static let topSpacing: CGFloat = 8

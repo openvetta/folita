@@ -35,7 +35,7 @@ struct ClipboardPanelTests {
 
         #expect(frame.size == ClipboardPanelMetrics.windowSize)
         #expect(abs(frame.midX - visible.midX) <= 1)
-        // 容器（去掉阴影边距）顶边与菜单栏下沿保持固定间距。
+        // 容器（去掉透明边距）顶边与菜单栏下沿保持固定间距。
         #expect(frame.maxY - inset == visible.maxY - ClipboardPanelMetrics.topSpacing)
     }
 

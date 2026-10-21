@@ -50,7 +50,6 @@ struct ClipboardPanelView: View {
             }
         }
         .animation(.snappy(duration: ClipboardPanelMetrics.peekAnimationDuration), value: isPeeking)
-        .shadow(color: .black.opacity(0.28), radius: 22, y: 10)
         .padding(ClipboardPanelMetrics.shadowInset)
         .defaultFocus($isSearchFocused, true)
         .onChange(of: model.presentationCount) {

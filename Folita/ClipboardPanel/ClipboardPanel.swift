@@ -17,7 +17,7 @@ final class ClipboardPanel: NSPanel {
         level = .floating
         isOpaque = false
         backgroundColor = .clear
-        // 阴影由 SwiftUI 按容器形状绘制，系统窗口阴影会描出整块透明区域。
+        // 面板不带阴影：系统窗口阴影会描出整块透明区域，SwiftUI 阴影的半径加偏移超出窗口边距，会在边缘被裁断。
         hasShadow = false
         hidesOnDeactivate = false
         isMovableByWindowBackground = true
