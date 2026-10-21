@@ -20,8 +20,6 @@ struct LocalizationTests {
     }
 
     @Test func clipboardPanelCopyIsLocalized() {
-        #expect(localized("Clipboard", "en") == "Clipboard")
-        #expect(localized("Clipboard", "zh-Hans") == "剪贴板")
         #expect(localized("Clear Search", "zh-Hans") == "清除搜索")
         #expect(localized("Search", "zh-Hans") == "搜索")
         #expect(localized("Filter", "zh-Hans") == "筛选")

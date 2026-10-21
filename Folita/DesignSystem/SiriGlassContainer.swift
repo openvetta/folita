@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// iOS 27 Siri 风格的通透容器：Liquid Glass 打底，自上而下渐隐的着色，
-/// 内容在底部淡出，边缘一圈高光，底部带一枚把手。
+/// 内容在底部淡出，边缘一圈高光，顶部居中带一枚可拖动的把手。
 struct SiriGlassContainer<Content: View>: View {
     var cornerRadius: CGFloat = ClipboardPanelMetrics.cornerRadius
     @ViewBuilder var content: Content
@@ -27,11 +27,14 @@ struct SiriGlassContainer<Content: View>: View {
                     lineWidth: 1
                 )
             }
-            .overlay(alignment: .bottom) {
+            .overlay(alignment: .top) {
+                // 顶部居中的把手暗示这里可以拖动；命中区比可见的胶囊大，更容易抓住。
                 Capsule()
                     .fill(style.handle)
-                    .frame(width: 68, height: 5)
-                    .padding(.bottom, 10)
+                    .frame(width: 36, height: 4)
+                    .frame(width: 96, height: 16)
+                    .contentShape(.rect)
+                    .gesture(WindowDragGesture())
             }
             .background { edgeShadow(in: shape, color: style.shadow) }
     }

@@ -139,8 +139,15 @@ final class ClipboardPanelController {
             // 输入法组字期间方向键属于候选选择，交给输入法处理。
             guard !ClipboardPanelCommand.isComposing(in: window.firstResponder) else { return false }
         }
-        guard let command = ClipboardPanelCommand.command(for: event),
-              command.isIntercepted(isPeeking: model.isPeeking, responder: event.window?.firstResponder ?? panel.firstResponder)
+        guard let command = ClipboardPanelCommand.command(for: event) else {
+            // 焦点不在文本编辑器（如点过列表）时，直接打字也应进入搜索。
+            guard !(panel.firstResponder is NSTextView), let text = ClipboardPanelCommand.typedText(for: event) else {
+                return false
+            }
+            model.typeIntoSearch(text)
+            return true
+        }
+        guard command.isIntercepted(isPeeking: model.isPeeking, responder: event.window?.firstResponder ?? panel.firstResponder)
         else { return false }
         model.perform(command)
         return true

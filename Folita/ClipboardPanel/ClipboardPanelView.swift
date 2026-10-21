@@ -14,14 +14,11 @@ struct ClipboardPanelView: View {
 
         SiriGlassContainer {
             VStack(alignment: .leading, spacing: 18) {
-                // 顶栏与标题都可拖动面板，控件自身保持交互。
+                // 顶栏空白处可拖动面板，控件自身保持交互。
                 topBar
                     .contentShape(.rect)
                     .gesture(WindowDragGesture())
                 VStack(alignment: .leading, spacing: 14) {
-                    header
-                        .contentShape(.rect)
-                        .gesture(WindowDragGesture())
                     PanelNoticeBanner(notice: model.notice, action: model.resolveNotice, onDismiss: model.dismissNotice)
                     ClipboardHistoryList(model: model)
                         .frame(maxHeight: .infinity, alignment: .top)
@@ -52,7 +49,7 @@ struct ClipboardPanelView: View {
         .animation(.snappy(duration: ClipboardPanelMetrics.peekAnimationDuration), value: isPeeking)
         .padding(ClipboardPanelMetrics.shadowInset)
         .defaultFocus($isSearchFocused, true)
-        .onChange(of: model.presentationCount) {
+        .onChange(of: model.searchFocusRequest) {
             isSearchFocused = true
         }
         // 从系统设置授权后切回来，提示应立即消失。
@@ -105,23 +102,6 @@ struct ClipboardPanelView: View {
                 ClipboardFilterMenu(selection: $model.filter)
             }
         }
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Clipboard")
-                .font(.system(size: 26, weight: .semibold))
-            if model.filter == .all {
-                Text("Recent copies")
-                    .font(.system(size: 15))
-                    .foregroundStyle(.secondary)
-            } else {
-                Text(model.filter.title)
-                    .font(.system(size: 15))
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.horizontal, 6)
     }
 }
 

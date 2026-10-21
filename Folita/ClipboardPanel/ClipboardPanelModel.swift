@@ -59,6 +59,15 @@ enum ClipboardPanelCommand: Equatable {
         return command(for: characters, modifiers: EventModifiers(event.modifierFlags))
     }
 
+    /// 事件中可直接作为搜索词输入的文字；带 ⌘ / ⌃ 的组合键、方向键等功能键返回 nil。
+    static func typedText(for event: NSEvent) -> String? {
+        guard event.type == .keyDown, event.modifierFlags.isDisjoint(with: [.command, .control]),
+              let text = event.characters, !text.isEmpty,
+              text.unicodeScalars.allSatisfy({ !CharacterSet.controlCharacters.contains($0) && !(0xF700...0xF8FF).contains($0.value) })
+        else { return nil }
+        return text
+    }
+
     /// 输入法正在组字时，方向键用于选词，不能被面板快捷键截走。
     static func isComposing(in responder: NSResponder?) -> Bool {
         (responder as? NSTextView)?.hasMarkedText() ?? false
@@ -128,8 +137,11 @@ final class ClipboardPanelModel {
         }
     }
 
-    /// 每次呼出面板递增，视图据此把焦点放回搜索框。
+    /// 每次呼出面板时递增。
     private(set) var presentationCount = 0
+
+    /// 每次需要把焦点放回搜索框时递增（呼出、焦点不在搜索框时直接打字），视图据此聚焦。
+    private(set) var searchFocusRequest = 0
 
     /// 呼出时刷新；授权状态可能在面板关闭期间被用户修改。
     private(set) var notice: PanelNotice = .none
@@ -165,6 +177,13 @@ final class ClipboardPanelModel {
         isPeeking = false
         refreshNotice()
         presentationCount += 1
+        searchFocusRequest += 1
+    }
+
+    /// 焦点不在搜索框时用户直接打字：文字并入搜索词，并把焦点交还搜索框。
+    func typeIntoSearch(_ text: String) {
+        query += text
+        searchFocusRequest += 1
     }
 
     /// 授权状态可能在面板打开期间改变（例如从系统设置切回来）。

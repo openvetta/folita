@@ -153,8 +153,35 @@ struct ClipboardPanelTests {
         #expect(controller.handleKeyDown(try key("\u{F700}")))
         #expect(model.selectedItem?.id == items[0].id)
 
-        // 普通字符不拦截，继续交给搜索框输入。
+        // 焦点在搜索框的文本编辑器里时，普通字符不拦截，交给搜索框输入。
+        let editor = NSTextView()
+        let panel = try #require(controller.panel)
+        panel.contentView?.addSubview(editor)
+        #expect(panel.makeFirstResponder(editor))
         #expect(controller.handleKeyDown(try key("a")) == false)
+        #expect(model.query.isEmpty)
+    }
+
+    /// 点过列表等导致焦点不在搜索框时，直接打字也进入搜索并请求聚焦搜索框。
+    @Test func typingOutsideSearchFieldFeedsSearch() throws {
+        let model = makePanelModel(copying: ["alpha", "beta", "alphabet"])
+        let controller = ClipboardPanelController(model: model, placementSettings: makePlacementSettings())
+        controller.show()
+        defer { controller.hide() }
+        let panel = try #require(controller.panel)
+        #expect(panel.makeFirstResponder(nil))
+        let requests = model.searchFocusRequest
+
+        #expect(controller.handleKeyDown(try key("a")))
+        #expect(controller.handleKeyDown(try key("l")))
+        #expect(model.query == "al")
+        #expect(model.visibleItems.count == 2)
+        #expect(model.searchFocusRequest == requests + 2)
+
+        // 快捷键组合与功能键不当作输入。
+        #expect(controller.handleKeyDown(try key("c", .command)) == false)
+        #expect(controller.handleKeyDown(try key("\u{F704}")) == false)
+        #expect(model.query == "al")
     }
 
     @Test func commandKeysActOnTheSelectedItem() throws {
