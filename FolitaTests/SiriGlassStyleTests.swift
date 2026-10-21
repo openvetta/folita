@@ -24,4 +24,14 @@ struct SiriGlassStyleTests {
 
         #expect(selection.alphaComponent >= 0.9)
     }
+
+    /// 图标底色是不透明的实心块，且与选中行底色不同：选中时图标也要看得清。
+    @Test(arguments: [ColorScheme.dark, .light])
+    func iconChipIsSolidAndDistinctFromSelection(colorScheme: ColorScheme) {
+        let style = SiriGlassStyle.resolve(for: colorScheme)
+
+        #expect(NSColor(style.iconBackground).alphaComponent >= 0.99)
+        #expect(NSColor(style.iconForeground).alphaComponent >= 0.99)
+        #expect(style.iconBackground != style.selection)
+    }
 }

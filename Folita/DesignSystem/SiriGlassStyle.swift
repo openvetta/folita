@@ -10,6 +10,10 @@ struct SiriGlassStyle: Equatable {
     var selection: Color
     /// 选中行的描边，给实心底色勾出边缘。
     var selectionRim: Color
+    /// 历史行左侧图标块的底色与字形颜色：实心块让图标在任何壁纸上都看得清。
+    var iconBackground: Color
+    var iconForeground: Color
+    var iconRim: Color
 
     /// 内容在容器底部渐隐的蒙版，与着色渐隐的节奏保持一致。
     static let contentFade: [Gradient.Stop] = [
@@ -31,7 +35,10 @@ struct SiriGlassStyle: Equatable {
                 rim: [.white.opacity(0.95), .black.opacity(0.06), .white.opacity(0.7)],
                 handle: .black.opacity(0.35),
                 selection: Color(white: 0.90).opacity(0.97),
-                selectionRim: .black.opacity(0.06)
+                selectionRim: .black.opacity(0.06),
+                iconBackground: Color(white: 0.84),
+                iconForeground: Color(white: 0.30),
+                iconRim: .black.opacity(0.08)
             )
         default:
             SiriGlassStyle(
@@ -44,7 +51,10 @@ struct SiriGlassStyle: Equatable {
                 rim: [.white.opacity(0.40), .white.opacity(0.08), .white.opacity(0.22)],
                 handle: .white.opacity(0.85),
                 selection: Color(white: 0.24).opacity(0.97),
-                selectionRim: .white.opacity(0.10)
+                selectionRim: .white.opacity(0.10),
+                iconBackground: Color(white: 0.36),
+                iconForeground: Color(white: 0.97),
+                iconRim: .white.opacity(0.12)
             )
         }
     }

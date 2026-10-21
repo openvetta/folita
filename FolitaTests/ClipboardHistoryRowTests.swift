@@ -82,6 +82,16 @@ struct ClipboardHistoryRowTests {
         #expect(ClipboardHistoryRow.title(of: item(Self.samples[2])) == "https://folita.app")
     }
 
+    /// 有实心变体的类别用 `.fill`，并且每个符号都真实存在（避免拼写错误的名称静默消失）。
+    @Test func typeSymbolsAreValidAndFilledWhereAvailable() {
+        for category in ClipCategory.allCases {
+            #expect(NSImage(systemSymbolName: category.symbolName, accessibilityDescription: nil) != nil)
+        }
+        for category in [ClipCategory.richText, .image, .file, .color] {
+            #expect(category.symbolName.hasSuffix(".fill"))
+        }
+    }
+
     @Test func metadataCopyIsLocalized() {
         func zh(_ resource: LocalizedStringResource) -> String { localized(resource, "zh-Hans") }
         let count = 3

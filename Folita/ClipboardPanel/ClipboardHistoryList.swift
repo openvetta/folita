@@ -93,9 +93,8 @@ struct ClipboardHistoryRow: View {
 
     var body: some View {
         let details = ClipDetails(contents: item.clipContents, category: item.category)
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             icon(details)
-                .frame(width: 28, height: 28)
             VStack(alignment: .leading, spacing: 2) {
                 title(details)
                     .font(.system(size: 13, weight: .medium))
@@ -142,28 +141,33 @@ struct ClipboardHistoryRow: View {
 
     // MARK: 左侧
 
+    /// 左侧图标块：图片用缩略图，颜色值用色块，其余用实心类型图标。尺寸与裁剪都在内部完成，
+    /// 宽图按填充裁切，不会溢出到右侧文字上。
     @ViewBuilder
     private func icon(_ details: ClipDetails) -> some View {
-        if let thumbnail {
-            Image(decorative: thumbnail, scale: 2)
-                .resizable()
-                .scaledToFill()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-        } else if item.category == .color, let color = details.color {
-            // 颜色值没有缩略图，用色块代替类型图标。
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(Color(.sRGB, red: color.red, green: color.green, blue: color.blue, opacity: color.alpha))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .strokeBorder(.primary.opacity(0.15))
-                }
-        } else {
-            Image(systemName: item.category.symbolName)
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+        let style = SiriGlassStyle.resolve(for: colorScheme)
+        let size = ClipboardPanelMetrics.historyIconSize
+        let shape = RoundedRectangle(cornerRadius: 6, style: .continuous)
+
+        Group {
+            if let thumbnail {
+                Image(decorative: thumbnail, scale: 2)
+                    .resizable()
+                    .scaledToFill()
+            } else if item.category == .color, let color = details.color {
+                Rectangle()
+                    .fill(Color(.sRGB, red: color.red, green: color.green, blue: color.blue, opacity: color.alpha))
+            } else {
+                Image(systemName: item.category.symbolName)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(style.iconForeground)
+            }
+        }
+        .frame(width: size, height: size)
+        .background(style.iconBackground, in: shape)
+        .clipShape(shape)
+        .overlay {
+            shape.strokeBorder(style.iconRim, lineWidth: 1)
         }
     }
 
@@ -280,14 +284,15 @@ struct ClipboardHistoryEmptyView: View {
 
 extension ClipCategory {
     /// 避免使用 `textformat` 等会随语言本地化成文字字形的符号（中文下会显示为「格式」）。
+    /// 有实心变体的类别用 `.fill`，与 iOS 的实心图标观感一致；文本、链接、邮箱没有实心变体，保留线性字形。
     var symbolName: String {
         switch self {
         case .text: "text.alignleft"
-        case .richText: "doc.richtext"
-        case .image: "photo"
-        case .file: "doc"
+        case .richText: "doc.richtext.fill"
+        case .image: "photo.fill"
+        case .file: "doc.fill"
         case .link: "link"
-        case .color: "paintpalette"
+        case .color: "paintpalette.fill"
         case .email: "at"
         }
     }
