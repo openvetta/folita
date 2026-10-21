@@ -15,10 +15,13 @@ struct SiriGlassStyle: Equatable {
     var iconForeground: Color
     var iconRim: Color
 
+    /// 内容在容器底部开始渐隐的位置（从容器顶部按比例计）。列表用它在底部留出安全空间。
+    static let contentFadeStart: CGFloat = 0.70
+
     /// 内容在容器底部渐隐的蒙版，与着色渐隐的节奏保持一致。
     static let contentFade: [Gradient.Stop] = [
         .init(color: .black, location: 0),
-        .init(color: .black, location: 0.70),
+        .init(color: .black, location: contentFadeStart),
         .init(color: .clear, location: 0.94),
     ]
 

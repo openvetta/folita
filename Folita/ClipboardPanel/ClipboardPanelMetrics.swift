@@ -11,7 +11,11 @@ enum ClipboardPanelMetrics {
     static let historyRowHeight: CGFloat = 52
     /// 历史行左侧图标块的边长，图片缩略图也撑满这块区域。
     static let historyIconSize: CGFloat = 28
+    /// 历史列表底部的安全高度：等于容器渐隐区的高度（560 × 30%），高度靠
+    /// `SiriGlassStyle.contentFadeStart` 对齐，内容不会被淡出效果吃掉。
+    static let listBottomSafeSpace: CGFloat = 168
     static let historyRowCornerRadius: CGFloat = 12
+    static let historyRowSpacing: CGFloat = 4
     /// 窗口四周为 SwiftUI 阴影预留的透明边距。
     static let shadowInset: CGFloat = 28
     /// 容器顶边距离屏幕可见区域顶部（菜单栏下沿）的距离。

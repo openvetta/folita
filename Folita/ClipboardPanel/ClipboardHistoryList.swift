@@ -3,6 +3,9 @@ import SwiftUI
 /// 剪贴面板中的历史列表。
 struct ClipboardHistoryList: View {
     @Bindable var model: ClipboardPanelModel
+    @State private var scrollPosition = ScrollPosition(idType: Never.self)
+    @State private var listGeometry = ListGeometry()
+
 
     var body: some View {
         let items = model.visibleItems
@@ -10,30 +13,41 @@ struct ClipboardHistoryList: View {
             emptyState
         } else {
             let selectedID = model.selectedItem?.id
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(spacing: 4) {
-                        ForEach(items) { item in
-                            // 悬停只高亮不选中：跟随鼠标改变选中项会让列表在指针下来回跳动。
-                            ClipboardHistoryRow(item: item, isSelected: item.id == selectedID)
-                                .id(item.id)
-                                .onTapGesture {
-                                    model.select(item)
-                                    model.perform(.paste(.original))
-                                }
-                                .contextMenu { contextMenu(for: item) }
-                        }
+            ScrollView {
+                LazyVStack(spacing: ClipboardPanelMetrics.historyRowSpacing) {
+                    ForEach(items) { item in
+                        // 悬停只高亮不选中：跟随鼠标改变选中项会让列表在指针下来回跳动。
+                        ClipboardHistoryRow(item: item, isSelected: item.id == selectedID)
+                            .id(item.id)
+                            .onTapGesture {
+                                model.select(item)
+                                model.perform(.paste(.original))
+                            }
+                            .contextMenu { contextMenu(for: item) }
                     }
-                    // 底部留出空间，最后几行不会落在容器的渐隐区里。
-                    .padding(.bottom, 72)
                 }
-                .scrollIndicators(.never)
-                .animation(.snappy(duration: 0.22), value: selectedID)
-                .onChange(of: selectedID) { _, id in
-                    guard let id else { return }
-                    withAnimation(.snappy(duration: 0.22)) {
-                        proxy.scrollTo(id)
-                    }
+            }
+            // 容器的渐隐区不能动，改为给滚动内容留出等高的底部空间：
+            // 滚轮可以把最后几行推到渐隐区上方，方向键滚动时选中行也不会落在淡出区域。
+            .contentMargins(.bottom, ClipboardPanelMetrics.listBottomSafeSpace, for: .scrollContent)
+            .scrollIndicators(.never)
+            .scrollPosition($scrollPosition)
+            .onScrollGeometryChange(for: ListGeometry.self) { geometry in
+                ListGeometry(offset: geometry.contentOffset.y, viewportHeight: geometry.containerSize.height)
+            } action: { _, geometry in
+                listGeometry = geometry
+            }
+            .onChange(of: selectedID) { _, id in
+                guard let id, let index = items.firstIndex(where: { $0.id == id }) else { return }
+                let target = ClipboardHistoryScroll.targetOffset(
+                    selectedIndex: index,
+                    itemCount: items.count,
+                    viewportHeight: listGeometry.viewportHeight,
+                    currentOffset: listGeometry.offset
+                )
+                guard target != listGeometry.offset else { return }
+                withAnimation(.snappy(duration: 0.22)) {
+                    scrollPosition.scrollTo(y: target)
                 }
             }
         }
