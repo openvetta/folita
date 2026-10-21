@@ -17,7 +17,7 @@
 | Secret | `APPLE_APP_SPECIFIC_PASSWORD` | 在 appleid.apple.com 为该 Apple ID 生成的 App 专用密码 |
 | Variable | `SPARKLE_PUBLIC_ED_KEY` | Sparkle EdDSA 公钥 |
 | Secret | `SPARKLE_PRIVATE_KEY` | Sparkle EdDSA 私钥 |
-| Secret | `HOMEBREW_TAP_TOKEN` | 可写 `nbecloud/homebrew-tap` 的 fine-grained token；不配置则跳过更新 tap |
+| Secret | `HOMEBREW_TAP_TOKEN` | 可写 `openvetta/homebrew-tap` 的 fine-grained token；不配置则跳过更新 tap |
 
 ### 证书
 
@@ -41,10 +41,10 @@ $SPARKLE_BIN/generate_keys -x sparkle_private_key   # 导出私钥，填入 SPAR
 
 ### Homebrew tap
 
-在 GitHub 组织 `nbecloud` 下创建公开仓库 `homebrew-tap`。发布后用户可通过以下命令安装：
+在 GitHub 组织 `openvetta` 下创建公开仓库 `homebrew-tap`。发布后用户可通过以下命令安装：
 
 ```sh
-brew install --cask nbecloud/tap/folita
+brew install --cask openvetta/tap/folita
 ```
 
 Cask 模板见 [`packaging/homebrew/folita.rb`](../packaging/homebrew/folita.rb)。

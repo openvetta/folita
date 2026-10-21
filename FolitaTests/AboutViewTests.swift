@@ -6,7 +6,7 @@ import Testing
 @MainActor
 struct AboutViewTests {
     @Test func linksPointToRepository() {
-        #expect(AppInfo.repositoryURL.host() == "github.com")
+        #expect(AppInfo.repositoryURL.absoluteString == "https://github.com/openvetta/folita")
         #expect(AppInfo.licenseURL.absoluteString.hasPrefix(AppInfo.repositoryURL.absoluteString))
         #expect(AppInfo.version == "0.1.0")
     }

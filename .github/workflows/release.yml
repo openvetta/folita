@@ -120,7 +120,7 @@ jobs:
         run: |
           version="${{ steps.version.outputs.version }}"
           sha256=$(cat build/release/sha256.txt)
-          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/nbecloud/homebrew-tap.git" build/tap
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/openvetta/homebrew-tap.git" build/tap
           mkdir -p build/tap/Casks
           sed -e "s/{{VERSION}}/$version/" -e "s/{{SHA256}}/$sha256/" packaging/homebrew/folita.rb > build/tap/Casks/folita.rb
           cd build/tap
