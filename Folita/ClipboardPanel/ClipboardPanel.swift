@@ -42,6 +42,9 @@ final class ClipboardPanelController {
 
     @ObservationIgnored private var eventMonitors: [Any] = []
     @ObservationIgnored private let languageSettings: LanguageSettings
+    @ObservationIgnored private let placementSettings: PanelPlacementSettings
+    /// 呼出时的鼠标位置与其所在屏幕的可见区域；测试替换为固定值。
+    @ObservationIgnored private let pointerProvider: @MainActor () -> PanelPointer?
     @ObservationIgnored let model: ClipboardPanelModel
     @ObservationIgnored private let peekCollapseDelay: Duration
     /// 退出预览后等待收窄动画结束再缩回窗口的任务；测试可等待它完成。
@@ -49,11 +52,15 @@ final class ClipboardPanelController {
 
     init(
         model: ClipboardPanelModel,
+        placementSettings: PanelPlacementSettings,
         languageSettings: LanguageSettings = .shared,
+        pointerProvider: @escaping @MainActor () -> PanelPointer? = { PanelPointer.current },
         peekCollapseDelay: Duration = ClipboardPanelMetrics.peekCollapseDelay
     ) {
         self.model = model
         self.languageSettings = languageSettings
+        self.placementSettings = placementSettings
+        self.pointerProvider = pointerProvider
         self.peekCollapseDelay = peekCollapseDelay
         model.onDismiss = { [weak self] in self?.hide() }
         model.onPeekChange = { [weak self] in self?.peekChanged($0) }
@@ -67,8 +74,15 @@ final class ClipboardPanelController {
         model.prepareForPresentation()
         let panel = panel ?? makePanel()
         cancelPeekCollapse()
-        if let screen = NSScreen.screenContainingMouse ?? NSScreen.main {
-            panel.setFrame(ClipboardPanelMetrics.windowFrame(in: screen.visibleFrame), display: false)
+        if let pointer = pointerProvider() {
+            panel.setFrame(
+                ClipboardPanelMetrics.windowFrame(
+                    placement: placementSettings.placement,
+                    in: pointer.visibleFrame,
+                    cursor: pointer.location
+                ),
+                display: false
+            )
         }
         panel.makeKeyAndOrderFront(nil)
         isVisible = true
@@ -240,9 +254,17 @@ private extension NSWindow {
     }
 }
 
-private extension NSScreen {
-    static var screenContainingMouse: NSScreen? {
+/// 鼠标指针及其所在屏幕的可见区域。
+struct PanelPointer {
+    var location: CGPoint
+    var visibleFrame: CGRect
+
+    @MainActor
+    static var current: PanelPointer? {
         let location = NSEvent.mouseLocation
-        return screens.first { $0.frame.contains(location) }
+        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(location) }) ?? NSScreen.main else {
+            return nil
+        }
+        return PanelPointer(location: location, visibleFrame: screen.visibleFrame)
     }
 }

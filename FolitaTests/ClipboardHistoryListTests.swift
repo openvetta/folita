@@ -67,7 +67,7 @@ struct ClipboardHistoryListTests {
 
     @Test func showingPanelResetsSearchAndRefocuses() {
         let model = makePanelModel(copying: ["a"])
-        let controller = ClipboardPanelController(model: model)
+        let controller = ClipboardPanelController(model: model, placementSettings: makePlacementSettings())
         model.query = "leftover"
         let count = model.presentationCount
 
@@ -80,7 +80,7 @@ struct ClipboardHistoryListTests {
 
     @Test func escapeFromModelHidesPanel() {
         let model = makePanelModel()
-        let controller = ClipboardPanelController(model: model)
+        let controller = ClipboardPanelController(model: model, placementSettings: makePlacementSettings())
         controller.show()
         model.perform(.dismiss)
         #expect(!controller.isVisible)

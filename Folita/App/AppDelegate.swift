@@ -6,6 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let privacySettings: PrivacySettings
     let historyStore: ClipboardHistoryStore
     let pasteSettings: PasteSettings
+    let placementSettings: PanelPlacementSettings
     let launchAtLogin = LaunchAtLogin()
     let appIconSettings = AppIconSettings()
     /// 测试宿主中不启动 Sparkle。
@@ -32,8 +33,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.historyStore = historyStore
         historyBackupURL = opened.backupURL
         let pasteSettings = PasteSettings()
+        let placementSettings = PanelPlacementSettings()
         let pasteService = PasteService(store: historyStore, settings: pasteSettings)
-        let clipboardPanel = ClipboardPanelController(model: ClipboardPanelModel(store: historyStore))
+        let clipboardPanel = ClipboardPanelController(
+            model: ClipboardPanelModel(store: historyStore),
+            placementSettings: placementSettings
+        )
         clipboardPanel.model.onPaste = { [weak clipboardPanel] item, mode in
             clipboardPanel?.hide()
             pasteService.paste(item, mode: mode)
@@ -57,6 +62,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         self.pasteSettings = pasteSettings
+        self.placementSettings = placementSettings
         self.pasteService = pasteService
         self.clipboardPanel = clipboardPanel
         hotKeys = GlobalHotKeyService { [weak clipboardPanel] in clipboardPanel?.toggle() }

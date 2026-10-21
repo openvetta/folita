@@ -13,6 +13,17 @@ func makePanelModel(copying texts: [String] = []) -> ClipboardPanelModel {
     return ClipboardPanelModel(store: store)
 }
 
+/// 使用隔离 UserDefaults 的呼出位置设置，避免读到开发者真实的偏好。
+@MainActor
+func makePlacementSettings(_ placement: PanelPlacement = .topCenter) -> PanelPlacementSettings {
+    let suite = "FolitaTests.Placement.\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: suite)!
+    defaults.removePersistentDomain(forName: suite)
+    let settings = PanelPlacementSettings(userDefaults: defaults)
+    settings.placement = placement
+    return settings
+}
+
 /// 设置页需要的全部服务，均使用隔离的 UserDefaults、内存库和假的系统后端。
 @MainActor
 final class TestServices {
@@ -22,6 +33,7 @@ final class TestServices {
     let history: HistorySettings
     let privacy: PrivacySettings
     let paste: PasteSettings
+    let placement: PanelPlacementSettings
     /// 交给系统的 Dock 图标，nil 表示恢复默认图标。
     var appliedIcons: [NSImage?] = []
     lazy var appIcon = AppIconSettings(userDefaults: defaults) { [unowned self] in appliedIcons.append($0) }
@@ -41,9 +53,10 @@ final class TestServices {
         history = HistorySettings(userDefaults: defaults)
         privacy = PrivacySettings(userDefaults: defaults)
         paste = PasteSettings(userDefaults: defaults)
+        placement = PanelPlacementSettings(userDefaults: defaults)
         let model = makePanelModel(copying: texts)
         store = model.store
-        panel = ClipboardPanelController(model: model, languageSettings: language)
+        panel = ClipboardPanelController(model: model, placementSettings: placement, languageSettings: language)
     }
 
     isolated deinit {
@@ -63,6 +76,7 @@ extension View {
             .environment(services.history)
             .environment(services.privacy)
             .environment(services.paste)
+            .environment(services.placement)
             .environment(services.launchAtLogin)
             .environment(services.appIcon)
             .environment(services.updater)

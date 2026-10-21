@@ -39,8 +39,40 @@ struct ClipboardPanelTests {
         #expect(frame.maxY - inset == visible.maxY - ClipboardPanelMetrics.topSpacing)
     }
 
+    /// 常见流程：设置里改了呼出位置 → 再次呼出落在新位置 → 光标贴边时展开预览仍在屏幕内。
+    @Test func showFollowsPlacementSetting() throws {
+        let visible = CGRect(x: 0, y: 0, width: 1512, height: 944)
+        let pointer = PanelPointer(location: CGPoint(x: 1480, y: 300), visibleFrame: visible)
+        let settings = makePlacementSettings(.center)
+        let controller = ClipboardPanelController(
+            model: makePanelModel(copying: ["a", "b"]),
+            placementSettings: settings,
+            pointerProvider: { pointer }
+        )
+        defer { controller.hide() }
+
+        controller.show()
+        let panel = try #require(controller.panel)
+        #expect(panel.frame == ClipboardPanelMetrics.windowFrame(placement: .center, in: visible, cursor: pointer.location))
+        controller.hide()
+
+        settings.placement = .cursor
+        controller.show()
+        let container = panel.frame.insetBy(dx: ClipboardPanelMetrics.shadowInset, dy: ClipboardPanelMetrics.shadowInset)
+        #expect(container.contains(pointer.location))
+        // 光标靠近右缘：整体向左挪，容器不超出屏幕。
+        #expect(container.maxX == visible.maxX)
+
+        // 在该位置展开预览（窗口按所在屏幕夹取）：加宽后仍在屏幕内，顶边不动。
+        let expanded = ClipboardPanelMetrics.windowFrame(resizing: panel.frame, isPeeking: true, visibleFrame: visible)
+        let peeking = expanded.insetBy(dx: ClipboardPanelMetrics.shadowInset, dy: ClipboardPanelMetrics.shadowInset)
+        #expect(peeking.maxX <= visible.maxX)
+        #expect(peeking.minX >= visible.minX)
+        #expect(expanded.maxY == panel.frame.maxY)
+    }
+
     @Test func toggleShowsAndHidesPanel() {
-        let controller = ClipboardPanelController(model: makePanelModel())
+        let controller = ClipboardPanelController(model: makePanelModel(), placementSettings: makePlacementSettings())
         #expect(controller.isVisible == false)
 
         controller.toggle()
@@ -51,7 +83,7 @@ struct ClipboardPanelTests {
     }
 
     @Test func escapeHidesPanel() throws {
-        let controller = ClipboardPanelController(model: makePanelModel())
+        let controller = ClipboardPanelController(model: makePanelModel(), placementSettings: makePlacementSettings())
         controller.show()
         let panel = try #require(controller.panel)
         #expect(panel.isVisible)
@@ -103,7 +135,7 @@ struct ClipboardPanelTests {
     /// 搜索框聚焦时方向键也不能被 TextField 吃掉：面板打开期间上下键切选中项。
     @Test func arrowKeysMoveSelectionWhilePanelIsOpen() throws {
         let model = makePanelModel(copying: ["first", "second", "third"])
-        let controller = ClipboardPanelController(model: model)
+        let controller = ClipboardPanelController(model: model, placementSettings: makePlacementSettings())
         controller.show()
         defer { controller.hide() }
 
@@ -129,7 +161,7 @@ struct ClipboardPanelTests {
         let model = makePanelModel(copying: ["keep", "remove"])
         var pasted: [PasteMode] = []
         model.onPaste = { _, mode in pasted.append(mode) }
-        let controller = ClipboardPanelController(model: model)
+        let controller = ClipboardPanelController(model: model, placementSettings: makePlacementSettings())
         controller.show()
         defer { controller.hide() }
 
@@ -156,7 +188,7 @@ struct ClipboardPanelTests {
     /// 常见流程：→ 加宽并预览 → ↓ 切换条目仍在预览 → ← 退出并缩回原宽度 → Esc 收起面板。
     @Test func peekKeyboardFlowResizesPanel() async throws {
         let model = makePanelModel(copying: ["third", "second", "first"])
-        let controller = ClipboardPanelController(model: model, peekCollapseDelay: .zero)
+        let controller = ClipboardPanelController(model: model, placementSettings: makePlacementSettings(), peekCollapseDelay: .zero)
         controller.show()
         defer { controller.hide() }
         let panel = try #require(controller.panel)
@@ -245,7 +277,7 @@ struct ClipboardPanelTests {
 
     /// 面板收起后不再消费按键，避免影响其他窗口。
     @Test func keysAreIgnoredWhilePanelIsHidden() throws {
-        let controller = ClipboardPanelController(model: makePanelModel(copying: ["a", "b"]))
+        let controller = ClipboardPanelController(model: makePanelModel(copying: ["a", "b"]), placementSettings: makePlacementSettings())
 
         #expect(controller.handleKeyDown(try key("\u{F701}")) == false)
     }
