@@ -44,4 +44,13 @@ struct SiriGlassStyleTests {
         #expect(alpha > 0.05)
         #expect(alpha <= 0.15)
     }
+
+    /// 浅色背景上玻璃几乎透明：描边与投影必须足够清晰，否则面板边缘会“隐形”。
+    @Test(arguments: [ColorScheme.dark, .light])
+    func panelEdgeStaysVisible(colorScheme: ColorScheme) {
+        let style = SiriGlassStyle.resolve(for: colorScheme)
+
+        #expect(style.rim.allSatisfy { NSColor($0).alphaComponent >= 0.08 })
+        #expect(NSColor(style.shadow).alphaComponent >= 0.2)
+    }
 }

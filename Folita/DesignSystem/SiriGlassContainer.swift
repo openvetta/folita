@@ -33,5 +33,20 @@ struct SiriGlassContainer<Content: View>: View {
                     .frame(width: 68, height: 5)
                     .padding(.bottom, 10)
             }
+            .background { edgeShadow(in: shape, color: style.shadow) }
+    }
+
+    /// 只在容器外侧画投影：玻璃底部近乎透明，整块带阴影会透出一块灰色。
+    /// 半径与偏移之和须小于窗口的透明边距，否则会在窗口边缘被裁断。
+    private func edgeShadow(in shape: RoundedRectangle, color: Color) -> some View {
+        shape
+            .fill(.black)
+            .shadow(color: color, radius: 12, y: 4)
+            .mask {
+                Rectangle()
+                    .padding(-ClipboardPanelMetrics.shadowInset)
+                    .overlay { shape.blendMode(.destinationOut) }
+                    .compositingGroup()
+            }
     }
 }

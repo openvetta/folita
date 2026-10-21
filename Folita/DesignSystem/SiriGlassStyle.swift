@@ -6,6 +6,8 @@ struct SiriGlassStyle: Equatable {
     var tint: [Gradient.Stop]
     var rim: [Color]
     var handle: Color
+    /// 容器外围的投影：浅色背景上玻璃几乎透明，靠它把边缘托出来。只画在容器外侧。
+    var shadow: Color
     /// 选中行的底色：近乎实心，列表落到容器下部的渐隐区时也不会透出桌面。
     var selection: Color
     /// 选中行的描边，给实心底色勾出边缘。
@@ -40,8 +42,9 @@ struct SiriGlassStyle: Equatable {
                     .init(color: .white.opacity(0.40), location: 0.84),
                     .init(color: .white.opacity(0.08), location: 1),
                 ],
-                rim: [.white.opacity(0.95), .black.opacity(0.06), .white.opacity(0.7)],
+                rim: [.black.opacity(0.22), .black.opacity(0.12), .black.opacity(0.20)],
                 handle: .black.opacity(0.35),
+                shadow: .black.opacity(0.22),
                 selection: Color(white: 0.90).opacity(0.97),
                 selectionRim: .black.opacity(0.06),
                 iconBackground: Color(white: 0.84),
@@ -62,6 +65,7 @@ struct SiriGlassStyle: Equatable {
                 ],
                 rim: [.white.opacity(0.40), .white.opacity(0.08), .white.opacity(0.22)],
                 handle: .white.opacity(0.85),
+                shadow: .black.opacity(0.30),
                 selection: Color(white: 0.24).opacity(0.97),
                 selectionRim: .white.opacity(0.10),
                 iconBackground: Color(white: 0.36),
