@@ -59,6 +59,23 @@ struct ClipboardHistoryListTests {
         #expect(host(ClipboardHistoryList(model: noMatch), locale: locale, scheme: scheme).fittingSize.height == 400)
     }
 
+    @Test(arguments: appearances)
+    func emptyViewLaysOutDirectly(locale: String, scheme: ColorScheme) {
+        let view = ClipboardHistoryEmptyView(
+            symbolName: "list.bullet",
+            title: "Nothing here yet",
+            message: "Copied text, images and files will appear here."
+        )
+        let host = NSHostingView(
+            rootView: view
+                .frame(width: 392, height: 400)
+                .environment(\.locale, Locale(identifier: locale))
+                .environment(\.colorScheme, scheme)
+        )
+        host.layoutSubtreeIfNeeded()
+        #expect(host.fittingSize == CGSize(width: 392, height: 400))
+    }
+
     @Test(arguments: ClipCategory.allCases)
     func everyCategoryHasDistinctSymbol(category: ClipCategory) {
         let others = ClipCategory.allCases.filter { $0 != category }.map(\.symbolName)

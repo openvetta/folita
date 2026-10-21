@@ -296,21 +296,46 @@ struct ClipboardHistoryEmptyView: View {
     let title: LocalizedStringResource
     let message: LocalizedStringResource
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Image(systemName: symbolName)
-                .font(.system(size: 28, weight: .regular))
-                .foregroundStyle(.secondary)
-            Text(title)
-                .font(.system(size: 20, weight: .medium))
-            Text(message)
-                .font(.system(size: 17))
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+        let style = SiriGlassStyle.resolve(for: colorScheme)
+        let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
+
+        VStack(spacing: 14) {
+            ZStack {
+                shape
+                    .fill(style.peekWell)
+                    .overlay {
+                        shape.strokeBorder(style.iconRim, lineWidth: 1)
+                    }
+                    .frame(width: 60, height: 60)
+
+                Image(systemName: symbolName)
+                    .font(.system(size: 26, weight: .medium))
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(.secondary)
+                    .symbolEffect(.breathe, options: .repeating)
+                    .contentTransition(.symbolEffect(.replace))
+            }
+
+            VStack(spacing: 5) {
+                Text(title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.primary)
+
+                Text(message)
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: 240)
+            }
         }
-        .padding(.top, 16)
-        .padding(.horizontal, 6)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.bottom, 48)
+        .accessibilityElement(children: .combine)
     }
 }
 

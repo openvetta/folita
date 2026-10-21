@@ -102,6 +102,14 @@ struct ClipboardPanelTests {
         #expect(view.fittingSize == ClipboardPanelMetrics.windowSize)
     }
 
+    @Test(arguments: [ColorScheme.dark, .light])
+    func panelViewLaysOutWhenEmpty(colorScheme: ColorScheme) {
+        let view = NSHostingView(rootView: ClipboardPanelView(model: makePanelModel()).environment(\.colorScheme, colorScheme))
+        view.frame = CGRect(origin: .zero, size: ClipboardPanelMetrics.windowSize)
+        view.layoutSubtreeIfNeeded()
+        #expect(view.fittingSize == ClipboardPanelMetrics.windowSize)
+    }
+
     // MARK: 键盘
 
     private func key(_ characters: String, _ flags: NSEvent.ModifierFlags = []) throws -> NSEvent {
