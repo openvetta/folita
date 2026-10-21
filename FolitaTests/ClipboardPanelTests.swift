@@ -41,8 +41,9 @@ struct ClipboardPanelTests {
 
     /// 常见流程：设置里改了呼出位置 → 再次呼出落在新位置 → 光标贴边时展开预览仍在屏幕内。
     @Test func showFollowsPlacementSetting() throws {
-        let visible = CGRect(x: 0, y: 0, width: 1512, height: 944)
-        let pointer = PanelPointer(location: CGPoint(x: 1480, y: 300), visibleFrame: visible)
+        // NSPanel 显示时会按真实屏幕夹取 frame，所以用主屏的可见区域；CI 的虚拟屏幕比开发机小。
+        let visible = NSScreen.main?.visibleFrame ?? CGRect(x: 0, y: 0, width: 1512, height: 944)
+        let pointer = PanelPointer(location: CGPoint(x: visible.maxX - 32, y: visible.minY + 300), visibleFrame: visible)
         let settings = makePlacementSettings(.center)
         let controller = ClipboardPanelController(
             model: makePanelModel(copying: ["a", "b"]),
