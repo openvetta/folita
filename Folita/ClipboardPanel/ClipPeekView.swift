@@ -32,10 +32,8 @@ struct ClipPeekPanel: View {
 
 /// 两栏之间的竖向分割线，两端渐隐，不在顶栏和底部把手处生硬截断。
 struct ClipPeekDivider: View {
-    @Environment(\.colorScheme) private var colorScheme
-
     var body: some View {
-        let color = SiriGlassStyle.resolve(for: colorScheme).peekDivider
+        let color = SiriGlassStyle.panel.peekDivider
         Rectangle()
             .fill(LinearGradient(
                 stops: [
@@ -56,12 +54,11 @@ struct ClipPeekDivider: View {
 struct ClipPeekCard: View {
     let item: HistoryItem
 
-    @Environment(\.colorScheme) private var colorScheme
     @State private var image: CGImage?
 
     var body: some View {
         let details = ClipDetails(contents: item.clipContents, category: item.category)
-        let style = SiriGlassStyle.resolve(for: colorScheme)
+        let style = SiriGlassStyle.panel
 
         VStack(alignment: .leading, spacing: 14) {
             preview(details, style: style)

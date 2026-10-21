@@ -6,10 +6,8 @@ struct SiriGlassContainer<Content: View>: View {
     var cornerRadius: CGFloat = ClipboardPanelMetrics.cornerRadius
     @ViewBuilder var content: Content
 
-    @Environment(\.colorScheme) private var colorScheme
-
     var body: some View {
-        let style = SiriGlassStyle.resolve(for: colorScheme)
+        let style = SiriGlassStyle.panel
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
 
         content

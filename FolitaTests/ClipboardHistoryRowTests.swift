@@ -6,7 +6,7 @@ import Testing
 @MainActor
 struct ClipboardHistoryRowTests {
     nonisolated private static let appearances: [(String, ColorScheme)] = [
-        ("zh-Hans", .light), ("zh-Hans", .dark), ("en", .light), ("en", .dark),
+        ("zh-Hans", .dark), ("en", .dark),
     ]
 
     private static let samples: [[ClipContent]] = [

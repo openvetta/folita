@@ -6,7 +6,7 @@ import Testing
 @MainActor
 struct ClipboardHistoryListTests {
     nonisolated private static let appearances: [(String, ColorScheme)] = [
-        ("zh-Hans", .light), ("zh-Hans", .dark), ("en", .light), ("en", .dark),
+        ("zh-Hans", .dark), ("en", .dark),
     ]
 
     private func host(_ view: some View, locale: String, scheme: ColorScheme) -> NSHostingView<some View> {

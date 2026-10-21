@@ -85,7 +85,7 @@ struct PanelNoticeTests {
     }
 
     @Test(arguments: [
-        ("zh-Hans", ColorScheme.light), ("zh-Hans", .dark), ("en", .light), ("en", .dark),
+        ("zh-Hans", ColorScheme.dark), ("en", .dark),
     ])
     func bannerLaysOutForEveryNotice(locale: String, scheme: ColorScheme) {
         for notice in [PanelNotice.accessibilityNeeded, .pasteboardDenied] {

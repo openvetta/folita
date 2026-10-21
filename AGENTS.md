@@ -91,7 +91,7 @@ Folita 是一套 macOS 剪贴板工具，纯 Swift 编写（Swift 6、SwiftUI + 
 | 新功能 | 实现、用户常见使用操作流程与关键行为测试、必要的用户文档/i18n、补充当前版本的发布说明 |
 | 内部重构 | 说明保持的不变量，以现有测试、差分测试或合同测试证明行为未变 |
 | 公共合同变更 | 检查生产者与消费者、兼容或迁移策略、协议/Schema/API 合同测试 |
-| UI 交互变更 | 视图状态与交互测试（`NSHostingView` 宿主，覆盖深浅色 × 中英文）；依赖真实窗口服务器、跨应用焦点或系统权限的风险，在交付中写明人工验证步骤，确有必要时再提议新增 UI Test target |
+| UI 交互变更 | 视图状态与交互测试（`NSHostingView` 宿主，主窗口覆盖深浅色 × 中英文，剪贴面板固定深色 × 中英文）；依赖真实窗口服务器、跨应用焦点或系统权限的风险，在交付中写明人工验证步骤，确有必要时再提议新增 UI Test target |
 | 文档、文案或无逻辑配置 | 核对链接、路径、命令和事实；没有行为变化时无需新增单元测试 |
 
 ### 必须新增或更新测试
@@ -296,9 +296,10 @@ Folita 是一套 macOS 剪贴板工具，纯 Swift 编写（Swift 6、SwiftUI + 
    - 工程启用 Swift 6 与 `SWIFT_STRICT_CONCURRENCY: complete`。触碰 AppKit/SwiftUI 的类型标注 `@MainActor`；不得用 `@unchecked Sendable`、`nonisolated(unsafe)` 或 `MainActor.assumeIsolated` 压制诊断，确有必要时以注释说明安全依据。
    - 剪贴面板是独立于 SwiftUI Scene 的 `NSPanel`，由 `AppDelegate` 持有的 `ClipboardPanelController` 管理生命周期；主面板由 SwiftUI `Window` Scene 管理。新增长期服务（剪贴板监听、存储、快捷键）同样由 `AppDelegate` 装配持有，通过构造参数注入依赖，经 `.environment` 下发给视图，不使用全局单例。
    - 文件 I/O、图片解码等耗时操作不得阻塞主线程；结果回到主 actor 再更新 `@Observable` 状态。
-4. **深浅色双外观（强制执行）**：
-   - 严禁在视图中硬编码颜色。优先使用系统语义色、`.secondary` 等层级样式与系统材质；剪贴面板玻璃质感的取色集中在 `SiriGlassStyle.resolve(for:)`，新增取色在此扩展，不散落到视图。
-   - 所有新增或修改的视图测试必须用 `@Test(arguments: [ColorScheme.dark, .light])` 并注入 `.environment(\.colorScheme, …)`，验证两种外观均能完成布局。
+4. **深浅色外观（强制执行）**：
+   - 主窗口跟随系统，需同时支持深浅色；**剪贴面板固定深色**（窗口 `appearance` 锁定 `.darkAqua`，面板视图树注入 `.dark`），玻璃效果只在深色下成立，不要为面板补浅色分支。
+   - 严禁在视图中硬编码颜色。优先使用系统语义色、`.secondary` 等层级样式与系统材质；剪贴面板玻璃质感的取色集中在 `SiriGlassStyle.panel`，新增取色在此扩展，不散落到视图。
+   - 主窗口视图测试必须用 `@Test(arguments: [ColorScheme.dark, .light])` 并注入 `.environment(\.colorScheme, …)`，验证两种外观均能完成布局；剪贴面板视图只需覆盖深色（可额外注入浅色宿主环境，验证仍能布局）。
 5. **中英文国际化（i18n：`en` / `zh-Hans`，强制执行）**：
    - 所有用户可见文案（按钮、标签、占位符、提示、`help`、`accessibilityLabel`、菜单项）使用 `Text("Key")` / `LocalizedStringResource`，并在 `Folita/Resources/Localizable.xcstrings` 中补齐 `en` 与 `zh-Hans` 两种翻译，不得留空或只写一种语言。
    - 语言切换收敛于 `LanguageSettings`。不在 SwiftUI Scene 内的窗口与浮层（`NSPanel`、popover 等）必须显式注入 `LanguageSettings` 与 `.environment(\.locale, languageSettings.effectiveLocale)`，保证切换语言即时生效。

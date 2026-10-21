@@ -21,9 +21,7 @@ struct ClipboardPanelHeaderTests {
     }
 
     @Test(arguments: [
-        ("zh-Hans", ColorScheme.light),
         ("zh-Hans", ColorScheme.dark),
-        ("en", ColorScheme.light),
         ("en", ColorScheme.dark),
     ])
     func filterMenuLaysOut(localeIdentifier: String, colorScheme: ColorScheme) {
@@ -39,9 +37,7 @@ struct ClipboardPanelHeaderTests {
     }
 
     @Test(arguments: [
-        ("zh-Hans", ColorScheme.light),
         ("zh-Hans", ColorScheme.dark),
-        ("en", ColorScheme.light),
         ("en", ColorScheme.dark),
     ])
     func searchFieldKeepsFixedCapsuleSize(localeIdentifier: String, colorScheme: ColorScheme) {
