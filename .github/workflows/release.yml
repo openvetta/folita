@@ -26,7 +26,10 @@ jobs:
             echo "::error::Tag $GITHUB_REF_NAME does not match MARKETING_VERSION $project_version"
             exit 1
           fi
+          # Sparkle 以构建号判断新旧，必须随版本单调递增：0.1.1 → 101。
+          build=$(echo "$version" | awk -F. '{ printf "%d", $1 * 10000 + $2 * 100 + $3 }')
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "build=$build" >> "$GITHUB_OUTPUT"
 
       - name: Check release notes
         run: scripts/release/check-release-notes.sh "${{ steps.version.outputs.version }}"
@@ -55,6 +58,7 @@ jobs:
         env:
           TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
           SPARKLE_PUBLIC_ED_KEY: ${{ vars.SPARKLE_PUBLIC_ED_KEY }}
+          BUILD_NUMBER: ${{ steps.version.outputs.build }}
         run: |
           make project
           xcodebuild archive \
@@ -62,6 +66,7 @@ jobs:
             -derivedDataPath "$DERIVED_DATA" -archivePath build/Folita.xcarchive \
             CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Developer ID Application" \
             DEVELOPMENT_TEAM="$TEAM_ID" SPARKLE_PUBLIC_ED_KEY="$SPARKLE_PUBLIC_ED_KEY" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             OTHER_CODE_SIGN_FLAGS="--timestamp --keychain $KEYCHAIN"
           cat > build/ExportOptions.plist <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>

@@ -53,7 +53,7 @@ Cask 模板见 [`packaging/homebrew/folita.rb`](../packaging/homebrew/folita.rb)
 ## 每次发布
 
 1. 确认 `project.yml` 的 `MARKETING_VERSION` 已更新，`.github/release-notes/v<版本号>.md` 已写好：`make check-release-notes`。
-2. 推送 tag：`git tag v0.1.0 && git push origin v0.1.0`。tag 与 `MARKETING_VERSION` 不一致时流水线会中止。
+2. 推送 tag：`git tag v0.1.0 && git push origin v0.1.0`。tag 与 `MARKETING_VERSION` 不一致时流水线会中止。构建号（`CURRENT_PROJECT_VERSION`）由流水线按版本号推导（主×10000 + 次×100 + 修订），Sparkle 靠它判断更新，无需手工维护。
 
 ## 手动发布（不使用流水线）
 
