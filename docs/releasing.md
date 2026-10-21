@@ -13,8 +13,9 @@
 | Variable | `APPLE_TEAM_ID` | 开发者团队 ID |
 | Secret | `DEVELOPER_ID_CERTIFICATE_P12` | Developer ID Application 证书（含私钥）导出的 `.p12`，再 `base64` 编码 |
 | Secret | `DEVELOPER_ID_CERTIFICATE_PASSWORD` | 导出 `.p12` 时设置的密码 |
-| Secret | `APPLE_ID` | 用于公证的 Apple ID |
-| Secret | `APPLE_APP_SPECIFIC_PASSWORD` | 在 appleid.apple.com 为该 Apple ID 生成的 App 专用密码 |
+| Secret | `APPLE_API_KEY_P8` | 公证用 App Store Connect API Key 的 `.p8` 文件全文 |
+| Variable | `APPLE_API_KEY_ID` | 该 API Key 的 Key ID |
+| Variable | `APPLE_API_ISSUER_ID` | App Store Connect 的 Issuer ID |
 | Variable | `SPARKLE_PUBLIC_ED_KEY` | Sparkle EdDSA 公钥 |
 | Secret | `SPARKLE_PRIVATE_KEY` | Sparkle EdDSA 私钥 |
 | Secret | `HOMEBREW_TAP_TOKEN` | 可写 `openvetta/homebrew-tap` 的 fine-grained token；不配置则跳过更新 tap |

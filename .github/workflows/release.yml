@@ -78,13 +78,16 @@ jobs:
 
       - name: Notarize and staple
         env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          API_KEY_ID: ${{ vars.APPLE_API_KEY_ID }}
+          API_ISSUER_ID: ${{ vars.APPLE_API_ISSUER_ID }}
         run: |
+          key_file="$RUNNER_TEMP/AuthKey.p8"
+          printf '%s' "$API_KEY_P8" > "$key_file"
           ditto -c -k --keepParent build/export/Folita.app build/Folita-notarize.zip
           xcrun notarytool submit build/Folita-notarize.zip \
-            --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$TEAM_ID" --wait
+            --key "$key_file" --key-id "$API_KEY_ID" --issuer "$API_ISSUER_ID" --wait
+          rm "$key_file"
           xcrun stapler staple build/export/Folita.app
           spctl --assess --type execute --verbose build/export/Folita.app
 
