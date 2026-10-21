@@ -69,39 +69,50 @@ struct ClipPeekCard: View {
         VStack(alignment: .leading, spacing: 14) {
             preview(details, style: style)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+            if item.category == .file {
+                Button(action: onOpenInFinder) {
+                    Label("Open in Finder", systemImage: "folder")
+                        .font(.system(size: 12, weight: .medium))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.glass)
+                .controlSize(.large)
+            }
             information(details, style: style)
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("Preview"))
         .task(id: item.id) {
-            guard item.category == .image,
-                  let data = item.clipContents.first(where: { ClipboardCapture.imageTypes.contains($0.type) })?.data
-            else { return }
-            image = await ClipPreviewImages.thumbnail(from: data, maxPixelSize: 1200)
+            image = await ClipPreviewImages.thumbnail(for: item, maxPixelSize: 1200)
         }
     }
 
     // MARK: 预览
+
+    /// 图片（含图片文件）的大图；解码完成前显示加载指示。
+    private func imagePreview(style: SiriGlassStyle, shape: RoundedRectangle) -> some View {
+        ZStack {
+            if let image {
+                Image(decorative: image, scale: 2)
+                    .resizable()
+                    .scaledToFit()
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .shadow(color: style.peekShadow, radius: 8, y: 3)
+                    .padding(12)
+            } else {
+                ProgressView().controlSize(.small)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(style.peekWell, in: shape)
+    }
 
     @ViewBuilder
     private func preview(_ details: ClipDetails, style: SiriGlassStyle) -> some View {
         let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
         switch item.category {
         case .image:
-            ZStack {
-                if let image {
-                    Image(decorative: image, scale: 2)
-                        .resizable()
-                        .scaledToFit()
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        .shadow(color: style.peekShadow, radius: 8, y: 3)
-                        .padding(12)
-                } else {
-                    ProgressView().controlSize(.small)
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(style.peekWell, in: shape)
+            imagePreview(style: style, shape: shape)
         case .color:
             if let color = details.color {
                 shape
@@ -119,9 +130,14 @@ struct ClipPeekCard: View {
                 textPreview(details, style: style)
             }
         case .file:
-            filePreview(details)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(style.peekWell, in: shape)
+            // 图片文件显示图片本身，其余文件显示图标与路径。
+            if details.imageFileURL != nil, image != nil {
+                imagePreview(style: style, shape: shape)
+            } else {
+                filePreview(details)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(style.peekWell, in: shape)
+            }
         case .link:
             linkPreview(details, style: style)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -186,12 +202,6 @@ struct ClipPeekCard: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
-                Button(action: onOpenInFinder) {
-                    Label("Open in Finder", systemImage: "folder")
-                        .font(.system(size: 12, weight: .medium))
-                }
-                .buttonStyle(.glass)
-                .padding(.top, 4)
             }
             .padding(20)
         } else {

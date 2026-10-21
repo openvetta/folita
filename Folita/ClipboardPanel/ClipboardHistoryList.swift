@@ -131,10 +131,7 @@ struct ClipboardHistoryRow: View {
         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
         .onHover { isHovering = $0 }
         .task(id: item.id) {
-            guard item.category == .image,
-                  let data = item.clipContents.first(where: { ClipboardCapture.imageTypes.contains($0.type) })?.data
-            else { return }
-            thumbnail = await ClipPreviewImages.thumbnail(from: data, maxPixelSize: 64)
+            thumbnail = await ClipPreviewImages.thumbnail(for: item, maxPixelSize: 64)
         }
     }
 
@@ -165,7 +162,7 @@ struct ClipboardHistoryRow: View {
 
     // MARK: 左侧
 
-    /// 左侧图标块：图片用缩略图，颜色值用色块，其余用实心类型图标。尺寸与裁剪都在内部完成，
+    /// 左侧图标块：图片（含图片文件）用缩略图，颜色值用色块，其余用实心类型图标。尺寸与裁剪都在内部完成，
     /// 宽图按填充裁切，不会溢出到右侧文字上。
     @ViewBuilder
     private func icon(_ details: ClipDetails) -> some View {
@@ -178,6 +175,12 @@ struct ClipboardHistoryRow: View {
                 Image(decorative: thumbnail, scale: 2)
                     .resizable()
                     .scaledToFill()
+            } else if item.category == .file {
+                Image(nsImage: FileTypeIcon.image(for: details.fileURLs))
+                    .resizable()
+                    .scaledToFit()
+                    .padding(2)
+                    .accessibilityHidden(true)
             } else if item.category == .color, let color = details.color {
                 Rectangle()
                     .fill(Color(.sRGB, red: color.red, green: color.green, blue: color.blue, opacity: color.alpha))

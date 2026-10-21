@@ -106,6 +106,63 @@ struct ClipPeekViewTests {
         #expect(revealed == [[URL(filePath: "/tmp/report.pdf"), URL(filePath: "/tmp/notes.txt")]])
     }
 
+    // MARK: 图片文件
+
+    private func writeTemporaryPNG(width: Int, height: Int) throws -> URL {
+        let url = FileManager.default.temporaryDirectory.appending(path: "FolitaTests-\(UUID().uuidString).png")
+        try Self.png(width: width, height: height).write(to: url)
+        return url
+    }
+
+    private func fileItem(in model: ClipboardPanelModel, _ urls: [URL]) throws -> HistoryItem {
+        model.store.record(CapturedClip(
+            contents: urls.map { ClipContent(type: .fileURL, data: $0.dataRepresentation) },
+            sourceBundleID: nil
+        ))
+        return try #require(model.visibleItems.first)
+    }
+
+    /// 复制单个图片文件时列表缩略图与详情大图都取自文件；多个文件、非图片文件、文件已删除时回退为文件图标。
+    @Test func imageFileProvidesThumbnailsOnlyForSingleReadableImage() async throws {
+        let model = makePanelModel()
+        let png = try writeTemporaryPNG(width: 64, height: 32)
+        let text = FileManager.default.temporaryDirectory.appending(path: "FolitaTests-\(UUID().uuidString).txt")
+        try Data("hi".utf8).write(to: text)
+        defer { try? FileManager.default.removeItem(at: png); try? FileManager.default.removeItem(at: text) }
+
+        let single = try fileItem(in: model, [png])
+        #expect(ClipDetails(contents: single.clipContents, category: single.category).imageFileURL == png)
+        let thumbnail = await ClipPreviewImages.thumbnail(for: single, maxPixelSize: 64)
+        #expect(thumbnail?.width == 64)
+
+        let plain = try fileItem(in: model, [text])
+        #expect(ClipDetails(contents: plain.clipContents, category: plain.category).imageFileURL == nil)
+        #expect(await ClipPreviewImages.thumbnail(for: plain, maxPixelSize: 64) == nil)
+
+        let several = try fileItem(in: model, [png, text])
+        #expect(ClipDetails(contents: several.clipContents, category: several.category).imageFileURL == nil)
+        #expect(await ClipPreviewImages.thumbnail(for: several, maxPixelSize: 64) == nil)
+
+        try FileManager.default.removeItem(at: png)
+        #expect(await ClipPreviewImages.thumbnail(for: single, maxPixelSize: 64) == nil)
+    }
+
+    @Test(arguments: appearances)
+    func imageFileDetailLaysOut(locale: String, scheme: ColorScheme) throws {
+        let model = makePanelModel()
+        let png = try writeTemporaryPNG(width: 64, height: 32)
+        defer { try? FileManager.default.removeItem(at: png) }
+        let item = try fileItem(in: model, [png])
+        let size = ClipboardPanelMetrics.peekDetailFrame(in: ClipboardPanelMetrics.containerSize(isPeeking: true)).size
+
+        let host = NSHostingView(rootView: ClipPeekPanel(item: item)
+            .frame(width: size.width, height: size.height)
+            .environment(\.locale, Locale(identifier: locale))
+            .environment(\.colorScheme, scheme))
+        host.layoutSubtreeIfNeeded()
+        #expect(host.fittingSize == size)
+    }
+
     // MARK: 信息区
 
     @Test func imageInformationShowsSourceAndDimensions() throws {
