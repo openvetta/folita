@@ -1,56 +1,85 @@
-# Folita
+<p align="center">
+  <img src="docs/assets/banner.png" alt="Folita" width="100%">
+</p>
 
-纯 Swift 编写的 macOS 剪贴板工具。
+<p align="center">
+  A native macOS clipboard manager with a Liquid Glass panel, written in pure Swift.
+</p>
 
-## 两个面板
+<p align="center">
+  English ·
+  <a href="README.zh-CN.md">简体中文</a> ·
+  <a href="https://github.com/openvetta/folita/releases/latest">Download</a> ·
+  <a href="docs/releasing.md">Releasing</a>
+</p>
 
-| 面板 | 形态 | 入口 |
-| --- | --- | --- |
-| 主面板 | 传统 macOS 工具布局：侧边栏分区 + 设置内容（SwiftUI `Window` + `NavigationSplitView`） | 菜单栏图标 → 打开主面板 |
-| 剪贴面板 | iOS 27 Siri 新 UI 风格的通透玻璃容器，自屏幕顶部居中弹出（无边框非激活 `NSPanel`） | 菜单栏图标 → 显示剪贴面板；主面板工具栏按钮；`Esc` 关闭 |
+---
 
-剪贴面板的质地由 `SiriGlassContainer` 提供：Liquid Glass 打底，自上而下渐隐的着色，内容在底部淡出，边缘高光描边，底部把手。深浅色外观的取色集中在 `SiriGlassStyle`。
+Folita keeps what you copy and brings it back with a shortcut. Press <kbd>⌘</kbd><kbd>⇧</kbd><kbd>V</kbd> in any app, pick an item, and it is pasted into the app you came from.
 
-## 目录
+## Features
+
+- **Liquid Glass panel.** A translucent panel pops up from the top of the screen, the center, or at the cursor, in light and dark appearances.
+- **Keyboard first.** <kbd>↑</kbd><kbd>↓</kbd> to select, <kbd>↩</kbd> to paste, <kbd>⇧↩</kbd> as plain text, <kbd>⌘1</kbd>–<kbd>⌘9</kbd> for the first nine, <kbd>⌘K</kbd> for more actions.
+- **Search and filters.** Text, images, files, links, colors, and emails, with a detail preview for the selected item.
+- **Private by default.** History stays on your Mac. Items marked hidden by password managers, items over 10 MB, and apps you ignore are never recorded. Recording can be paused at any time.
+- **Sandboxed.** The app runs in the App Sandbox and requests no network access of its own.
+- **Extras.** Global shortcut, launch at login, 12 app icons, automatic updates, English and Simplified Chinese.
+
+## Install
+
+Requires macOS 26 or later.
+
+```sh
+brew install --cask openvetta/tap/folita
+```
+
+Or download the signed and notarized build from [Releases](https://github.com/openvetta/folita/releases/latest).
+
+Auto-paste simulates <kbd>⌘</kbd><kbd>V</kbd> and needs the Accessibility permission. Without it, the item is copied back and you paste it yourself.
+
+## Development
+
+Requires macOS 26+, Xcode 26+, and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
+
+```sh
+make project   # generate Folita.xcodeproj
+make build     # build Debug
+make test      # run tests
+make run       # build and launch
+make app-icons # re-export icons after editing design/app-icons
+```
+
+Builds use ad-hoc signing by default, so no certificate is needed. Maintainers can copy `Configs/Local.xcconfig.example` to `Configs/Local.xcconfig` (git-ignored) and set a team, which keeps the signing identity stable so Accessibility grants survive rebuilds.
+
+To launch a Debug build with the clipboard panel already open:
+
+```sh
+open .build/DerivedData/Build/Products/Debug/Folita.app --args -FolitaShowClipboardPanel YES
+```
+
+### Layout
 
 ```text
 Folita/
-  App/              应用入口、AppDelegate（装配各服务）、菜单栏菜单、开机自启、应用图标设置
-  ClipboardPanel/   剪贴面板窗口、控制器、状态模型、历史列表与搜索
-  History/          剪贴板监听、采集规则、SwiftData 模型与存储、保留与隐私设置
-  Paste/            写回剪贴板、自动粘贴与权限提示
-  HotKey/           全局快捷键（封装 KeyboardShortcuts）
-  Updates/          应用内更新（封装 Sparkle）
-  MainPanel/        主面板及其设置分区
-  DesignSystem/     Siri 风格玻璃容器与取色
-  Resources/        Localizable.xcstrings（en / zh-Hans）、Assets.xcassets（图标缩略图，由脚本生成）
-FolitaTests/        Swift Testing 单元、视图与流程测试
-Configs/            签名配置（Local.xcconfig 不入库）
-design/app-icons/   可选应用图标的 Icon Composer 源文件（fox.icon 为默认图标）
-scripts/icons/      把图标源按系统蒙层导出到 Assets.xcassets
-docs/adr/           架构决策记录
-docs/releasing.md   发布流程与所需凭据
-project.yml         XcodeGen 工程定义（.xcodeproj 不入库）
+  App/              Entry point, AppDelegate (wires services), menu bar, launch at login, app icon
+  ClipboardPanel/   Panel window, controller, state model, history list and search
+  History/          Pasteboard monitor, capture rules, SwiftData model and store, retention and privacy
+  Paste/            Writing back to the pasteboard, auto-paste, permission hints
+  HotKey/           Global shortcut (wraps KeyboardShortcuts)
+  Updates/          In-app updates (wraps Sparkle)
+  MainPanel/        Main window and its settings sections
+  DesignSystem/     Siri-style glass container and colors
+  Resources/        Localizable.xcstrings (en / zh-Hans), Assets.xcassets (generated icon thumbnails)
+FolitaTests/        Swift Testing unit, view, and flow tests
+Configs/            Signing configuration (Local.xcconfig is not committed)
+design/app-icons/   Icon Composer sources for the selectable app icons
+scripts/icons/      Exports icon sources into Assets.xcassets
+docs/adr/           Architecture decision records
+docs/releasing.md   Release process and required credentials
+project.yml         XcodeGen project definition (.xcodeproj is not committed)
 ```
 
-## 开发
-
-要求 macOS 26+、Xcode 26+、[XcodeGen](https://github.com/yonaskolb/XcodeGen)（`brew install xcodegen`）。
-
-```sh
-make project   # 生成 Folita.xcodeproj
-make build     # 构建 Debug
-make test      # 运行测试
-make run       # 构建并启动
-make app-icons # 修改 design/app-icons 后重新导出图标图片
-```
-
-默认使用临时签名，无需证书即可构建和测试。维护者可复制 `Configs/Local.xcconfig.example` 为 `Configs/Local.xcconfig`（不入库）并填入团队，使签名身份稳定，避免每次重新构建后辅助功能等系统授权失效。
-
-Debug 构建可用 `open .build/DerivedData/Build/Products/Debug/Folita.app --args -FolitaShowClipboardPanel YES` 启动即弹出剪贴面板。
-
-发布流程与所需凭据见 [docs/releasing.md](docs/releasing.md)。
-
-## 许可证
+## License
 
 [MIT](LICENSE) © nbecloud
