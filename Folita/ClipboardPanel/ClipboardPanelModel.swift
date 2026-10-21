@@ -22,6 +22,12 @@ enum ClipboardPanelCommand: Equatable {
     case pasteAt(Int)
     case deleteSelected
     case deleteAll
+    /// 用默认浏览器打开链接条目。
+    case openInBrowser
+    /// 给指定邮件地址写信。
+    case composeEmail(String)
+    /// 把颜色条目转换成另一种格式并复制到剪贴板。
+    case convertColor(ColorFormat)
     /// 打开或收起选中项的「更多操作」菜单（⌘K，右键也能打开）。
     case toggleActionsMenu
     /// 打开详情预览（peek）：面板加宽，右侧显示选中项详情。
@@ -145,6 +151,12 @@ final class ClipboardPanelModel {
     /// 菜单里高亮第几项，↑↓ 改它、↩ 执行它，鼠标悬停也同步。
     private(set) var actionsMenuIndex = 0
 
+    /// 菜单打开时锚定条目对应的条目列表，打开时按内容算一次，期间不随渲染重算。
+    private(set) var actionsMenuEntries: [ClipboardActionsMenuEntry] = []
+
+    /// 已就地展开二级菜单的条目。
+    private(set) var actionsMenuExpanded: ClipboardActionsMenuEntry?
+
     /// 各历史行在容器坐标系（原点在容器左上角）中的位置，由列表在布局后写回。
     /// 菜单定位与右键命中都靠它。
     private(set) var rowFrames: [UUID: CGRect] = [:]
@@ -179,6 +191,14 @@ final class ClipboardPanelModel {
     }
     /// 在访达中显示文件；由宿主装配（收起面板并调用系统接口）。
     @ObservationIgnored var onRevealInFinder: ([URL]) -> Void = { _ in }
+    /// 用系统默认应用打开网址（http(s) 链接与 mailto）；由宿主装配（收起面板并调用系统接口）。
+    @ObservationIgnored var onOpenURL: (URL) -> Void = { _ in }
+    /// 把转换后的文本写回剪贴板（不粘贴、不入历史）；由宿主装配。
+    @ObservationIgnored var onCopyText: (String) -> Void = { _ in }
+    /// 「已复制」提示停留多久；测试替换为可控值。
+    @ObservationIgnored var copyFeedbackDuration: Duration = .milliseconds(1600)
+    /// 「已复制」提示的消隐任务；测试可等待它完成。
+    @ObservationIgnored private(set) var copyFeedbackTask: Task<Void, Never>?
     @ObservationIgnored var onDismiss: () -> Void = {}
     @ObservationIgnored var noticeProvider: () -> PanelNotice = { .none }
     @ObservationIgnored var onResolveNotice: (PanelNotice) -> Void = { _ in }
@@ -207,6 +227,7 @@ final class ClipboardPanelModel {
         selectedID = nil
         isPeeking = false
         actionsMenuItemID = nil
+        clearCopyFeedback()
         targetAppName = targetAppNameProvider()
         refreshNotice()
         presentationCount += 1
@@ -218,6 +239,9 @@ final class ClipboardPanelModel {
         query += text
         searchFocusRequest += 1
     }
+
+    /// 刚复制到剪贴板的文本，面板据此在底部短暂显示「已复制」；nil 表示没有提示。
+    private(set) var copyFeedback: String?
 
     /// 授权状态可能在面板打开期间改变（例如从系统设置切回来）。
     func refreshNotice() {
@@ -248,52 +272,168 @@ final class ClipboardPanelModel {
 
     var isShowingActionsMenu: Bool { actionsMenuItemID != nil }
 
-    /// 菜单卡片在容器坐标中的位置；还没量到那一行时返回 nil，菜单等布局完成后再出现。
+    /// 菜单当前展开的行：固定条目与按内容出现的条目，加上展开条目的二级条目（紧跟在父条目后），
+    /// 键盘 ↑↓ 按这个顺序移动。
+    var actionsMenuRows: [ClipboardActionsMenuRow] {
+        ClipboardActionsMenuRow.rows(of: actionsMenuEntries, expanded: actionsMenuExpanded)
+    }
+
+    /// 一级卡片里的行，与展开的二级条目分开画。
+    var actionsMenuTopRows: [ClipboardActionsMenuRow] { actionsMenuRows.filter { $0.depth == 0 } }
+    var actionsMenuChildRows: [ClipboardActionsMenuRow] { actionsMenuRows.filter { $0.depth == 1 } }
+
+    private var actionsMenuContainer: CGRect {
+        CGRect(origin: .zero, size: ClipboardPanelMetrics.containerSize(isPeeking: isPeeking))
+    }
+
+    /// 一级菜单卡片在容器坐标中的位置；还没量到那一行时返回 nil，菜单等布局完成后再出现。
     var actionsMenuFrame: CGRect? {
         guard let actionsMenuItemID, let row = rowFrames[actionsMenuItemID] else { return nil }
+        let rows = actionsMenuTopRows
         return ClipboardPanelMetrics.actionsMenuFrame(
             anchoredTo: row,
-            entryCount: ClipboardActionsMenuEntry.allCases.count,
-            in: CGRect(origin: .zero, size: ClipboardPanelMetrics.containerSize(isPeeking: isPeeking))
+            size: ClipboardPanelMetrics.actionsMenuSize(
+                rowCount: rows.count,
+                separatorCount: ClipboardActionsMenuRow.separatorCount(in: rows)
+            ),
+            in: actionsMenuContainer
         )
+    }
+
+    /// 二级菜单卡片的位置；没有展开的二级菜单时为 nil。
+    var actionsSubmenuFrame: CGRect? {
+        guard let menu = actionsMenuFrame, let expanded = actionsMenuExpanded else { return nil }
+        let top = actionsMenuTopRows
+        guard let index = top.firstIndex(where: { $0.entry == expanded }) else { return nil }
+        let children = actionsMenuChildRows
+        guard !children.isEmpty else { return nil }
+        let separatorsBefore = ClipboardActionsMenuRow.separatorCount(in: Array(top[...index]))
+        return ClipboardPanelMetrics.actionsSubmenuFrame(
+            besides: menu,
+            parentRowOffset: ClipboardPanelMetrics.actionsMenuRowOffset(index: index, separatorsBefore: separatorsBefore),
+            rowCount: children.count,
+            in: actionsMenuContainer
+        )
+    }
+
+    /// 点在任一菜单卡片上。
+    func actionsMenuContains(_ point: CGPoint) -> Bool {
+        actionsMenuFrame?.contains(point) == true || actionsSubmenuFrame?.contains(point) == true
     }
 
     /// 菜单里当前高亮的条目，↑↓ 移动，↩ 执行。
     var highlightedActionsMenuEntry: ClipboardActionsMenuEntry? {
-        ClipboardActionsMenuEntry.entry(at: actionsMenuIndex)
+        let rows = actionsMenuRows
+        return rows.indices.contains(actionsMenuIndex) ? rows[actionsMenuIndex].entry : nil
     }
 
-    /// 右键或 ⌘K 打开：菜单锚在选中条目上，高亮回到第一项。
+    /// 右键或 ⌘K 打开：菜单锚在选中条目上，条目按它的内容决定，高亮回到第一项。
     func showActions(for item: HistoryItem) {
         selectedID = item.id
         actionsMenuItemID = item.id
+        actionsMenuEntries = ClipboardActionsMenuEntry.entries(for: details(of: item))
+        actionsMenuExpanded = nil
         actionsMenuIndex = 0
     }
 
     func hideActions() {
         actionsMenuItemID = nil
+        actionsMenuEntries = []
+        actionsMenuExpanded = nil
         actionsMenuIndex = 0
     }
 
     /// ↑↓：在菜单项之间移动，到头就停住，不回绕。
     func moveActionsMenuSelection(by offset: Int) {
         guard isShowingActionsMenu else { return }
-        let count = ClipboardActionsMenuEntry.allCases.count
+        let count = actionsMenuRows.count
         actionsMenuIndex = min(max(actionsMenuIndex + offset, 0), count - 1)
     }
 
     /// 鼠标悬停到某一项上：高亮跟过去，↩ 执行的就是它。
     func highlightActionsMenuEntry(_ entry: ClipboardActionsMenuEntry) {
         guard isShowingActionsMenu,
-              let index = ClipboardActionsMenuEntry.allCases.firstIndex(of: entry)
+              let index = actionsMenuRows.firstIndex(where: { $0.entry == entry })
         else { return }
         actionsMenuIndex = index
     }
 
-    /// ↩ 执行当前高亮项；执行的命令会先收起菜单（粘贴动作本身可能再收起面板）。
+    /// ↩ 执行当前高亮项。
     func confirmActionsMenuSelection() {
         guard let entry = highlightedActionsMenuEntry else { return }
-        perform(entry.command)
+        activateActionsMenuEntry(entry)
+    }
+
+    /// 点击或 ↩ 一行：带二级菜单的条目就地展开 / 收回，其余执行命令（先收起菜单，粘贴动作本身可能再收起面板）。
+    func activateActionsMenuEntry(_ entry: ClipboardActionsMenuEntry) {
+        guard isShowingActionsMenu else { return }
+        if !entry.children.isEmpty {
+            actionsMenuExpanded = actionsMenuExpanded == entry ? nil : entry
+            highlightActionsMenuEntry(entry)
+        } else if let command = entry.command {
+            perform(command)
+        }
+    }
+
+    /// →：展开高亮的带二级菜单的条目，高亮落到它的第一个二级条目上。
+    func expandActionsMenuSelection() {
+        guard let entry = highlightedActionsMenuEntry, !entry.children.isEmpty, actionsMenuExpanded != entry else { return }
+        actionsMenuExpanded = entry
+        actionsMenuIndex = min(actionsMenuIndex + 1, actionsMenuRows.count - 1)
+    }
+
+    /// ← / Esc：有展开的二级菜单就先收回并让高亮回到父条目；否则关闭菜单。返回是否只是收回了二级菜单。
+    @discardableResult
+    func backOutOfActionsMenu() -> Bool {
+        guard let parent = actionsMenuExpanded else {
+            hideActions()
+            return false
+        }
+        actionsMenuExpanded = nil
+        highlightActionsMenuEntry(parent)
+        return true
+    }
+
+    // MARK: 内容相关的操作
+
+    private func details(of item: HistoryItem) -> ClipDetails {
+        ClipDetails(contents: item.clipContents, category: item.category)
+    }
+
+    /// 详情或菜单里的「浏览器打开」：只对链接条目生效。
+    func openInBrowser(_ item: HistoryItem) {
+        guard let url = details(of: item).link else { return }
+        onOpenURL(url)
+    }
+
+    func composeEmail(to address: String) {
+        guard let url = EmailAddresses.mailtoURL(to: address) else { return }
+        onOpenURL(url)
+    }
+
+    /// 把颜色条目转换成指定格式并复制到剪贴板，面板保持打开并提示已复制；不是颜色条目时不做任何事。
+    func convertColor(of item: HistoryItem, to format: ColorFormat) {
+        guard let color = details(of: item).color else { return }
+        let text = format.string(for: color)
+        onCopyText(text)
+        showCopyFeedback(text)
+    }
+
+    private func showCopyFeedback(_ text: String) {
+        copyFeedbackTask?.cancel()
+        copyFeedback = text
+        let duration = copyFeedbackDuration
+        copyFeedbackTask = Task { [weak self] in
+            try? await Task.sleep(for: duration)
+            guard !Task.isCancelled else { return }
+            self?.copyFeedback = nil
+        }
+    }
+
+    private func clearCopyFeedback() {
+        copyFeedbackTask?.cancel()
+        copyFeedbackTask = nil
+        copyFeedback = nil
     }
 
     func setRowFrame(_ frame: CGRect, for id: UUID) {
@@ -312,8 +452,8 @@ final class ClipboardPanelModel {
             toggleActionsMenu()
             return
         case .dismiss where isShowingActionsMenu:
-            // 菜单打开时 Esc 先收起菜单，再按一次才收起面板。
-            hideActions()
+            // 菜单打开时 Esc 先收回二级菜单、再收起菜单，最后一次才收起面板。
+            backOutOfActionsMenu()
             return
         case .moveUp where isShowingActionsMenu:
             moveActionsMenuSelection(by: -1)
@@ -355,6 +495,12 @@ final class ClipboardPanelModel {
             let neighbor = items.indices.contains(index + 1) ? items[index + 1] : (index > 0 ? items[index - 1] : nil)
             store.delete(item)
             selectedID = neighbor?.id
+        case .openInBrowser:
+            if let item = selectedItem { openInBrowser(item) }
+        case .composeEmail(let address):
+            composeEmail(to: address)
+        case .convertColor(let format):
+            if let item = selectedItem { convertColor(of: item, to: format) }
         case .deleteAll:
             store.clearAll()
             selectedID = nil

@@ -10,13 +10,17 @@ struct ClipboardActionsMenuTests {
     ]
 
     private static let container = CGRect(origin: .zero, size: ClipboardPanelMetrics.containerSize)
-    private static let entryCount = ClipboardActionsMenuEntry.allCases.count
+    /// 纯文本条目的菜单：只有固定的粘贴与删除条目。
+    private static let entries = ClipboardActionsMenuEntry.entries(for: ClipDetails(
+        contents: [ClipContent(type: .string, data: Data("a".utf8))], category: .text
+    ))
+    private static let entryCount = entries.count
 
     // MARK: 布局
 
     /// 卡片高度＝内边距 × 2 + 条目 × 行高 + 一道分组分割线。
     @Test func menuSizeFollowsEntryCount() {
-        let size = ClipboardPanelMetrics.actionsMenuSize(entryCount: 5)
+        let size = ClipboardPanelMetrics.actionsMenuSize(rowCount: 5, separatorCount: 1)
         #expect(size.width == ClipboardPanelMetrics.actionsMenuWidth)
         #expect(
             size.height
@@ -29,7 +33,7 @@ struct ClipboardActionsMenuTests {
     /// 默认贴在那一行的下方，并与行右对齐。
     @Test func menuSitsBelowTheRow() {
         let row = CGRect(x: 24, y: 100, width: 392, height: 52)
-        let frame = ClipboardPanelMetrics.actionsMenuFrame(anchoredTo: row, entryCount: 5, in: Self.container)
+        let frame = ClipboardPanelMetrics.actionsMenuFrame(anchoredTo: row, size: ClipboardPanelMetrics.actionsMenuSize(rowCount: 5, separatorCount: 1), in: Self.container)
 
         #expect(frame.maxX == row.maxX)
         #expect(frame.minY == row.maxY + ClipboardPanelMetrics.actionsMenuGap)
@@ -39,7 +43,7 @@ struct ClipboardActionsMenuTests {
     /// 下方放不下时翻到行的上方，不越过容器底边。
     @Test func menuFlipsAboveTheRowNearTheBottom() {
         let row = CGRect(x: 24, y: 460, width: 392, height: 52)
-        let frame = ClipboardPanelMetrics.actionsMenuFrame(anchoredTo: row, entryCount: 5, in: Self.container)
+        let frame = ClipboardPanelMetrics.actionsMenuFrame(anchoredTo: row, size: ClipboardPanelMetrics.actionsMenuSize(rowCount: 5, separatorCount: 1), in: Self.container)
 
         #expect(frame.maxY == row.minY - ClipboardPanelMetrics.actionsMenuGap)
         #expect(frame.minY >= Self.container.minY)
@@ -48,11 +52,11 @@ struct ClipboardActionsMenuTests {
     /// 行超出左右边界时卡片向内夹，整张卡片始终在容器内。
     @Test func menuStaysInsideTheContainer() {
         let wide = CGRect(x: 200, y: 100, width: 400, height: 52)
-        let right = ClipboardPanelMetrics.actionsMenuFrame(anchoredTo: wide, entryCount: 5, in: Self.container)
+        let right = ClipboardPanelMetrics.actionsMenuFrame(anchoredTo: wide, size: ClipboardPanelMetrics.actionsMenuSize(rowCount: 5, separatorCount: 1), in: Self.container)
         #expect(right.maxX == Self.container.maxX - ClipboardPanelMetrics.actionsMenuInset)
 
         let narrow = CGRect(x: 0, y: 100, width: 10, height: 52)
-        let left = ClipboardPanelMetrics.actionsMenuFrame(anchoredTo: narrow, entryCount: 5, in: Self.container)
+        let left = ClipboardPanelMetrics.actionsMenuFrame(anchoredTo: narrow, size: ClipboardPanelMetrics.actionsMenuSize(rowCount: 5, separatorCount: 1), in: Self.container)
         #expect(left.minX == Self.container.minX + ClipboardPanelMetrics.actionsMenuInset)
     }
 
@@ -80,17 +84,17 @@ struct ClipboardActionsMenuTests {
 
     /// 菜单上标出的键必须真能触发同一动作：改键位时两边要一起改。
     @Test func shortcutGlyphsMatchTheirKeyBindings() {
-        for entry in ClipboardActionsMenuEntry.allCases {
+        for entry in Self.entries {
             let (characters, modifiers) = Self.parse(entry.shortcut)
             #expect(ClipboardPanelCommand.command(for: characters, modifiers: modifiers) == entry.command)
         }
     }
 
     @Test func entriesAreGroupedWithDeleteLast() {
-        #expect(ClipboardActionsMenuEntry.allCases.filter(\.startsNewGroup) == [.deleteEntry])
-        #expect(ClipboardActionsMenuEntry.allCases.filter(\.isDestructive) == [.deleteEntry, .deleteAll])
+        #expect(Self.entries.map(\.group) == [0, 0, 0, 2, 2])
+        #expect(Self.entries.filter(\.isDestructive) == [.deleteEntry, .deleteAll])
         #expect(
-            ClipboardActionsMenuEntry.allCases.map(\.command) == [
+            Self.entries.map(\.command) == [
                 .paste(.original), .pasteKeepingPanelOpen, .paste(.plainText), .deleteSelected, .deleteAll,
             ]
         )
@@ -101,9 +105,9 @@ struct ClipboardActionsMenuTests {
         // 类型上下文不可推断（localized 的入参是 LocalizedStringResource），显式写出条目类型。
         let name: String? = "Safari"
         let entry = ClipboardActionsMenuEntry.pasteToTarget
-        #expect(Self.localized(entry.title(targetAppName: name), "en") == "Paste to Safari")
-        #expect(Self.localized(entry.title(targetAppName: name), "zh-Hans") == "粘贴到 Safari")
-        #expect(Self.localized(entry.title(targetAppName: nil), "zh-Hans") == "粘贴")
+        #expect(Self.title(entry, name, "en") == "Paste to Safari")
+        #expect(Self.title(entry, name, "zh-Hans") == "粘贴到 Safari")
+        #expect(Self.title(entry, nil, "zh-Hans") == "粘贴")
     }
 
     @Test func entryTitlesAreLocalized() {
@@ -114,8 +118,8 @@ struct ClipboardActionsMenuTests {
             (.deleteAll, "Delete All Entries", "删除全部"),
         ]
         for (entry, en, zh) in titles {
-            #expect(Self.localized(entry.title(targetAppName: nil), "en") == en)
-            #expect(Self.localized(entry.title(targetAppName: nil), "zh-Hans") == zh)
+            #expect(Self.title(entry, nil, "en") == en)
+            #expect(Self.title(entry, nil, "zh-Hans") == zh)
         }
     }
 
@@ -125,9 +129,15 @@ struct ClipboardActionsMenuTests {
     @Test(arguments: appearances)
     func menuCardLaysOutAtTheComputedSize(locale: String, scheme: ColorScheme) {
         // 面板按算出的尺寸给卡片定宽，这里断言两边一致。
-        let size = ClipboardPanelMetrics.actionsMenuSize(entryCount: Self.entryCount)
+        let size = ClipboardPanelMetrics.actionsMenuSize(rowCount: Self.entryCount, separatorCount: 1)
         let host = NSHostingView(
-            rootView: ClipboardActionsMenuView(targetAppName: "Safari", perform: { _ in })
+            rootView: ClipboardActionsMenuView(
+                rows: ClipboardActionsMenuRow.rows(of: Self.entries, expanded: nil),
+                targetAppName: "Safari",
+                highlighted: nil,
+                expanded: nil,
+                activate: { _ in }
+            )
                 .frame(width: size.width)
                 .environment(\.locale, Locale(identifier: locale))
                 .environment(\.colorScheme, scheme)
@@ -347,7 +357,7 @@ struct ClipboardActionsMenuTests {
         #expect(ClipboardActionsMenuEntry.deleteEntry.keyCaps == ["⌃", "X"])
         #expect(ClipboardActionsMenuEntry.deleteAll.keyCaps == ["⌃", "⇧", "X"])
         #expect(ClipboardActionsMenuEntry.menuHintKeyCaps == ["⌘", "K"])
-        #expect(ClipboardActionsMenuEntry.allCases.allSatisfy { $0.keyCaps.allSatisfy { $0.count == 1 } })
+        #expect(Self.entries.allSatisfy { $0.keyCaps.allSatisfy { $0.count == 1 } })
     }
 
     // MARK: 辅助
@@ -382,6 +392,11 @@ struct ClipboardActionsMenuTests {
             }
         }
         return (characters, modifiers)
+    }
+
+    private static func title(_ entry: ClipboardActionsMenuEntry, _ appName: String?, _ identifier: String) -> String {
+        guard case .localized(let resource) = entry.title(targetAppName: appName) else { return "" }
+        return localized(resource, identifier)
     }
 
     private static func localized(_ resource: LocalizedStringResource, _ identifier: String) -> String {

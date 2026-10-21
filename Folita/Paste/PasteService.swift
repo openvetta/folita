@@ -62,6 +62,12 @@ final class PasteService {
         return .pasted
     }
 
+    /// 把转换得到的文本（如另一种颜色格式）作为纯文本写回剪贴板，不粘贴。带 Folita 自己的标记，
+    /// 监听时会跳过，不会作为新的一条入历史。
+    func copy(text: String) {
+        ClipboardWriter.write([ClipContent(type: .string, data: Data(text.utf8))], mode: .plainText, to: pasteboard)
+    }
+
     private func targetApplication() -> PasteTarget {
         guard let pid = targetProcessIdentifier() else { return .keyWindow }
         return .process(pid)

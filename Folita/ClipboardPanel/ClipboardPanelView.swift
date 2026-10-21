@@ -41,7 +41,13 @@ struct ClipboardPanelView: View {
                     ClipPeekDivider()
                         .frame(height: detail.height)
                         .offset(x: ClipboardPanelMetrics.peekDividerX(in: container), y: detail.minY)
-                    ClipPeekPanel(item: model.selectedItem, onOpenInFinder: model.openInFinder)
+                    ClipPeekPanel(
+                        item: model.selectedItem,
+                        onOpenInFinder: model.openInFinder,
+                        onOpenInBrowser: model.openInBrowser,
+                        onComposeEmail: model.composeEmail(to:),
+                        onConvertColor: model.convertColor(of:to:)
+                    )
                         .frame(width: detail.width, height: detail.height)
                         .offset(x: detail.minX, y: detail.minY)
                 }
@@ -52,9 +58,11 @@ struct ClipboardPanelView: View {
         .overlay(alignment: .topLeading) {
             if let frame = model.actionsMenuFrame {
                 ClipboardActionsMenuView(
+                    rows: model.actionsMenuTopRows,
                     targetAppName: model.targetAppName,
                     highlighted: model.highlightedActionsMenuEntry,
-                    perform: model.perform,
+                    expanded: model.actionsMenuExpanded,
+                    activate: model.activateActionsMenuEntry,
                     highlight: model.highlightActionsMenuEntry
                 )
                     .frame(width: frame.width, height: frame.height)
@@ -62,6 +70,31 @@ struct ClipboardPanelView: View {
                     .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
             }
         }
+        // 复制成功的提示浮在底部，不受容器渐隐蒙版影响。
+        .overlay(alignment: .bottom) {
+            if let text = model.copyFeedback {
+                CopyFeedbackToast(text: text)
+                    .padding(.horizontal, ClipboardPanelMetrics.contentInset)
+                    .padding(.bottom, 36)
+                    .transition(.opacity.combined(with: .offset(y: 8)))
+            }
+        }
+        .animation(.snappy(duration: 0.18), value: model.copyFeedback)
+        // 二级菜单画在一级卡片旁边，与它同层。
+        .overlay(alignment: .topLeading) {
+            if let frame = model.actionsSubmenuFrame {
+                ClipboardActionsSubmenuView(
+                    rows: model.actionsMenuChildRows,
+                    highlighted: model.highlightedActionsMenuEntry,
+                    activate: model.activateActionsMenuEntry,
+                    highlight: model.highlightActionsMenuEntry
+                )
+                    .frame(width: frame.width, height: frame.height)
+                    .offset(x: frame.minX, y: frame.minY)
+                    .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .leading)))
+            }
+        }
+        .animation(.snappy(duration: 0.18), value: model.actionsMenuExpanded)
         .animation(.snappy(duration: 0.18), value: model.isShowingActionsMenu)
         .animation(.snappy(duration: ClipboardPanelMetrics.peekAnimationDuration), value: isPeeking)
         .padding(ClipboardPanelMetrics.shadowInset)

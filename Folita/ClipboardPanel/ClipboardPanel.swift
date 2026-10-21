@@ -154,7 +154,7 @@ final class ClipboardPanelController {
         }
         guard model.isShowingActionsMenu else { return false }
         // 点卡片交给 SwiftUI 的按钮。
-        guard model.actionsMenuFrame?.contains(point) != true else { return false }
+        guard !model.actionsMenuContains(point) else { return false }
         model.hideActions()
         return true
     }
@@ -197,7 +197,13 @@ final class ClipboardPanelController {
             model.moveActionsMenuSelection(by: 1)
         case .paste(.original):
             model.confirmActionsMenuSelection()
-        case .dismiss, .toggleActionsMenu:
+        case .peek:
+            model.expandActionsMenuSelection()
+        case .endPeek:
+            model.backOutOfActionsMenu()
+        case .dismiss:
+            model.backOutOfActionsMenu()
+        case .toggleActionsMenu:
             model.hideActions()
         default:
             break

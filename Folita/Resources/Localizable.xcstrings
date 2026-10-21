@@ -131,6 +131,16 @@
         }
       }
     },
+    "Channel" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "频道"
+          }
+        }
+      }
+    },
     "Characters" : {
       "localizations" : {
         "zh-Hans" : {
@@ -301,6 +311,16 @@
         }
       }
     },
+    "Convert Color" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转换颜色格式"
+          }
+        }
+      }
+    },
     "Copied" : {
       "localizations" : {
         "zh-Hans" : {
@@ -317,6 +337,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "复制的文本、图片和文件会出现在这里。"
+          }
+        }
+      }
+    },
+    "Copied to Clipboard" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已复制到剪贴板"
           }
         }
       }
@@ -507,6 +537,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "通用"
+          }
+        }
+      }
+    },
+    "Gist" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "代码片段"
           }
         }
       }
@@ -762,6 +802,16 @@
         }
       }
     },
+    "Open in Browser" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在浏览器中打开"
+          }
+        }
+      }
+    },
     "Open in Finder" : {
       "localizations" : {
         "zh-Hans" : {
@@ -922,6 +972,16 @@
         }
       }
     },
+    "Post" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "帖子"
+          }
+        }
+      }
+    },
     "Preview" : {
       "localizations" : {
         "zh-Hans" : {
@@ -948,6 +1008,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "隐私"
+          }
+        }
+      }
+    },
+    "Profile" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "个人主页"
           }
         }
       }
@@ -988,6 +1058,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "移除"
+          }
+        }
+      }
+    },
+    "Repository" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仓库"
           }
         }
       }
@@ -1058,6 +1138,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选中的内容会直接粘贴到你正在使用的应用。未授权时只会复制，需要自己按 ⌘V 粘贴。"
+          }
+        }
+      }
+    },
+    "Send Email" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发送邮件"
           }
         }
       }
@@ -1268,6 +1358,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "版本 %@（%@）"
+          }
+        }
+      }
+    },
+    "Video" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "视频"
           }
         }
       }

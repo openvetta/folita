@@ -272,7 +272,7 @@ struct ClipboardPanelModelTests {
         #expect(
             model.actionsMenuFrame == ClipboardPanelMetrics.actionsMenuFrame(
                 anchoredTo: row,
-                entryCount: ClipboardActionsMenuEntry.allCases.count,
+                size: ClipboardPanelMetrics.actionsMenuSize(rowCount: 5, separatorCount: 1),
                 in: CGRect(origin: .zero, size: ClipboardPanelMetrics.containerSize(isPeeking: false))
             )
         )

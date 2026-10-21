@@ -36,6 +36,10 @@ enum ClipboardPanelMetrics {
     static let actionsMenuSeparatorHeight: CGFloat = 9
     static let actionsMenuGap: CGFloat = 6
     static let actionsMenuInset: CGFloat = 8
+    /// 二级菜单卡片：理想宽度、挤在一级卡片左侧时的最小宽度、与一级卡片的间距。
+    static let actionsSubmenuWidth: CGFloat = 188
+    static let actionsSubmenuMinWidth: CGFloat = 132
+    static let actionsSubmenuGap: CGFloat = 4
     /// 窗口四周的透明边距，容器在窗口内缩进这一圈，预览伸缩时也用它吸收取整误差。
     static let shadowInset: CGFloat = 28
     /// 容器顶边距离屏幕可见区域顶部（菜单栏下沿）的距离。
@@ -48,28 +52,63 @@ enum ClipboardPanelMetrics {
 
     static var windowSize: CGSize { windowSize(isPeeking: false) }
 
-    /// 菜单卡片尺寸：条目按固定高度叠放，与 `ClipboardActionsMenuView` 的行高一致。
-    /// 菜单按“粘贴一组、删除一组”分成两段，中间有一道分割线。
-    static func actionsMenuSize(entryCount: Int) -> CGSize {
+    /// 菜单卡片尺寸：行按固定高度叠放，组与组之间各有一道分割线，与 `ClipboardActionsMenuView` 一致。
+    static func actionsMenuSize(rowCount: Int, separatorCount: Int) -> CGSize {
         CGSize(
             width: actionsMenuWidth,
-            height: actionsMenuPadding * 2 + CGFloat(entryCount) * actionsMenuEntryHeight + actionsMenuSeparatorHeight
+            height: actionsMenuPadding * 2 + CGFloat(rowCount) * actionsMenuEntryHeight
+                + CGFloat(separatorCount) * actionsMenuSeparatorHeight
         )
     }
 
     /// 菜单在容器内的位置：优先放在那一行下方并与行右对齐；下方放不下就翻到行上方，
     /// 左右超出容器时向内夹，保证整张卡片都在面板内。
-    static func actionsMenuFrame(anchoredTo row: CGRect, entryCount: Int, in container: CGRect) -> CGRect {
-        let size = actionsMenuSize(entryCount: entryCount)
+    static func actionsMenuFrame(anchoredTo row: CGRect, size: CGSize, in container: CGRect) -> CGRect {
         let minX = container.minX + actionsMenuInset
         let maxX = container.maxX - actionsMenuInset - size.width
         let x = min(max(row.maxX - size.width, minX), max(minX, maxX))
 
         let below = row.maxY + actionsMenuGap
         let above = row.minY - actionsMenuGap - size.height
-        let y = below + size.height <= container.maxY - actionsMenuInset ? below : above
+        let preferred = below + size.height <= container.maxY - actionsMenuInset ? below : above
+        // 展开二级菜单后卡片变高，上下都放不下时也要整张留在容器内。
+        let minY = container.minY + actionsMenuInset
+        let maxY = container.maxY - actionsMenuInset - size.height
+        let y = min(max(preferred, minY), max(minY, maxY))
 
         return CGRect(origin: CGPoint(x: x.rounded(), y: y.rounded()), size: size)
+    }
+
+    /// 一级卡片里第 `index` 行（0 起）顶边相对卡片顶边的偏移；`separatorsBefore` 是它之前的分割线条数。
+    static func actionsMenuRowOffset(index: Int, separatorsBefore: Int) -> CGFloat {
+        actionsMenuPadding + CGFloat(index) * actionsMenuEntryHeight + CGFloat(separatorsBefore) * actionsMenuSeparatorHeight
+    }
+
+    /// 二级菜单在容器内的位置：第一行与父行对齐；优先放在一级卡片右侧，放不下就放左侧（宽度随可用空间收窄，
+    /// 但不小于最小宽度）；两侧都放不下时贴容器右缘盖在一级卡片上。上下超出时向内夹。
+    static func actionsSubmenuFrame(
+        besides menu: CGRect, parentRowOffset: CGFloat, rowCount: Int, in container: CGRect
+    ) -> CGRect {
+        let rightRoom = container.maxX - actionsMenuInset - menu.maxX - actionsSubmenuGap
+        let leftRoom = menu.minX - actionsSubmenuGap - container.minX - actionsMenuInset
+        let width: CGFloat
+        let x: CGFloat
+        if rightRoom >= actionsSubmenuWidth {
+            width = actionsSubmenuWidth
+            x = menu.maxX + actionsSubmenuGap
+        } else if leftRoom >= actionsSubmenuMinWidth {
+            width = min(actionsSubmenuWidth, leftRoom)
+            x = menu.minX - actionsSubmenuGap - width
+        } else {
+            width = actionsSubmenuMinWidth
+            x = container.maxX - actionsMenuInset - width
+        }
+
+        let height = actionsMenuPadding * 2 + CGFloat(rowCount) * actionsMenuEntryHeight
+        let minY = container.minY + actionsMenuInset
+        let maxY = container.maxY - actionsMenuInset - height
+        let y = min(max(menu.minY + parentRowOffset - actionsMenuPadding, minY), max(minY, maxY))
+        return CGRect(x: x.rounded(), y: y.rounded(), width: width, height: height)
     }
 
     /// 窗口坐标（原点在左下，含四周透明边距）→ 容器坐标（原点在左上）。

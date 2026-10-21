@@ -25,6 +25,8 @@ struct SiriGlassStyle: Equatable {
     var peekWell: Color
     var peekStripe: Color
     var peekShadow: Color
+    /// 站点链接卡片（GitHub、X、YouTube）的底色：浅色下近白，深色下是比面板略亮的深灰。
+    var linkCardBackground: Color
 
     /// 内容在容器底部开始渐隐的位置（从容器顶部按比例计）。列表用它在底部留出安全空间。
     static let contentFadeStart: CGFloat = 0.70
@@ -60,7 +62,8 @@ struct SiriGlassStyle: Equatable {
                 peekDivider: .black.opacity(0.10),
                 peekWell: .black.opacity(0.05),
                 peekStripe: .black.opacity(0.045),
-                peekShadow: .black.opacity(0.12)
+                peekShadow: .black.opacity(0.12),
+                linkCardBackground: .white
             )
         default:
             SiriGlassStyle(
@@ -84,7 +87,8 @@ struct SiriGlassStyle: Equatable {
                 peekDivider: .white.opacity(0.12),
                 peekWell: .white.opacity(0.06),
                 peekStripe: .white.opacity(0.06),
-                peekShadow: .black.opacity(0.35)
+                peekShadow: .black.opacity(0.35),
+                linkCardBackground: Color(white: 0.16)
             )
         }
     }

@@ -8,11 +8,23 @@ struct ClipPeekPanel: View {
     let item: HistoryItem?
     /// 文件条目的「从访达打开」。
     var onOpenInFinder: (HistoryItem) -> Void = { _ in }
+    /// 链接条目的「浏览器打开」。
+    var onOpenInBrowser: (HistoryItem) -> Void = { _ in }
+    /// 给某个邮件地址写信。
+    var onComposeEmail: (String) -> Void = { _ in }
+    /// 颜色条目转换成另一种格式并粘贴。
+    var onConvertColor: (HistoryItem, ColorFormat) -> Void = { _, _ in }
 
     var body: some View {
         ZStack {
             if let item {
-                ClipPeekCard(item: item, onOpenInFinder: { onOpenInFinder(item) })
+                ClipPeekCard(
+                    item: item,
+                    onOpenInFinder: { onOpenInFinder(item) },
+                    onOpenInBrowser: { onOpenInBrowser(item) },
+                    onComposeEmail: onComposeEmail,
+                    onConvertColor: { onConvertColor(item, $0) }
+                )
                     .id(item.id)
                     .transition(.opacity)
             } else {
@@ -58,6 +70,9 @@ struct ClipPeekDivider: View {
 struct ClipPeekCard: View {
     let item: HistoryItem
     var onOpenInFinder: () -> Void = {}
+    var onOpenInBrowser: () -> Void = {}
+    var onComposeEmail: (String) -> Void = { _ in }
+    var onConvertColor: (ColorFormat) -> Void = { _ in }
 
     @Environment(\.colorScheme) private var colorScheme
     @State private var image: CGImage?
@@ -70,9 +85,7 @@ struct ClipPeekCard: View {
             preview(details, style: style)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .overlay(alignment: .topTrailing) {
-                    if item.category == .file {
-                        openInFinderButton.padding(10)
-                    }
+                    actionButtons(details).padding(10)
                 }
             information(details, style: style)
         }
@@ -80,6 +93,74 @@ struct ClipPeekCard: View {
         .accessibilityLabel(Text("Preview"))
         .task(id: item.id) {
             image = await ClipPreviewImages.thumbnail(for: item, maxPixelSize: 1200)
+        }
+    }
+
+    /// 右上角按钮占据的高度（按钮 + 上边距），文字预览据此下移。
+    static let actionButtonsInset: CGFloat = 52
+
+    /// 预览区右上角是否有操作按钮。
+    static func hasActionButtons(_ details: ClipDetails) -> Bool {
+        details.category == .file || details.link != nil || !details.emails.isEmpty || details.color != nil
+    }
+
+    /// 预览区右上角的操作按钮：文件 → 访达；链接 → 浏览器；含邮箱 → 发送邮件；颜色 → 转换格式。
+    @ViewBuilder
+    private func actionButtons(_ details: ClipDetails) -> some View {
+        GlassEffectContainer(spacing: 8) {
+            HStack(spacing: 8) {
+                if item.category == .file {
+                    openInFinderButton
+                }
+                if details.link != nil {
+                    capsuleButton("Open in Browser", systemImage: "safari", action: onOpenInBrowser)
+                }
+                if details.emails.count == 1, let address = details.emails.first {
+                    capsuleButton("Send Email", systemImage: "envelope") { onComposeEmail(address) }
+                } else if details.emails.count > 1 {
+                    Menu {
+                        ForEach(details.emails, id: \.self) { address in
+                            Button { onComposeEmail(address) } label: { Text(verbatim: address) }
+                        }
+                    } label: {
+                        capsuleLabel("Send Email", systemImage: "envelope")
+                    }
+                    .menuStyle(.button)
+                    .buttonStyle(.glass)
+                    .buttonBorderShape(.capsule)
+                    .menuIndicator(.hidden)
+                }
+                if let color = details.color {
+                    Menu {
+                        // 菜单项直接写出转换后的色值，选中即复制。
+                        ForEach(ColorFormat.allCases.filter { $0 != details.colorFormat }, id: \.self) { format in
+                            Button { onConvertColor(format) } label: { Text(verbatim: format.string(for: color)) }
+                        }
+                    } label: {
+                        capsuleLabel("Convert Color", systemImage: "arrow.triangle.2.circlepath")
+                    }
+                    .menuStyle(.button)
+                    .buttonStyle(.glass)
+                    .buttonBorderShape(.capsule)
+                    .menuIndicator(.hidden)
+                }
+            }
+        }
+    }
+
+    private func capsuleButton(_ title: LocalizedStringResource, systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) { capsuleLabel(title, systemImage: systemImage) }
+            .buttonStyle(.glass)
+            .buttonBorderShape(.capsule)
+    }
+
+    private func capsuleLabel(_ title: LocalizedStringResource, systemImage: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: systemImage)
+                .font(.system(size: 12, weight: .medium))
+                .accessibilityHidden(true)
+            Text(title)
+                .font(.system(size: 12, weight: .medium))
         }
     }
 
@@ -153,9 +234,13 @@ struct ClipPeekCard: View {
                     .background(style.peekWell, in: shape)
             }
         case .link:
-            linkPreview(details, style: style)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(style.peekWell, in: shape)
+            if let target = details.linkTarget, let url = details.link {
+                LinkBrandCard(target: target, url: url)
+            } else {
+                linkPreview(details, style: style)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(style.peekWell, in: shape)
+            }
         case .text, .richText, .email:
             textPreview(details, style: style)
         }
@@ -167,7 +252,9 @@ struct ClipPeekCard: View {
                 .font(.system(size: 13))
                 .lineSpacing(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(14)
+                .padding([.horizontal, .bottom], 14)
+                // 右上角有操作按钮时文字从按钮下方开始，不被按钮盖住。
+                .padding(.top, Self.hasActionButtons(details) ? Self.actionButtonsInset : 14)
         }
         .scrollIndicators(.automatic)
         .background(style.peekWell, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
