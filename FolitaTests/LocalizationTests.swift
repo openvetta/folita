@@ -56,6 +56,7 @@ struct LocalizationTests {
             ("Paste and Keep Window Open", "Paste and Keep Window Open", "粘贴并保持窗口打开"),
             ("Delete Entry", "Delete Entry", "删除此条"),
             ("Delete All Entries", "Delete All Entries", "删除全部"),
+            ("Open the Main Panel", "Open the Main Panel", "打开主面板"),
         ]
         for (resource, en, zh) in copy {
             #expect(localized(resource, "en") == en)
@@ -100,9 +101,9 @@ struct LocalizationTests {
         ])
         #expect(localized("App Icon", "en") == "App Icon")
         #expect(localized("App Icon", "zh-Hans") == "应用图标")
-        let footer: LocalizedStringResource = "The Dock shows the selected icon while Folita is running. Finder and other places keep the default fox."
-        #expect(localized(footer, "en") == "The Dock shows the selected icon while Folita is running. Finder and other places keep the default fox.")
-        #expect(localized(footer, "zh-Hans") == "Folita 运行期间，程序坞显示所选图标；访达等其他位置仍显示默认的狐狸图标。")
+        let footer: LocalizedStringResource = "The menu bar shows the selected icon while Folita is running. Finder and other places keep the default fox."
+        #expect(localized(footer, "en") == "The menu bar shows the selected icon while Folita is running. Finder and other places keep the default fox.")
+        #expect(localized(footer, "zh-Hans") == "Folita 运行期间，菜单栏显示所选图标；访达等其他位置仍显示默认的狐狸图标。")
     }
 
     @Test func generalSettingsCopyIsLocalized() {

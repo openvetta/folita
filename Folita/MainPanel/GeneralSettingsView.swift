@@ -37,7 +37,7 @@ struct GeneralSettingsView: View {
             } header: {
                 Text("App Icon")
             } footer: {
-                Text("The Dock shows the selected icon while Folita is running. Finder and other places keep the default fox.")
+                Text("The menu bar shows the selected icon while Folita is running. Finder and other places keep the default fox.")
                     .foregroundStyle(.secondary)
             }
 

@@ -15,7 +15,7 @@
 
 ---
 
-Folita keeps what you copy and brings it back with a shortcut. Press <kbd>⌘</kbd><kbd>⇧</kbd><kbd>V</kbd> in any app, pick an item, and it is pasted into the app you came from.
+Folita keeps what you copy and brings it back with a shortcut. Press <kbd>⌘</kbd><kbd>⇧</kbd><kbd>V</kbd> in any app, pick an item, and it is pasted into the app you came from. It lives in the menu bar only — there is no Dock icon.
 
 ## Screenshots
 
@@ -37,7 +37,7 @@ Folita keeps what you copy and brings it back with a shortcut. Press <kbd>⌘</k
 - **Search and filters.** Text, images, files, links, colors, and emails, with a detail preview for the selected item.
 - **Private by default.** History stays on your Mac. Items marked hidden by password managers, items over 10 MB, and apps you ignore are never recorded. Recording can be paused at any time.
 - **Sandboxed.** The app runs in the App Sandbox and requests no network access of its own.
-- **Extras.** Global shortcut, launch at login, 12 app icons, automatic updates, English and Simplified Chinese.
+- **Extras.** Menu bar only (the Dock icon appears only while settings are open), global shortcut, launch at login, 12 app icons, automatic updates, English and Simplified Chinese.
 
 ## Install
 
@@ -75,7 +75,7 @@ open .build/DerivedData/Build/Products/Debug/Folita.app --args -FolitaShowClipbo
 
 ```text
 Folita/
-  App/              Entry point, AppDelegate (wires services), menu bar, launch at login, app icon
+  App/              Entry point, AppDelegate (wires services), menu bar and its icon, launch at login, app icon
   ClipboardPanel/   Panel window, controller, state model, history list and search
   History/          Pasteboard monitor, capture rules, SwiftData model and store, retention and privacy
   Paste/            Writing back to the pasteboard, auto-paste, permission hints

@@ -55,16 +55,16 @@ struct PanelPlacementTests {
         #expect(secondary.contains(container.origin))
     }
 
-    @Test func settingsDefaultToTopCenterAndPersist() {
+    @Test func settingsDefaultToCursorAndPersist() {
         let suite = "FolitaTests.Placement.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
 
         let settings = PanelPlacementSettings(userDefaults: defaults)
-        #expect(settings.placement == .topCenter)
+        #expect(settings.placement == .cursor)
 
-        settings.placement = .cursor
-        #expect(PanelPlacementSettings(userDefaults: defaults).placement == .cursor)
+        settings.placement = .center
+        #expect(PanelPlacementSettings(userDefaults: defaults).placement == .center)
     }
 
     @Test func unknownStoredValueFallsBackToDefault() {
@@ -73,6 +73,6 @@ struct PanelPlacementTests {
         defer { defaults.removePersistentDomain(forName: suite) }
         defaults.set("elsewhere", forKey: PanelPlacementSettings.placementKey)
 
-        #expect(PanelPlacementSettings(userDefaults: defaults).placement == .topCenter)
+        #expect(PanelPlacementSettings(userDefaults: defaults).placement == .cursor)
     }
 }

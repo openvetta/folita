@@ -11,7 +11,7 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
-    MARKETING_VERSION: "0.1.2"
+    MARKETING_VERSION: "0.1.3"
     CURRENT_PROJECT_VERSION: "1"
     ENABLE_HARDENED_RUNTIME: YES
     LOCALIZATION_PREFERS_STRING_CATALOGS: YES
@@ -51,6 +51,8 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Folita
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        # 无 Dock 图标：应用只以菜单栏图标常驻，见 docs/adr/0005-menu-bar-only-app.md。
+        INFOPLIST_KEY_LSUIElement: YES
 
   FolitaTests:
     type: bundle.unit-test

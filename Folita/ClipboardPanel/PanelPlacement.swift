@@ -23,7 +23,7 @@ enum PanelPlacement: String, CaseIterable, Identifiable {
 @Observable
 final class PanelPlacementSettings {
     static let placementKey = "FolitaPanelPlacement"
-    static let defaultPlacement = PanelPlacement.topCenter
+    static let defaultPlacement = PanelPlacement.cursor
 
     @ObservationIgnored private let userDefaults: UserDefaults
 

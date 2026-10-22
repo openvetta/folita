@@ -235,6 +235,9 @@ final class ClipboardPanelController {
             model.backOutOfActionsMenu()
         case .toggleActionsMenu:
             model.hideActions()
+        case .openMainPanel:
+            // ⌘, 是全局的设置快捷键，菜单打开时也照常生效。
+            model.perform(.openMainPanel)
         default:
             break
         }

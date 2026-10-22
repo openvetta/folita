@@ -138,7 +138,7 @@ struct ClipboardPanelView: View {
         .frame(height: ClipboardPanelMetrics.controlHeight)
     }
 
-    /// 跟随用户所选的应用图标（运行期 Dock 图标）。
+    /// 跟随用户所选的应用图标（与菜单栏、关于页一致）。
     private var appLogo: some View {
         Image(nsImage: NSApp?.applicationIconImage ?? NSImage())
             .resizable()

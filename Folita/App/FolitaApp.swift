@@ -17,12 +17,17 @@ struct FolitaApp: App {
         }
         .defaultSize(width: 760, height: 520)
         .windowResizability(.contentMinSize)
+        // 应用没有 Dock 图标，入口是菜单栏：启动（含登录时启动）不弹主面板，也不恢复上次的窗口。
+        .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
 
         MenuBarExtra {
-            MenuBarContent()
+            MenuBarContent(mainWindow: appDelegate.mainWindow)
                 .appServices(appDelegate, languageSettings: languageSettings)
         } label: {
-            Image(systemName: "doc.on.clipboard")
+            MenuBarIcon(appIconSettings: appDelegate.appIconSettings)
+                // 菜单栏标签是启动后唯一常驻的 SwiftUI 视图，主面板的打开动作从这里取。
+                .background(WindowOpeningBridge(router: appDelegate.mainWindow))
         }
     }
 }
@@ -31,6 +36,7 @@ private extension View {
     /// 主面板与菜单栏共用的服务注入，新增设置对象时只改这里。
     func appServices(_ app: AppDelegate, languageSettings: LanguageSettings) -> some View {
         environment(app.clipboardPanel)
+            .environment(app.dockIcon)
             .environment(app.historyStore)
             .environment(app.historySettings)
             .environment(app.privacySettings)

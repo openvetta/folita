@@ -822,6 +822,16 @@
         }
       }
     },
+    "Open the Main Panel" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开主面板"
+          }
+        }
+      }
+    },
     "Open System Settings" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1272,12 +1282,12 @@
         }
       }
     },
-    "The Dock shows the selected icon while Folita is running. Finder and other places keep the default fox." : {
+    "The menu bar shows the selected icon while Folita is running. Finder and other places keep the default fox." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Folita 运行期间，程序坞显示所选图标；访达等其他位置仍显示默认的狐狸图标。"
+            "value" : "Folita 运行期间，菜单栏显示所选图标；访达等其他位置仍显示默认的狐狸图标。"
           }
         }
       }

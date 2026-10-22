@@ -57,7 +57,7 @@ struct GeneralSettingsTests {
         #expect(services.paste.autoPaste == false)
     }
 
-    /// 常见流程：打开通用设置 → 选择“光标位置” → 设置落盘，下次启动仍是该选择。
+    /// 常见流程：打开通用设置 → 选择“屏幕正中心” → 设置落盘，下次启动仍是该选择。
     @Test(arguments: [
         ("zh-Hans", ColorScheme.light), ("zh-Hans", .dark),
         ("en", .light), ("en", .dark),
@@ -67,10 +67,10 @@ struct GeneralSettingsTests {
         let host = NSHostingView(rootView: GeneralSettingsView().testServices(services, locale: locale, scheme: scheme))
         host.frame = CGRect(x: 0, y: 0, width: 520, height: 700)
         host.layoutSubtreeIfNeeded()
-        #expect(services.placement.placement == .topCenter)
+        #expect(services.placement.placement == .cursor)
 
-        services.placement.placement = .cursor
+        services.placement.placement = .center
         host.layoutSubtreeIfNeeded()
-        #expect(PanelPlacementSettings(userDefaults: services.defaults).placement == .cursor)
+        #expect(PanelPlacementSettings(userDefaults: services.defaults).placement == .center)
     }
 }

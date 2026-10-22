@@ -17,20 +17,21 @@ struct AppIconSettingsTests {
         return rep
     }
 
-    @Test func defaultsToFoxAndKeepsSystemIcon() {
+    @Test func defaultsToFox() throws {
         let services = TestServices()
         #expect(services.appIcon.selection == .fox)
 
         services.appIcon.apply()
         #expect(services.appliedIcons.count == 1)
-        #expect(services.appliedIcons[0] == nil)
+        #expect(try #require(services.appliedIcons[0]) == services.appIcon.selection.image)
     }
 
-    @Test func choosingIconUpdatesDockAndSurvivesRelaunch() throws {
+    /// 常见流程：通用设置里换图标 → 运行期应用图标立即跟上，重启后仍是所选图标。
+    @Test func choosingIconAppliesImmediatelyAndSurvivesRelaunch() throws {
         let services = TestServices()
         services.appIcon.selection = .penguin
         let applied = try #require(services.appliedIcons.last ?? nil)
-        #expect(applied.size == NSSize(width: 1024, height: 1024))
+        #expect(applied.size == AppIconOption.penguin.image?.size)
 
         // 重新启动：新实例读取已保存的选择，并在启动时应用。
         var relaunched: [NSImage?] = []
@@ -39,9 +40,9 @@ struct AppIconSettingsTests {
         restored.apply()
         #expect(relaunched.count == 1 && relaunched[0] != nil)
 
-        // 换回狐狸时交还系统渲染的默认图标。
+        // 换回狐狸时同样立即生效。
         restored.selection = .fox
-        #expect(relaunched.count == 2 && relaunched[1] == nil)
+        #expect(relaunched.count == 2 && relaunched[1] != nil)
         #expect(AppIconSettings(userDefaults: services.defaults) { _ in }.selection == .fox)
     }
 
@@ -60,11 +61,17 @@ struct AppIconSettingsTests {
         #expect(try #require(rep.colorAt(x: 256, y: 256)).alphaComponent == 1)
     }
 
-    @Test func dockImageKeepsSystemIconMargin() throws {
-        let rep = try rasterize(try #require(AppIconOption.dog.dockImage))
-        #expect(try #require(rep.colorAt(x: 90, y: 512)).alphaComponent == 0)
-        #expect(try #require(rep.colorAt(x: 110, y: 512)).alphaComponent > 0.9)
-        #expect(try #require(rep.colorAt(x: 512, y: 934)).alphaComponent == 0)
+    /// 菜单栏图标：按菜单栏尺寸（18 pt）绘制，而不是把 512 点原图直接交出去（会把状态栏项撑满整条菜单栏）；
+    /// 且不加模板渲染，保留彩色。
+    @Test(arguments: AppIconOption.allCases)
+    func everyOptionProvidesColoredMenuBarIconAtMenuBarSize(option: AppIconOption) throws {
+        let icon = try #require(option.menuBarImage)
+        #expect(icon.size == NSSize(width: 18, height: 18))
+        #expect(icon.isTemplate == false)
+
+        let rep = try rasterize(icon, side: 512)
+        #expect(try #require(rep.colorAt(x: 4, y: 256)).alphaComponent > 0.9)
+        #expect(try #require(rep.colorAt(x: 2, y: 2)).alphaComponent == 0)
     }
 
     @Test(arguments: [
