@@ -402,7 +402,8 @@ struct FavoritesView: View {
 
     private func cleanupEmptyDraft(exempting newID: UUID?) {
         guard let id = draftID, id != newID else { return }
-        if let draftItem = store.items.first(where: { $0.id == id }),
+        // 草稿是片段，不在 `items`（剪贴历史）里，需从全量里找。
+        if let draftItem = store.allItems.first(where: { $0.id == id }),
            (draftItem.plainText ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             store.delete(draftItem)
             if selectedID == id {

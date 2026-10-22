@@ -25,6 +25,10 @@ final class HistoryItem {
     /// 内容指纹，用于去重；唯一性由存储层保证而非数据库约束。
     var contentHash: String = ""
 
+    /// 是否为用户手动录入的片段（而非从剪贴板复制而来）。
+    /// 片段不进入剪贴历史，也不参与「复制」语义：取消收藏即删除，不退回历史。
+    var isSnippet: Bool = false
+
     @Relationship(deleteRule: .cascade, inverse: \HistoryItemContent.item)
     var contents: [HistoryItemContent]? = []
 

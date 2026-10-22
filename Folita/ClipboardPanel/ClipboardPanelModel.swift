@@ -638,10 +638,10 @@ final class ClipboardPanelModel {
         store.deleteTab(tab)
     }
 
-    /// 选择器当前锛定的条目。
+    /// 选择器当前锚定的条目。用全量查询：手动片段不在剪贴历史里，但在收藏夹中可被 ⌘F 操作。
     var favoritePickerItem: HistoryItem? {
         guard let favoritePickerItemID else { return nil }
-        return store.items.first { $0.id == favoritePickerItemID }
+        return store.allItems.first { $0.id == favoritePickerItemID }
     }
 
     /// 选择器的行：先列出所有分组，最后（条目已收藏时）追加一行「取消收藏」。

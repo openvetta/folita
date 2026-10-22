@@ -8,8 +8,11 @@ import SwiftData
 @MainActor
 @Observable
 final class ClipboardHistoryStore {
-    /// 按最近复制时间倒序。
+    /// 剪贴历史：按最近复制时间倒序。只含真实复制来的条目，不含手动录入的片段。
     private(set) var items: [HistoryItem] = []
+
+    /// 全部条目（含片段），仅供收藏夹与内部查询使用。
+    private(set) var allItems: [HistoryItem] = []
 
     /// 收藏分组，按 `order` 升序（见 docs/adr/0006）。
     private(set) var tabs: [FavoriteTab] = []
@@ -54,7 +57,8 @@ final class ClipboardHistoryStore {
         }
     }
 
-    /// 记录一次复制。内容与已有条目相同时只把那条移到最前，不新增。
+    /// 记录一次复制。内容与已有剪贴条目相同时只把那条移到最前，不新增。
+    /// `items` 已排除片段，因此复制同内容不会「认领」收藏里的手动片段。
     func record(_ clip: CapturedClip) {
         let date = now()
         let hash = HistoryItem.hash(of: clip.contents)
@@ -110,6 +114,7 @@ final class ClipboardHistoryStore {
 
     /// 新建一条空白的文本收藏，作为「New Snippet」的就地编辑草稿。内容会随用户在详情栏
     /// 输入而由 `updateText` 覆盖；若用户没输入就离开，视图层会把它删掉。
+    /// 标记为 `isSnippet`：它是手动录入的片段，不属于剪贴历史。
     @discardableResult
     func insertEmptySnippet(in tab: FavoriteTab) -> HistoryItem {
         let date = now()
@@ -117,6 +122,7 @@ final class ClipboardHistoryStore {
             clip: CapturedClip(contents: [ClipContent(type: .string, data: Data())], sourceBundleID: nil),
             at: date
         )
+        item.isSnippet = true
         context.insert(item)
         item.favoriteTab = tab
         item.favoritedAt = date
@@ -154,8 +160,13 @@ final class ClipboardHistoryStore {
         commit()
     }
 
-    /// 取消收藏，条目退回普通历史。
+    /// 取消收藏：从剪贴板收藏来的条目退回普通历史；手动录入的片段没有「普通历史」可退，
+    /// 直接删除。这样取消收藏在语义上都是「移出收藏夹」，不会凭空制造一条假的复制记录。
     func unfavorite(_ item: HistoryItem) {
+        if item.isSnippet {
+            delete(item)
+            return
+        }
         item.favoriteTab = nil
         item.favoritedAt = nil
         item.updatedAt = now()
@@ -167,9 +178,9 @@ final class ClipboardHistoryStore {
         favorites.filter { $0.favoriteTab?.id == tab.id }
     }
 
-    /// 全部分组的收藏条目，按收藏时间倒序。
+    /// 全部分组的收藏条目（含手动片段），按收藏时间倒序。
     var favorites: [HistoryItem] {
-        items
+        allItems
             .filter(\.isFavorited)
             .sorted { ($0.favoritedAt ?? .distantPast) > ($1.favoritedAt ?? .distantPast) }
     }
@@ -191,19 +202,25 @@ final class ClipboardHistoryStore {
         commit()
     }
 
-    /// 删除分组：组内条目退回普通历史，剪贴内容本身保留（不用级联）。返回退回的条数。
+    /// 删除分组：组内从剪贴板收藏来的条目退回普通历史，剪贴内容本身保留（不用级联）；
+    /// 手动录入的片段没有剪贴来源，随分组一起删除。返回值是退回普通历史的剪贴条数。
     @discardableResult
     func deleteTab(_ tab: FavoriteTab) -> Int {
         let affected = favorites.filter { $0.favoriteTab?.id == tab.id }
         let date = now()
-        for item in affected {
+        var returned = 0
+        for item in affected where item.isSnippet {
+            context.delete(item)
+        }
+        for item in affected where !item.isSnippet {
             item.favoriteTab = nil
             item.favoritedAt = nil
             item.updatedAt = date
+            returned += 1
         }
         context.delete(tab)
         commit()
-        return affected.count
+        return returned
     }
 
     private func seedDefaultTabs(named names: [String]) {
@@ -224,7 +241,10 @@ final class ClipboardHistoryStore {
     }
 
     private func reload() {
-        items = fetchAll()
+        let all = fetchAll()
+        allItems = all
+        // 剪贴历史列表只展示真实复制来的条目；片段属于收藏，不混入历史。
+        items = all.filter { !$0.isSnippet }
         tabs = fetchTabs()
     }
 

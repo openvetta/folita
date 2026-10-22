@@ -326,6 +326,7 @@ struct ClipboardHistoryStoreTests {
 
         let item = store.insertEmptySnippet(in: work)
         #expect(item.isFavorited)
+        #expect(item.isSnippet)
         #expect(item.favoriteTab?.id == work.id)
         #expect(item.title.isEmpty)
 
@@ -334,8 +335,8 @@ struct ClipboardHistoryStoreTests {
         #expect(item.title == "hello world")
         #expect(item.category == .text)
         #expect(item.clipContents == [ClipContent(type: .string, data: Data("hello world".utf8))])
-        // 普通历史里也有它，且收藏分组能筛到。
-        #expect(store.items.map(\.title) == ["hello world"])
+        // 片段是收藏，不进入剪贴历史；只出现在所属分组里。
+        #expect(store.items.isEmpty)
         #expect(store.items(in: work).map(\.title) == ["hello world"])
     }
 
@@ -384,6 +385,68 @@ struct ClipboardHistoryStoreTests {
             store.record(clip(text))
         }
         #expect(store.favorites.map(\.title) == ["keep"])
+    }
+
+    /// 取消收藏片段：片段没有剪贴来源，应直接删除，而不是退回剪贴历史。
+    @Test func unfavoritingASnippetDeletesItInsteadOfReturningToHistory() throws {
+        let store = try makeStore()
+        let tab = try #require(store.createTab(named: "Work"))
+        let item = store.insertEmptySnippet(in: tab)
+        store.updateText(item, to: "my snippet")
+
+        store.unfavorite(item)
+
+        #expect(store.favorites.isEmpty)
+        #expect(store.items.isEmpty)
+        #expect(store.items(in: tab).isEmpty)
+    }
+
+    /// 取消收藏从剪贴板收藏来的条目：仍退回普通历史（行为不变）。
+    @Test func unfavoritingAClipReturnsItToHistory() throws {
+        let store = try makeStore()
+        let tab = try #require(store.createTab(named: "Work"))
+        store.record(clip("copied"))
+        let item = try #require(store.items.first)
+        store.favorite(item, in: tab)
+
+        store.unfavorite(item)
+
+        #expect(store.favorites.isEmpty)
+        #expect(store.items.map(\.title) == ["copied"])
+    }
+
+    /// 删除分组：组内剪贴条目退回历史，手动片段随分组删除，不污染历史。
+    @Test func deletingATabDropsSnippetsButReturnsClips() throws {
+        let store = try makeStore()
+        let tab = try #require(store.createTab(named: "Work"))
+        store.record(clip("copied"))
+        let clipItem = try #require(store.items.first)
+        store.favorite(clipItem, in: tab)
+        let snippet = store.insertEmptySnippet(in: tab)
+        store.updateText(snippet, to: "manual")
+
+        let returned = store.deleteTab(tab)
+
+        #expect(returned == 1)
+        #expect(store.items.map(\.title) == ["copied"])
+        #expect(store.favorites.isEmpty)
+    }
+
+    /// 复制的文本与某片段内容相同：不会把该片段「认领」为剪贴记录。
+    @Test func copyingTheSameTextAsASnippetDoesNotAdoptIt() throws {
+        let store = try makeStore()
+        let tab = try #require(store.createTab(named: "Work"))
+        let snippet = store.insertEmptySnippet(in: tab)
+        store.updateText(snippet, to: "shared")
+
+        store.record(clip("shared"))
+
+        // 片段仍在收藏且未变成剪贴记录；普通历史里是一条独立的复制。
+        #expect(snippet.isSnippet)
+        #expect(snippet.isFavorited)
+        #expect(store.items.map(\.isSnippet) == [false])
+        #expect(store.items.map(\.title) == ["shared"])
+        #expect(store.favorites.count == 1)
     }
 }
 
