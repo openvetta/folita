@@ -278,6 +278,7 @@ struct LocalizationTests {
             ("Make a group with the + button, then add snippets here.", "Make a group with the + button, then add snippets here.", "用 + 按钮新建一个分组，然后在这里添加片段。"),
             ("Add a snippet to save text you want to keep close.", "Add a snippet to save text you want to keep close.", "添加一个片段，把想随手取用的文本存起来。"),
             ("Select a snippet, or add a new one.", "Select a snippet, or add a new one.", "选择一个片段，或添加一个新的。"),
+            ("Copy to Clipboard", "Copy to Clipboard", "复制到剪贴板"),
         ]
         for (resource, en, zh) in copy {
             #expect(localized(resource, "en") == en)

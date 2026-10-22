@@ -46,6 +46,11 @@ final class HistoryItem {
     /// 是否已收藏。`favoritedAt` 与 `favoriteTab` 同时由存储层写入，任一为空都视为未收藏。
     var isFavorited: Bool { favoriteTab != nil && favoritedAt != nil }
 
+    /// 纯文本内容（若有）。
+    var plainText: String? {
+        ClipClassification.plainText(in: clipContents)
+    }
+
     /// 按采集时的顺序还原的全部格式，回填时原样写回剪贴板。
     var clipContents: [ClipContent] {
         (contents ?? [])

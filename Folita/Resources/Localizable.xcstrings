@@ -1671,6 +1671,16 @@
           }
         }
       }
+    },
+    "Copy to Clipboard" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制到剪贴板"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
