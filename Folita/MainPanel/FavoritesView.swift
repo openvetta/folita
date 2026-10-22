@@ -16,6 +16,7 @@ struct FavoritesView: View {
     @State private var selectedTabID: UUID?
     @State private var renamingTabID: UUID?
     @State private var renameDraft = ""
+    @State private var isAddingText = false
 
     private static let listColumnWidth: CGFloat = 280
 
@@ -26,6 +27,20 @@ struct FavoritesView: View {
             Divider()
             detail
                 .frame(maxWidth: .infinity)
+        }
+        .sheet(isPresented: $isAddingText) {
+            AddFavoriteTextSheet(
+                tabs: store.tabs,
+                initialTabID: selectedTabID,
+                onSave: { text, tabID in
+                    guard let tab = store.tabs.first(where: { $0.id == tabID }) else { return }
+                    if let item = store.addFavoriteText(text, in: tab) {
+                        // 保存后切到来源分组并选中新条目，用户马上能看到写进去的内容。
+                        selectedTabID = tab.id
+                        selectedID = item.id
+                    }
+                }
+            )
         }
     }
 
@@ -66,6 +81,10 @@ struct FavoritesView: View {
 
             Divider()
 
+            addTextBar
+
+            Divider()
+
             if tabItems.isEmpty {
                 emptyState
             } else {
@@ -79,6 +98,25 @@ struct FavoritesView: View {
                 .listStyle(.inset)
             }
         }
+    }
+
+    /// 列表栏顶部的手动添加入口：录入一段文本直接存为收藏，不必先复制。
+    /// 没有分组时暂不可用——保存必须归属一个分组，顶部胶囊排的 + 可先新建。
+    private var addTextBar: some View {
+        HStack {
+            Button {
+                isAddingText = true
+            } label: {
+                Label("Add Text…", systemImage: "plus")
+                    .font(.system(size: 12, weight: .medium))
+            }
+            .buttonStyle(.borderless)
+            .disabled(store.tabs.isEmpty)
+            .help(Text("Add Text…"))
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
 
     private var emptyState: some View {

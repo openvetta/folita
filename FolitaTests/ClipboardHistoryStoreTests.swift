@@ -316,6 +316,66 @@ struct ClipboardHistoryStoreTests {
         }
         #expect(store.tabs.map(\.name) == ["A", "B", "C"])
     }
+
+    // MARK: 手动添加文本
+
+    /// 常见流程：直接录入一段文本收藏到「工作」→ 在收藏夹里看到它 → 不需先复制。
+    @Test func addFavoriteTextCreatesFavoritedItem() throws {
+        let store = try makeStore()
+        let work = try #require(store.createTab(named: "Work"))
+
+        let saved = try #require(store.addFavoriteText("hello world", in: work))
+
+        #expect(saved.isFavorited)
+        #expect(saved.favoriteTab?.id == work.id)
+        #expect(saved.title == "hello world")
+        #expect(saved.category == .text)
+        // 普通历史里也能看到它，且同一条不会重复。
+        #expect(store.items.map(\.title) == ["hello world"])
+        // 收藏夹按该分组筛得到。
+        #expect(store.items(in: work).map(\.title) == ["hello world"])
+    }
+
+    /// 纯空白不算有效内容；首尾空白要原样保留（例如代码缩进）。
+    @Test func addFavoriteTextRejectsBlankButKeepsWhitespace() throws {
+        let store = try makeStore()
+        let tab = try #require(store.createTab(named: "Work"))
+
+        #expect(store.addFavoriteText("   \n\t ", in: tab) == nil)
+        #expect(store.favorites.isEmpty)
+
+        let padded = "  line\n    indented"
+        let saved = try #require(store.addFavoriteText(padded, in: tab))
+        #expect(saved.clipContents == [ClipContent(type: .string, data: Data(padded.utf8))])
+    }
+
+    /// 同一分组内原文重复时只刷新收藏时间，不产生第二条。
+    @Test func addFavoriteTextDeduplicatesWithinGroup() throws {
+        let store = try makeStore()
+        let work = try #require(store.createTab(named: "Work"))
+        let life = try #require(store.createTab(named: "Life"))
+
+        let first = try #require(store.addFavoriteText("same", in: work))
+        let again = try #require(store.addFavoriteText("same", in: work))
+        #expect(first.id == again.id)
+        #expect(store.items(in: work).count == 1)
+
+        // 换一个分组是另一条独立收藏。
+        let other = try #require(store.addFavoriteText("same", in: life))
+        #expect(other.id != first.id)
+        #expect(store.items(in: life).count == 1)
+    }
+
+    /// 手动录入的内容同样不会被条数上限淘汰（收藏语义与复制来源一致）。
+    @Test func addFavoriteTextSurvivesRetentionLimit() throws {
+        let store = try makeStore(limit: 1)
+        let tab = try #require(store.createTab(named: "Work"))
+        store.addFavoriteText("keep", in: tab)
+        for text in ["1", "2", "3"] {
+            store.record(clip(text))
+        }
+        #expect(store.favorites.map(\.title) == ["keep"])
+    }
 }
 
 @MainActor

@@ -108,6 +108,30 @@ final class ClipboardHistoryStore {
 
     // MARK: 收藏
 
+    /// 用户手动输入一段文本并直接收藏到指定分组，不必先复制再收藏。
+    /// 与原文本一致地保存（不裁剪首尾空白，保留代码缩进），只有整段都是空白时才算无效。
+    /// 去重以「同一分组内相同内容」为准：命中已有收藏时只刷新收藏时间并返回它。
+    @discardableResult
+    func addFavoriteText(_ text: String, in tab: FavoriteTab) -> HistoryItem? {
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        let contents = [ClipContent(type: .string, data: Data(text.utf8))]
+        let hash = HistoryItem.hash(of: contents)
+        let date = now()
+        if let existing = items.first(where: { $0.contentHash == hash && $0.favoriteTab?.id == tab.id }) {
+            existing.favoritedAt = date
+            existing.updatedAt = date
+            commit()
+            return existing
+        }
+        let item = HistoryItem(clip: CapturedClip(contents: contents, sourceBundleID: nil), at: date)
+        context.insert(item)
+        item.favoriteTab = tab
+        item.favoritedAt = date
+        item.updatedAt = date
+        commit()
+        return item
+    }
+
     /// 收藏到指定分组；已在其他分组时直接改归属，并刷新收藏时间。
     func favorite(_ item: HistoryItem, in tab: FavoriteTab) {
         item.favoriteTab = tab

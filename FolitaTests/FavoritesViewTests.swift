@@ -189,4 +189,38 @@ struct FavoritesViewTests {
         #expect(host.fittingSize.width > 0)
         #expect(host.fittingSize.height >= 0)
     }
+
+    /// 手动添加文本的弹窗：有分组、有文本时可保存，能完成深浅色 × 中英文布局。
+    @Test(arguments: matrix)
+    func addTextSheetLaysOut(locale: String, scheme: ColorScheme) {
+        let services = TestServices(copying: ["a"])
+        services.store.createTab(named: "Work")
+        services.store.createTab(named: "Life")
+
+        let host = host(
+            AddFavoriteTextSheet(
+                tabs: services.store.tabs,
+                initialTabID: services.store.tabs.first?.id,
+                onSave: { _, _ in }
+            ),
+            locale: locale,
+            scheme: scheme
+        )
+
+        #expect(host.fittingSize.width > 0)
+        #expect(host.fittingSize.height > 0)
+    }
+
+    /// 一个分组都没有时弹窗仍能布局，并提示先新建分组；此时保存按钮不可用。
+    @Test(arguments: matrix)
+    func addTextSheetWithoutGroupsLaysOut(locale: String, scheme: ColorScheme) {
+        let host = host(
+            AddFavoriteTextSheet(tabs: [], initialTabID: nil, onSave: { _, _ in }),
+            locale: locale,
+            scheme: scheme
+        )
+
+        #expect(host.fittingSize.width > 0)
+        #expect(host.fittingSize.height > 0)
+    }
 }

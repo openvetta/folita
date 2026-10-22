@@ -262,4 +262,19 @@ struct LocalizationTests {
         #expect(localized(tab, "en") == "Favorite items appear here. Press ⌘F on an item and pick this group.")
         #expect(localized(tab, "zh-Hans") == "收藏的内容会出现在这里。在条目上按 ⌘F，选这个分组即可收藏。")
     }
+
+    /// 手动添加文本到收藏夹的入口与弹窗文案，中英两版都要有。
+    @Test func addFavoriteTextCopyIsLocalized() {
+        let copy: [(LocalizedStringResource, String, String)] = [
+            ("Add Text to Favorites", "Add Text to Favorites", "添加文本到收藏夹"),
+            ("Add Text…", "Add Text…", "添加文本…"),
+            ("Create a group first to save text here.", "Create a group first to save text here.", "先新建一个分组，才能把文本存到这里。"),
+            ("Save", "Save", "保存"),
+            ("Cancel", "Cancel", "取消"),
+        ]
+        for (resource, en, zh) in copy {
+            #expect(localized(resource, "en") == en)
+            #expect(localized(resource, "zh-Hans") == zh)
+        }
+    }
 }
