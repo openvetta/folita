@@ -1,13 +1,23 @@
 import SwiftUI
 
-/// 收藏夹顶部的分组胶囊排：iOS 风格的横向滚动的胶囊，行尾一个「+」新建分组。
-/// 右键（或长按）胶囊弹出重命名 / 删除。
+/// 收藏夹的分组胶囊排：iOS 风格的横向滚动的胶囊，行尾一个「+」新建分组。
+/// 右键胶囊弹出重命名 / 删除。
+///
+/// 只能靠参数与回调工作，不依赖面板模型：剪贴面板与主窗口两处宿主共用这一套，
+/// 分组顺序、选中态与重命名交互因此只有一个事实源。
 struct FavoriteTabBar: View {
-    @Bindable var model: ClipboardPanelModel
+    let tabs: [FavoriteTab]
+    let selectedTabID: UUID?
     /// 正在就地重命名的分组。
     @Binding var renamingTabID: UUID?
     /// 重命名输入框的草稿值。
     @Binding var renameDraft: String
+
+    var select: (UUID?) -> Void
+    /// 新建一个待命名的分组；返回 nil 表示没有创建。
+    var create: () -> FavoriteTab?
+    var rename: (FavoriteTab, String) -> Void
+    var delete: (FavoriteTab) -> Void
 
     @Environment(\.colorScheme) private var colorScheme
     @FocusState private var isRenameFocused: Bool
@@ -16,14 +26,14 @@ struct FavoriteTabBar: View {
         ScrollView(.horizontal) {
             HStack(spacing: 6) {
                 pill(title: Text("All"), id: nil)
-                ForEach(model.store.tabs) { tab in
+                ForEach(tabs) { tab in
                     if renamingTabID == tab.id {
                         renameField(for: tab)
                     } else {
                         pill(title: Text(verbatim: tab.name), id: tab.id)
                             .contextMenu {
                                 Button("Rename") { beginRenaming(tab) }
-                                Button("Delete Group", role: .destructive) { model.deleteTab(tab) }
+                                Button("Delete Group", role: .destructive) { delete(tab) }
                             }
                     }
                 }
@@ -40,11 +50,11 @@ struct FavoriteTabBar: View {
 
     /// 一个分组胶囊；选中态用实心填充，与 iOS 的分段控件一致。
     private func pill(title: Text, id: UUID?) -> some View {
-        let isSelected = model.selectedTabID == id
+        let isSelected = selectedTabID == id
         let style = SiriGlassStyle.resolve(for: colorScheme)
 
         return Button {
-            model.selectTab(id)
+            select(id)
         } label: {
             title
                 .font(.system(size: 12, weight: .medium))
@@ -81,7 +91,7 @@ struct FavoriteTabBar: View {
 
     private var addButton: some View {
         Button {
-            if let tab = model.createTab() { beginRenaming(tab) }
+            if let tab = create() { beginRenaming(tab) }
         } label: {
             Image(systemName: "plus")
                 .font(.system(size: 11, weight: .semibold))
@@ -101,7 +111,7 @@ struct FavoriteTabBar: View {
 
     private func commitRename(_ tab: FavoriteTab) {
         guard renamingTabID == tab.id else { return }
-        model.renameTab(tab, to: renameDraft)
+        rename(tab, renameDraft)
         renamingTabID = nil
     }
 
@@ -128,7 +138,17 @@ private struct FavoriteTabBarPreview: View {
     @State private var draft = ""
 
     var body: some View {
-        FavoriteTabBar(model: model, renamingTabID: $renaming, renameDraft: $draft)
+        FavoriteTabBar(
+            tabs: model.store.tabs,
+            selectedTabID: model.selectedTabID,
+            renamingTabID: $renaming,
+            renameDraft: $draft,
+            select: model.selectTab,
+            create: model.createTab,
+            rename: model.renameTab,
+            delete: model.deleteTab
+        )
+            .frame(width: 392)
             .frame(width: 392)
     }
 }

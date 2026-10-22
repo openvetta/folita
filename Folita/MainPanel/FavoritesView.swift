@@ -1,12 +1,14 @@
 import AppKit
 import SwiftUI
 
-/// 主窗口的收藏夹分区：左侧分组、中间条目、右侧详情。
+/// 主窗口的收藏夹分区：左侧条目列表（顶部一排分组胶囊），右侧详情。
 ///
-/// 与面板里的收藏夹共用同一套数据（`ClipboardHistoryStore`），只是宿主更宽、能看到完整详情，
-/// 所以这里不做粘贴与快捷键，只提供「浏览 + 取消收藏 + 管理分组」。
-/// 外层 `MainPanelView` 已经是两栏 `NavigationSplitView`，这里改用固定三栏，
-/// 避免嵌套 `NavigationSplitView` 让侧边栏出现两层。
+/// 与面板里的收藏夹共用同一套数据（`ClipboardHistoryStore`）和同一个分组胶囊组件，
+/// 只是宿主更宽、能看到完整详情，所以这里不做粘贴与快捷键，
+/// 只提供「浏览 + 取消收藏 + 管理分组」。
+///
+/// 分组用横向胶囊而不是第二列列表：竖向两列列表在视觉上是重复的，
+/// 而胶囊与面板里的收藏夹完全一致，用户在两处看到的是同一个东西。
 struct FavoritesView: View {
     @Environment(ClipboardHistoryStore.self) private var store
 
@@ -15,16 +17,12 @@ struct FavoritesView: View {
     @State private var renamingTabID: UUID?
     @State private var renameDraft = ""
 
-    private static let tabColumnWidth: CGFloat = 180
-    private static let itemColumnWidth: CGFloat = 260
+    private static let listColumnWidth: CGFloat = 280
 
     var body: some View {
         HStack(spacing: 0) {
-            tabColumn
-                .frame(width: Self.tabColumnWidth)
-            Divider()
-            itemColumn
-                .frame(width: Self.itemColumnWidth)
+            listColumn
+                .frame(width: Self.listColumnWidth)
             Divider()
             detail
                 .frame(maxWidth: .infinity)
@@ -45,91 +43,63 @@ struct FavoritesView: View {
         tabItems.first { $0.id == selectedID } ?? tabItems.first
     }
 
-    // MARK: 分组
+    // MARK: 列表栏
 
-    private var tabColumn: some View {
+    private var listColumn: some View {
         VStack(alignment: .leading, spacing: 0) {
-            List(selection: $selectedTabID) {
-                Label {
-                    Text("All")
-                } icon: {
-                    Image(systemName: "star")
-                }
-                .tag(UUID?.none)
-
-                ForEach(store.tabs) { tab in
-                    tabRow(tab)
-                }
-            }
-            .listStyle(.sidebar)
-
-            Divider()
-            Button {
-                if let tab = store.createTab(named: String(localized: "New Group")) {
-                    renameDraft = tab.name
-                    renamingTabID = tab.id
-                }
-            } label: {
-                Label("New Group", systemImage: "plus")
-                    .font(.system(size: 12))
-            }
-            .buttonStyle(.borderless)
-            .padding(10)
-        }
-    }
-
-    @ViewBuilder
-    private func tabRow(_ tab: FavoriteTab) -> some View {
-        if renamingTabID == tab.id {
-            TextField("Group Name", text: $renameDraft)
-                .textFieldStyle(.roundedBorder)
-                .onSubmit { commitRename(tab) }
-                .onExitCommand { renamingTabID = nil }
-        } else {
-            Label {
-                Text(verbatim: tab.name)
-            } icon: {
-                Image(systemName: "folder")
-            }
-            .tag(UUID?.some(tab.id))
-            .contextMenu {
-                Button("Rename") {
-                    renameDraft = tab.name
-                    renamingTabID = tab.id
-                }
-                Button("Delete Group", role: .destructive) {
+            FavoriteTabBar(
+                tabs: store.tabs,
+                selectedTabID: selectedTabID,
+                renamingTabID: $renamingTabID,
+                renameDraft: $renameDraft,
+                // 换分组后选中项可能已不在列表里，交回给 selectedItem 兜底。
+                select: { selectedTabID = $0 },
+                create: { store.createTab(named: String(localized: "New Group")) },
+                rename: store.renameTab,
+                delete: { tab in
                     if selectedTabID == tab.id { selectedTabID = nil }
                     store.deleteTab(tab)
                 }
+            )
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+
+            Divider()
+
+            if tabItems.isEmpty {
+                emptyState
+            } else {
+                List(tabItems, selection: $selectedID) { item in
+                    FavoriteItemRow(item: item)
+                        .tag(item.id)
+                        .contextMenu {
+                            Button("Remove from Favorites") { store.unfavorite(item) }
+                        }
+                }
+                .listStyle(.inset)
             }
         }
     }
 
-    private func commitRename(_ tab: FavoriteTab) {
-        store.renameTab(tab, to: renameDraft)
-        renamingTabID = nil
-    }
-
-    // MARK: 条目
-
-    @ViewBuilder
-    private var itemColumn: some View {
-        if tabItems.isEmpty {
-            ContentUnavailableView {
-                Label("Nothing here yet", systemImage: "star")
-            } description: {
-                Text("Favorite items appear here. Press ⌘F on an item in the clipboard panel and pick a group.")
-            }
-        } else {
-            List(tabItems, selection: $selectedID) { item in
-                FavoriteItemRow(item: item)
-                    .tag(item.id)
-                    .contextMenu {
-                        Button("Remove from Favorites") { store.unfavorite(item) }
-                    }
-            }
-            .listStyle(.inset)
+    private var emptyState: some View {
+        VStack(spacing: 10) {
+            Spacer()
+            Image(systemName: "star")
+                .font(.system(size: 26, weight: .medium))
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(.secondary)
+            Text("Nothing here yet")
+                .font(.system(size: 13, weight: .semibold))
+            Text("Favorite items appear here. Press ⌘F on an item in the clipboard panel and pick a group.")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer()
         }
+        .padding(.horizontal, 20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: 详情

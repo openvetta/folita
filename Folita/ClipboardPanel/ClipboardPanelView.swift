@@ -25,7 +25,16 @@ struct ClipboardPanelView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     PanelNoticeBanner(notice: model.notice, action: model.resolveNotice, onDismiss: model.dismissNotice)
                     if model.mode == .favorites {
-                        FavoriteTabBar(model: model, renamingTabID: $renamingTabID, renameDraft: $renameDraft)
+                        FavoriteTabBar(
+                            tabs: model.store.tabs,
+                            selectedTabID: model.selectedTabID,
+                            renamingTabID: $renamingTabID,
+                            renameDraft: $renameDraft,
+                            select: model.selectTab,
+                            create: model.createTab,
+                            rename: model.renameTab,
+                            delete: model.deleteTab
+                        )
                             .transition(.opacity.combined(with: .offset(y: -6)))
                     }
                     ClipboardHistoryList(model: model)

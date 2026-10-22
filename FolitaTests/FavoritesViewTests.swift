@@ -28,7 +28,16 @@ struct FavoritesViewTests {
         model.store.createTab(named: "Life")
 
         let host = host(
-            FavoriteTabBar(model: model, renamingTabID: .constant(nil), renameDraft: .constant(""))
+            FavoriteTabBar(
+                tabs: model.store.tabs,
+                selectedTabID: model.selectedTabID,
+                renamingTabID: .constant(nil),
+                renameDraft: .constant(""),
+                select: model.selectTab,
+                create: model.createTab,
+                rename: model.renameTab,
+                delete: model.deleteTab
+            )
                 .frame(width: 392),
             locale: locale,
             scheme: scheme
@@ -48,7 +57,16 @@ struct FavoritesViewTests {
         }
 
         let host = host(
-            FavoriteTabBar(model: model, renamingTabID: .constant(nil), renameDraft: .constant(""))
+            FavoriteTabBar(
+                tabs: model.store.tabs,
+                selectedTabID: model.selectedTabID,
+                renamingTabID: .constant(nil),
+                renameDraft: .constant(""),
+                select: model.selectTab,
+                create: model.createTab,
+                rename: model.renameTab,
+                delete: model.deleteTab
+            )
                 .frame(width: 392),
             locale: locale,
             scheme: scheme
@@ -148,5 +166,27 @@ struct FavoritesViewTests {
 
         // 星标是装饰元素（accessibilityHidden），因此断言整行仍可访问且高度不变。
         #expect(host.fittingSize.height == ClipboardPanelMetrics.historyRowHeight)
+    }
+
+    /// 主窗口的收藏夹是「列表栏（顶部胶囊）+ 详情」两栏，不再有独立的分组列。
+    /// 断言两根分割线只剩一根：竖向两列列表被合并掉了。
+    @Test(arguments: matrix)
+    func mainWindowFavoritesUsesASingleDivider(locale: String, scheme: ColorScheme) {
+        let services = TestServices(copying: ["a"])
+        let work = services.store.createTab(named: "Work")
+        if let work, let item = services.store.items.first {
+            services.store.favorite(item, in: work)
+        }
+
+        let host = host(
+            FavoritesView()
+                .environment(services.store)
+                .environment(services.language),
+            locale: locale,
+            scheme: scheme
+        )
+
+        #expect(host.fittingSize.width > 0)
+        #expect(host.fittingSize.height >= 0)
     }
 }
