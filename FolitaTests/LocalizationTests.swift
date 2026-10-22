@@ -263,14 +263,21 @@ struct LocalizationTests {
         #expect(localized(tab, "zh-Hans") == "收藏的内容会出现在这里。在条目上按 ⌘F，选这个分组即可收藏。")
     }
 
-    /// 手动添加文本到收藏夹的入口与弹窗文案，中英两版都要有。
+    /// 就地新建 / 编辑片段的入口与编辑器文案，中英两版都要有。
     @Test func addFavoriteTextCopyIsLocalized() {
         let copy: [(LocalizedStringResource, String, String)] = [
-            ("Add Text to Favorites", "Add Text to Favorites", "添加文本到收藏夹"),
-            ("Add Text…", "Add Text…", "添加文本…"),
-            ("Create a group first to save text here.", "Create a group first to save text here.", "先新建一个分组，才能把文本存到这里。"),
-            ("Save", "Save", "保存"),
-            ("Cancel", "Cancel", "取消"),
+            ("Add Snippet", "Add Snippet", "添加片段"),
+            ("New Snippet", "New Snippet", "新片段"),
+            ("Edit", "Edit", "编辑"),
+            ("Done", "Done", "完成"),
+            ("Snippet", "Snippet", "片段"),
+            ("Editing", "Editing", "正在编辑"),
+            ("Type or paste text here…", "Type or paste text here…", "在此输入或粘贴文本…"),
+            ("No snippets yet", "No snippets yet", "还没有片段"),
+            ("Create a group first", "Create a group first", "请先新建分组"),
+            ("Make a group with the + button, then add snippets here.", "Make a group with the + button, then add snippets here.", "用 + 按钮新建一个分组，然后在这里添加片段。"),
+            ("Add a snippet to save text you want to keep close.", "Add a snippet to save text you want to keep close.", "添加一个片段，把想随手取用的文本存起来。"),
+            ("Select a snippet, or add a new one.", "Select a snippet, or add a new one.", "选择一个片段，或添加一个新的。"),
         ]
         for (resource, en, zh) in copy {
             #expect(localized(resource, "en") == en)

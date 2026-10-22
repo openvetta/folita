@@ -317,60 +317,69 @@ struct ClipboardHistoryStoreTests {
         #expect(store.tabs.map(\.name) == ["A", "B", "C"])
     }
 
-    // MARK: 手动添加文本
+    // MARK: 手动添加 / 编辑片段
 
-    /// 常见流程：直接录入一段文本收藏到「工作」→ 在收藏夹里看到它 → 不需先复制。
-    @Test func addFavoriteTextCreatesFavoritedItem() throws {
+    /// 常见流程：新建空白片段 → 写入文本 → 成为该分组的收藏，标题与分类随内容更新。
+    @Test func insertEmptySnippetThenUpdateText() throws {
         let store = try makeStore()
         let work = try #require(store.createTab(named: "Work"))
 
-        let saved = try #require(store.addFavoriteText("hello world", in: work))
+        let item = store.insertEmptySnippet(in: work)
+        #expect(item.isFavorited)
+        #expect(item.favoriteTab?.id == work.id)
+        #expect(item.title.isEmpty)
 
-        #expect(saved.isFavorited)
-        #expect(saved.favoriteTab?.id == work.id)
-        #expect(saved.title == "hello world")
-        #expect(saved.category == .text)
-        // 普通历史里也能看到它，且同一条不会重复。
+        store.updateText(item, to: "hello world")
+
+        #expect(item.title == "hello world")
+        #expect(item.category == .text)
+        #expect(item.clipContents == [ClipContent(type: .string, data: Data("hello world".utf8))])
+        // 普通历史里也有它，且收藏分组能筛到。
         #expect(store.items.map(\.title) == ["hello world"])
-        // 收藏夹按该分组筛得到。
         #expect(store.items(in: work).map(\.title) == ["hello world"])
     }
 
-    /// 纯空白不算有效内容；首尾空白要原样保留（例如代码缩进）。
-    @Test func addFavoriteTextRejectsBlankButKeepsWhitespace() throws {
+    /// 首尾空白原样保留（代码缩进）；改短或清空后标题随之更新。
+    @Test func updateTextKeepsWhitespaceAndRetitles() throws {
         let store = try makeStore()
         let tab = try #require(store.createTab(named: "Work"))
-
-        #expect(store.addFavoriteText("   \n\t ", in: tab) == nil)
-        #expect(store.favorites.isEmpty)
+        let item = store.insertEmptySnippet(in: tab)
 
         let padded = "  line\n    indented"
-        let saved = try #require(store.addFavoriteText(padded, in: tab))
-        #expect(saved.clipContents == [ClipContent(type: .string, data: Data(padded.utf8))])
+        store.updateText(item, to: padded)
+        #expect(item.clipContents == [ClipContent(type: .string, data: Data(padded.utf8))])
+
+        store.updateText(item, to: "")
+        #expect(item.title.isEmpty)
+        #expect(item.clipContents == [ClipContent(type: .string, data: Data())])
     }
 
-    /// 同一分组内原文重复时只刷新收藏时间，不产生第二条。
-    @Test func addFavoriteTextDeduplicatesWithinGroup() throws {
+    /// 编辑后只保留纯文本一种格式，旧的富文本残留会被清掉，避免回填带出过期样式。
+    @Test func updateTextDropsOtherFormats() throws {
         let store = try makeStore()
-        let work = try #require(store.createTab(named: "Work"))
-        let life = try #require(store.createTab(named: "Life"))
+        let tab = try #require(store.createTab(named: "Work"))
+        let contents = [
+            ClipContent(type: .string, data: Data("Bold".utf8)),
+            ClipContent(type: .rtf, data: Data([1, 2, 3])),
+            ClipContent(type: .html, data: Data("<b>Bold</b>".utf8)),
+        ]
+        store.record(CapturedClip(contents: contents, sourceBundleID: nil))
+        let item = try #require(store.items.first)
+        store.favorite(item, in: tab)
 
-        let first = try #require(store.addFavoriteText("same", in: work))
-        let again = try #require(store.addFavoriteText("same", in: work))
-        #expect(first.id == again.id)
-        #expect(store.items(in: work).count == 1)
+        store.updateText(item, to: "plain")
 
-        // 换一个分组是另一条独立收藏。
-        let other = try #require(store.addFavoriteText("same", in: life))
-        #expect(other.id != first.id)
-        #expect(store.items(in: life).count == 1)
+        #expect(item.clipContents == [ClipContent(type: .string, data: Data("plain".utf8))])
+        #expect(item.category == .text)
+        #expect(item.title == "plain")
     }
 
-    /// 手动录入的内容同样不会被条数上限淘汰（收藏语义与复制来源一致）。
-    @Test func addFavoriteTextSurvivesRetentionLimit() throws {
+    /// 手动新建的片段同样不会被条数上限淘汰（收藏语义与复制来源一致）。
+    @Test func snippetSurvivesRetentionLimit() throws {
         let store = try makeStore(limit: 1)
         let tab = try #require(store.createTab(named: "Work"))
-        store.addFavoriteText("keep", in: tab)
+        let item = store.insertEmptySnippet(in: tab)
+        store.updateText(item, to: "keep")
         for text in ["1", "2", "3"] {
             store.record(clip(text))
         }

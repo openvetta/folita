@@ -108,28 +108,42 @@ final class ClipboardHistoryStore {
 
     // MARK: 收藏
 
-    /// 用户手动输入一段文本并直接收藏到指定分组，不必先复制再收藏。
-    /// 与原文本一致地保存（不裁剪首尾空白，保留代码缩进），只有整段都是空白时才算无效。
-    /// 去重以「同一分组内相同内容」为准：命中已有收藏时只刷新收藏时间并返回它。
+    /// 新建一条空白的文本收藏，作为「New Snippet」的就地编辑草稿。内容会随用户在详情栏
+    /// 输入而由 `updateText` 覆盖；若用户没输入就离开，视图层会把它删掉。
     @discardableResult
-    func addFavoriteText(_ text: String, in tab: FavoriteTab) -> HistoryItem? {
-        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
-        let contents = [ClipContent(type: .string, data: Data(text.utf8))]
-        let hash = HistoryItem.hash(of: contents)
+    func insertEmptySnippet(in tab: FavoriteTab) -> HistoryItem {
         let date = now()
-        if let existing = items.first(where: { $0.contentHash == hash && $0.favoriteTab?.id == tab.id }) {
-            existing.favoritedAt = date
-            existing.updatedAt = date
-            commit()
-            return existing
-        }
-        let item = HistoryItem(clip: CapturedClip(contents: contents, sourceBundleID: nil), at: date)
+        let item = HistoryItem(
+            clip: CapturedClip(contents: [ClipContent(type: .string, data: Data())], sourceBundleID: nil),
+            at: date
+        )
         context.insert(item)
         item.favoriteTab = tab
         item.favoritedAt = date
         item.updatedAt = date
         commit()
         return item
+    }
+
+    /// 就地改写一条文本收藏的内容：只保留纯文本一种格式，并一起刷新标题、分类与内容指纹。
+    /// 允许写成空串（用户正在清空重写时），是否保留空条目由视图层决定。
+    func updateText(_ item: HistoryItem, to text: String) {
+        let data = Data(text.utf8)
+        let type = ClipContent(type: .string, data: data).type.rawValue
+        if let first = item.contents?.first {
+            first.type = type
+            first.value = data
+            // 手动编辑后只留纯文本，避免旧富文本/HTML 残留让回填带上过期样式。
+            for extra in (item.contents ?? []).dropFirst() { context.delete(extra) }
+        } else {
+            item.contents = [HistoryItemContent(type: type, value: data, order: 0)]
+        }
+        let contents = [ClipContent(type: .string, data: data)]
+        item.title = ClipClassification.title(for: contents)
+        item.categoryRaw = ClipClassification.category(of: contents).rawValue
+        item.contentHash = HistoryItem.hash(of: contents)
+        item.updatedAt = now()
+        commit()
     }
 
     /// 收藏到指定分组；已在其他分组时直接改归属，并刷新收藏时间。

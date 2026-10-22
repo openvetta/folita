@@ -51,26 +51,6 @@
         }
       }
     },
-    "Add Text to Favorites" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "添加文本到收藏夹"
-          }
-        }
-      }
-    },
-    "Add Text…" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "添加文本…"
-          }
-        }
-      }
-    },
     "All Types" : {
       "localizations" : {
         "zh-Hans" : {
@@ -137,16 +117,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "小黑猫"
-          }
-        }
-      }
-    },
-    "Cancel" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "取消"
           }
         }
       }
@@ -377,16 +347,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在这些应用中复制的内容不会被记录。"
-          }
-        }
-      }
-    },
-    "Create a group first to save text here." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "先新建一个分组，才能把文本存到这里。"
           }
         }
       }
@@ -1132,16 +1092,6 @@
         }
       }
     },
-    "Save" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保存"
-          }
-        }
-      }
-    },
     "Search" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1598,6 +1548,126 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "收藏的内容会出现在这里。在条目上按 ⌘F，选这个分组即可收藏。"
+          }
+        }
+      }
+    },
+    "Add Snippet" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加片段"
+          }
+        }
+      }
+    },
+    "New Snippet" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新片段"
+          }
+        }
+      }
+    },
+    "Edit" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑"
+          }
+        }
+      }
+    },
+    "Done" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完成"
+          }
+        }
+      }
+    },
+    "Snippet" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "片段"
+          }
+        }
+      }
+    },
+    "Editing" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在编辑"
+          }
+        }
+      }
+    },
+    "Type or paste text here…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在此输入或粘贴文本…"
+          }
+        }
+      }
+    },
+    "No snippets yet" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有片段"
+          }
+        }
+      }
+    },
+    "Create a group first" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先新建分组"
+          }
+        }
+      }
+    },
+    "Make a group with the + button, then add snippets here." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用 + 按钮新建一个分组，然后在这里添加片段。"
+          }
+        }
+      }
+    },
+    "Add a snippet to save text you want to keep close." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加一个片段，把想随手取用的文本存起来。"
+          }
+        }
+      }
+    },
+    "Select a snippet, or add a new one." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择一个片段，或添加一个新的。"
           }
         }
       }

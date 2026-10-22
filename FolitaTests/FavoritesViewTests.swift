@@ -190,19 +190,16 @@ struct FavoritesViewTests {
         #expect(host.fittingSize.height >= 0)
     }
 
-    /// 手动添加文本的弹窗：有分组、有文本时可保存，能完成深浅色 × 中英文布局。
+    /// 详情栏里的片段编辑器：空文本时显示占位提示，深浅色 × 中英文都能完成布局。
     @Test(arguments: matrix)
-    func addTextSheetLaysOut(locale: String, scheme: ColorScheme) {
-        let services = TestServices(copying: ["a"])
-        services.store.createTab(named: "Work")
-        services.store.createTab(named: "Life")
-
+    func snippetEditorLaysOut(locale: String, scheme: ColorScheme) {
         let host = host(
-            AddFavoriteTextSheet(
-                tabs: services.store.tabs,
-                initialTabID: services.store.tabs.first?.id,
-                onSave: { _, _ in }
-            ),
+            SnippetEditor(
+                text: .constant(""),
+                characterCount: 0,
+                done: {}
+            )
+                .frame(width: 420, height: 360),
             locale: locale,
             scheme: scheme
         )
@@ -211,16 +208,61 @@ struct FavoritesViewTests {
         #expect(host.fittingSize.height > 0)
     }
 
-    /// 一个分组都没有时弹窗仍能布局，并提示先新建分组；此时保存按钮不可用。
+    /// 编辑器有内容时也能布局，并随文本更新字符数。
     @Test(arguments: matrix)
-    func addTextSheetWithoutGroupsLaysOut(locale: String, scheme: ColorScheme) {
+    func snippetEditorWithTextLaysOut(locale: String, scheme: ColorScheme) {
+        let text = "func hello() {\n    print(\"hi\")\n}"
         let host = host(
-            AddFavoriteTextSheet(tabs: [], initialTabID: nil, onSave: { _, _ in }),
+            SnippetEditor(
+                text: .constant(text),
+                characterCount: text.count,
+                done: {}
+            )
+                .frame(width: 420, height: 360),
             locale: locale,
             scheme: scheme
         )
 
         #expect(host.fittingSize.width > 0)
         #expect(host.fittingSize.height > 0)
+    }
+
+    /// 没有分组时主窗口收藏夹仍能布局，空状态提示先新建分组。
+    @Test(arguments: matrix)
+    func favoritesWithoutGroupsLaysOut(locale: String, scheme: ColorScheme) {
+        let services = TestServices(copying: [])
+
+        let host = host(
+            FavoritesView()
+                .environment(services.store)
+                .environment(services.language),
+            locale: locale,
+            scheme: scheme
+        )
+
+        #expect(host.fittingSize.width > 0)
+    }
+
+    /// 多个片段时主窗口收藏夹能正常布局（详情栏展示选中项）。
+    @Test(arguments: matrix)
+    func favoritesWithSeveralSnippetsLaysOut(locale: String, scheme: ColorScheme) {
+        let services = TestServices(copying: [])
+        let work = services.store.createTab(named: "Work")
+        if let work {
+            for text in ["first snippet", "second snippet", "third snippet"] {
+                let item = services.store.insertEmptySnippet(in: work)
+                services.store.updateText(item, to: text)
+            }
+        }
+
+        let host = host(
+            FavoritesView()
+                .environment(services.store)
+                .environment(services.language),
+            locale: locale,
+            scheme: scheme
+        )
+
+        #expect(host.fittingSize.width > 0)
     }
 }
