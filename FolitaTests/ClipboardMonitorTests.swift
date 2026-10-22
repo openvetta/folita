@@ -21,10 +21,10 @@ final class ClipboardMonitorTests {
     init() throws {
         privacy = PrivacySettings(userDefaults: UserDefaults(suiteName: suiteName)!)
         let container = try ModelContainer(
-            for: HistoryItem.self,
+            for: HistoryItem.self, FavoriteTab.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
-        store = ClipboardHistoryStore(container: container, limit: { 500 })
+        store = ClipboardHistoryStore(container: container, limit: { 500 }, defaultTabNames: [])
     }
 
     isolated deinit {

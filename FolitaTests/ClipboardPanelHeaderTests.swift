@@ -28,7 +28,7 @@ struct ClipboardPanelHeaderTests {
     ])
     func filterMenuLaysOut(localeIdentifier: String, colorScheme: ColorScheme) {
         let host = NSHostingView(
-            rootView: ClipboardFilterMenu(selection: .constant(.text))
+            rootView: ClipboardFilterMenu(model: makePanelModel(copying: ["a"]))
                 .environment(\.locale, Locale(identifier: localeIdentifier))
                 .environment(\.colorScheme, colorScheme)
         )

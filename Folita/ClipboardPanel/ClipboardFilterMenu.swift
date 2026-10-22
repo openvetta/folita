@@ -1,12 +1,15 @@
 import SwiftUI
 
-/// 筛选类型气泡菜单，与 iOS 27 Siri 风格一致地只用图标与文字。
+/// 右上角筛选气泡：最上面一行是「收藏夹」模式开关，分隔线下面是按类型的筛选。
+/// 两个维度可以叠加：在收藏夹里选「仅链接」只筛收藏里的链接（见 docs/adr/0006）。
 struct ClipboardFilterMenu: View {
-    @Binding var selection: ClipboardFilter
+    @Bindable var model: ClipboardPanelModel
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            modeRow
+            separator
             ForEach(ClipboardFilter.allCases) { filter in
                 row(for: filter)
             }
@@ -15,32 +18,71 @@ struct ClipboardFilterMenu: View {
         .frame(width: 244)
     }
 
-    private func row(for filter: ClipboardFilter) -> some View {
+    /// 收藏夹置顶：再点一次退回剪贴列表，与 ⌘← 同义。
+    private var modeRow: some View {
         Button {
-            selection = filter
+            model.perform(.toggleFavorites)
             dismiss()
         } label: {
-            FilterRowLabel(filter: filter, isSelected: filter == selection)
+            FilterRowLabel(
+                symbolName: ClipboardPanelMode.favorites.symbolName,
+                title: Text(ClipboardPanelMode.favorites.title),
+                isSelected: model.mode == .favorites,
+                keyCaps: ClipboardActionsMenuEntry.favoritesKeyCaps
+            )
         }
         .buttonStyle(.plain)
-        .accessibilityAddTraits(filter == selection ? .isSelected : [])
+        .accessibilityAddTraits(model.mode == .favorites ? .isSelected : [])
+    }
+
+    private var separator: some View {
+        Rectangle()
+            .fill(.primary.opacity(0.08))
+            .frame(height: 1)
+            .padding(.vertical, 4)
+    }
+
+    private func row(for filter: ClipboardFilter) -> some View {
+        Button {
+            model.filter = filter
+            dismiss()
+        } label: {
+            FilterRowLabel(
+                symbolName: filter.symbolName,
+                title: Text(filter.title),
+                isSelected: filter == model.filter,
+                keyCaps: []
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(filter == model.filter ? .isSelected : [])
     }
 }
 
 private struct FilterRowLabel: View {
-    let filter: ClipboardFilter
+    let symbolName: String
+    let title: Text
     let isSelected: Bool
+    /// 这一行对应的快捷键，没有时留空。
+    var keyCaps: [String] = []
 
     @State private var isHovering = false
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: filter.symbolName)
+            Image(systemName: symbolName)
                 .font(.system(size: 15, weight: .regular))
                 .frame(width: 22)
-            Text(filter.title)
+            title
                 .font(.system(size: 17))
             Spacer(minLength: 0)
+            if !keyCaps.isEmpty {
+                HStack(spacing: 4) {
+                    ForEach(keyCaps, id: \.self) { key in
+                        KeyCap(key)
+                    }
+                }
+            }
         }
         .foregroundStyle(.primary)
         .padding(.horizontal, 10)

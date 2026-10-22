@@ -52,7 +52,7 @@ enum HistoryStorage {
     static func makeInMemoryContainer() -> ModelContainer {
         do {
             return try ModelContainer(
-                for: HistoryItem.self,
+                for: HistoryItem.self, FavoriteTab.self,
                 configurations: ModelConfiguration(isStoredInMemoryOnly: true)
             )
         } catch {
@@ -63,7 +63,7 @@ enum HistoryStorage {
     private static func makeContainer(in directory: URL) throws -> ModelContainer {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let configuration = ModelConfiguration(url: directory.appending(path: "History.store"))
-        return try ModelContainer(for: HistoryItem.self, configurations: configuration)
+        return try ModelContainer(for: HistoryItem.self, FavoriteTab.self, configurations: configuration)
     }
 
     private static func backUp(_ directory: URL, now: Date) throws -> URL {

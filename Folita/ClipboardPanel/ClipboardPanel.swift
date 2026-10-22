@@ -138,18 +138,28 @@ final class ClipboardPanelController {
         return handleMouseDown(at: point, isRightClick: event.type == .rightMouseDown)
     }
 
-    /// 面板内的一次鼠标按下（容器坐标）：右键打开「更多操作」菜单；菜单打开时点卡片以外
-    /// 只收起菜单，不把这一下当成点条目（否则会误粘贴并收起面板）。
+    /// 面板内的一次鼠标按下（容器坐标）：右键打开「更多操作」菜单；菜单或选择器打开时
+    /// 点卡片以外只收起它，不把这一下当成点条目（否则会误粘贴并收起面板）。
     @discardableResult
     func handleMouseDown(at point: CGPoint, isRightClick: Bool) -> Bool {
         guard let panel, panel.isVisible else { return false }
         if isRightClick {
+            guard !model.isShowingFavoritePicker else {
+                // 选择器是模态的：右键先把它收起，不打开别的菜单。
+                model.hideFavoritePicker()
+                return true
+            }
             guard let item = model.item(at: point) else {
                 // 没点在条目上（如搜索框）：收起菜单后把右键还给系统，文本编辑仍能用系统菜单。
                 model.hideActions()
                 return false
             }
             model.showActions(for: item)
+            return true
+        }
+        if model.isShowingFavoritePicker {
+            guard !model.favoritePickerContains(point) else { return false }
+            model.hideFavoritePicker()
             return true
         }
         guard model.isShowingActionsMenu else { return false }
@@ -173,6 +183,9 @@ final class ClipboardPanelController {
         if model.isShowingActionsMenu {
             return handleKeyDownInActionsMenu(event)
         }
+        if model.isShowingFavoritePicker {
+            return handleKeyDownInFavoritePicker(event)
+        }
 
         guard let command = ClipboardPanelCommand.command(for: event) else {
             // 焦点不在文本编辑器（如点过列表）时，直接打字也应进入搜索。
@@ -188,7 +201,24 @@ final class ClipboardPanelController {
         return true
     }
 
-    /// 菜单打开期间的按键：切换高亮、执行、关闭；其余按键被消费但不做任何事。
+    /// 选择器打开期间的按键：与「更多操作」菜单同构——只响应 ↑↓、↩、⎋ / ⌘F，
+    /// 其余按键被消费但不做任何事，避免落入搜索框。
+    private func handleKeyDownInFavoritePicker(_ event: NSEvent) -> Bool {
+        switch ClipboardPanelCommand.command(for: event) {
+        case .moveUp:
+            model.moveFavoritePickerSelection(by: -1)
+        case .moveDown:
+            model.moveFavoritePickerSelection(by: 1)
+        case .paste(.original):
+            model.confirmFavoritePickerSelection()
+        case .dismiss, .toggleFavoritePicker:
+            model.hideFavoritePicker()
+        default:
+            break
+        }
+        return true
+    }
+
     private func handleKeyDownInActionsMenu(_ event: NSEvent) -> Bool {
         switch ClipboardPanelCommand.command(for: event) {
         case .moveUp:

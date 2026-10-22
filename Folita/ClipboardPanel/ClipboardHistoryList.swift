@@ -60,7 +60,9 @@ struct ClipboardHistoryList: View {
 
     @ViewBuilder
     private var emptyState: some View {
-        if model.store.items.isEmpty {
+        if model.mode == .favorites {
+            favoritesEmptyState
+        } else if model.store.items.isEmpty {
             ClipboardHistoryEmptyView(
                 symbolName: ClipboardFilter.all.symbolName,
                 title: "Nothing here yet",
@@ -77,6 +79,30 @@ struct ClipboardHistoryList: View {
                 symbolName: model.filter.symbolName,
                 title: "Nothing here yet",
                 message: "No items of this type yet."
+            )
+        }
+    }
+
+    /// 收藏夹的空状态：先区分「搜不到」与「还没收藏」，后者教用户按 ⌘F。
+    @ViewBuilder
+    private var favoritesEmptyState: some View {
+        if !model.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            ClipboardHistoryEmptyView(
+                symbolName: "magnifyingglass",
+                title: "No matches",
+                message: "Try a different search or filter."
+            )
+        } else if model.selectedTab != nil {
+            ClipboardHistoryEmptyView(
+                symbolName: "star",
+                title: "Nothing here yet",
+                message: "Favorite items appear here. Press ⌘F on an item and pick this group."
+            )
+        } else {
+            ClipboardHistoryEmptyView(
+                symbolName: "star",
+                title: "Nothing here yet",
+                message: "Favorite items appear here. Press ⌘F on an item and pick a group."
             )
         }
     }
@@ -106,6 +132,14 @@ struct ClipboardHistoryRow: View {
                 metadata(details)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            // 已收藏标记常驻：否则用户无法区分「没收藏」与「收在工作里」，
+            // 只能每次按 ⌘F 才能确认。选中且未收窄时快捷键提示占据右侧。
+            if item.isFavorited {
+                Image(systemName: "star.fill")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+            }
             if Self.showsShortcutHints(isSelected: isSelected, isCompact: isCompact) {
                 HStack(spacing: 4) {
                     ForEach(ClipboardActionsMenuEntry.menuHintKeyCaps, id: \.self) { key in

@@ -91,11 +91,13 @@ struct ClipboardActionsMenuTests {
     }
 
     @Test func entriesAreGroupedWithDeleteLast() {
-        #expect(Self.entries.map(\.group) == [0, 0, 0, 2, 2])
+        // 收藏独立成组（2），删除组因此后移为 3。
+        #expect(Self.entries.map(\.group) == [0, 0, 0, 2, 3, 3])
         #expect(Self.entries.filter(\.isDestructive) == [.deleteEntry, .deleteAll])
         #expect(
             Self.entries.map(\.command) == [
-                .paste(.original), .pasteKeepingPanelOpen, .paste(.plainText), .deleteSelected, .deleteAll,
+                .paste(.original), .pasteKeepingPanelOpen, .paste(.plainText),
+                .toggleFavoritePicker, .deleteSelected, .deleteAll,
             ]
         )
     }
@@ -129,7 +131,8 @@ struct ClipboardActionsMenuTests {
     @Test(arguments: appearances)
     func menuCardLaysOutAtTheComputedSize(locale: String, scheme: ColorScheme) {
         // 面板按算出的尺寸给卡片定宽，这里断言两边一致。
-        let size = ClipboardPanelMetrics.actionsMenuSize(rowCount: Self.entryCount, separatorCount: 1)
+        // 收藏与删除各成一组，分割线因此是两道。
+        let size = ClipboardPanelMetrics.actionsMenuSize(rowCount: Self.entryCount, separatorCount: 2)
         let host = NSHostingView(
             rootView: ClipboardActionsMenuView(
                 rows: ClipboardActionsMenuRow.rows(of: Self.entries, expanded: nil),
@@ -247,7 +250,7 @@ struct ClipboardActionsMenuTests {
 
     // MARK: 菜单内的键盘操作
 
-    /// 常见流程：⌘K 打开菜单（高亮第一项）→ ↓↓↓ 移到「删除此条」→ ↩ 执行 → 菜单关闭且条目被删。
+    /// 常见流程：⌘K 打开菜单（高亮第一项）→ ↓↓↓↓ 移到「删除此条」→ ↩ 执行 → 菜单关闭且条目被删。
     @Test func menuIsDrivenByArrowKeysAndReturn() throws {
         let model = makePanelModel(copying: ["b", "a"])
         model.setRowFrame(CGRect(x: 24, y: 88, width: 392, height: 52), for: try #require(model.selectedItem).id)
@@ -258,9 +261,7 @@ struct ClipboardActionsMenuTests {
         #expect(controller.handleKeyDown(try Self.key("k", .command)))
         #expect(model.highlightedActionsMenuEntry == .pasteToTarget)
 
-        #expect(controller.handleKeyDown(try Self.key("\u{F701}")))
-        #expect(controller.handleKeyDown(try Self.key("\u{F701}")))
-        #expect(controller.handleKeyDown(try Self.key("\u{F701}")))
+        for _ in 0..<4 { #expect(controller.handleKeyDown(try Self.key("\u{F701}"))) }
         #expect(model.highlightedActionsMenuEntry == .deleteEntry)
 
         #expect(controller.handleKeyDown(try Self.key("\r")))

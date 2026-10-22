@@ -252,6 +252,11 @@ struct ClipboardPanelTests {
         #expect(controller.handleKeyDown(try key("\u{F702}")) == false)
 
         #expect(controller.handleKeyDown(try key("\u{F703}")))
+        #expect(model.isPeeking)
+        // Esc 逐层退：先退出预览，面板仍在；再按一次才收起面板。
+        #expect(controller.handleKeyDown(try key("\u{1B}")))
+        #expect(model.isPeeking == false)
+        #expect(controller.isVisible)
         #expect(controller.handleKeyDown(try key("\u{1B}")))
         #expect(controller.isVisible == false)
         // 收起时就已复位，下次呼出不会再看到从加宽到默认的变形动画。

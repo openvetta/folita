@@ -21,7 +21,7 @@ struct ContentActionsTests {
 
     @Test func menuEntriesFollowTheItemContent() {
         #expect(ClipboardActionsMenuEntry.entries(for: details("plain")) == [
-            .pasteToTarget, .pasteKeepingPanelOpen, .pasteAsPlainText, .deleteEntry, .deleteAll,
+            .pasteToTarget, .pasteKeepingPanelOpen, .pasteAsPlainText, .favorite, .deleteEntry, .deleteAll,
         ])
         #expect(ClipboardActionsMenuEntry.entries(for: details("https://folita.app")).contains(.openInBrowser))
         #expect(ClipboardActionsMenuEntry.entries(for: details("a@x.com")).contains(.sendEmail(addresses: ["a@x.com"])))
@@ -49,9 +49,9 @@ struct ContentActionsTests {
         #expect(expanded.count == collapsed.count + 2)
         let index = expanded.firstIndex { $0.entry == parent }!
         #expect(expanded[index + 1].entry == .sendEmailTo("a@x.com") && expanded[index + 1].depth == 1)
-        // 粘贴 / 针对内容 / 删除三组，两道分割线，展开不增加分割线。
-        #expect(ClipboardActionsMenuRow.separatorCount(in: collapsed) == 2)
-        #expect(ClipboardActionsMenuRow.separatorCount(in: expanded) == 2)
+        // 粘贴 / 针对内容 / 收藏 / 删除四组，三道分割线，展开不增加分割线。
+        #expect(ClipboardActionsMenuRow.separatorCount(in: collapsed) == 3)
+        #expect(ClipboardActionsMenuRow.separatorCount(in: expanded) == 3)
     }
 
     @Test(arguments: appearances)
@@ -218,7 +218,7 @@ struct ContentActionsTests {
         let submenu = try #require(model.actionsSubmenuFrame)
         #expect(model.actionsMenuFrame == menuBefore)
         #expect(!submenu.intersects(menuBefore))
-        #expect(model.actionsMenuTopRows.count == 6)
+        #expect(model.actionsMenuTopRows.count == 7)
         #expect(model.actionsMenuChildRows.map(\.entry) == [
             .convertTo(.rgb, text: "rgb(30, 144, 255)"), .convertTo(.hsl, text: "hsl(210, 100%, 56%)"),
         ])

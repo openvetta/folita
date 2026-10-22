@@ -45,6 +45,8 @@ struct MainPanelView: View {
         switch section {
         case .general:
             GeneralSettingsView()
+        case .favorites:
+            FavoritesView()
         case .shortcuts:
             ShortcutsSettingsView()
         case .history:

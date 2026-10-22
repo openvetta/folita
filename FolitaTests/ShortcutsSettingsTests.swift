@@ -21,8 +21,11 @@ struct ShortcutsSettingsTests {
         #expect(C.command(for: .escape, modifiers: []) == .dismiss)
         #expect(C.command(for: .rightArrow, modifiers: []) == .peek)
         #expect(C.command(for: .leftArrow, modifiers: []) == .endPeek)
+        #expect(C.command(for: .leftArrow, modifiers: .command) == .toggleFavorites)
+        #expect(C.command(for: "f", modifiers: .command) == .toggleFavoritePicker)
         #expect(PanelKeyHint.all.map(\.keys) == [
-            "↑ ↓", "→", "←", "↩", "⇧↩", "⌥↩", "⌘1 – ⌘9", "⌘K", "⌘⌫", "⌃X", "⌃⇧X", "Esc",
+            "↑ ↓", "→", "←", "⌘←", "⌘F", "↩", "⇧↩", "⌥↩", "⌘1 – ⌘9",
+            "⌘K", "⌘⌫", "⌃X", "⌃⇧X", "Esc",
         ])
     }
 

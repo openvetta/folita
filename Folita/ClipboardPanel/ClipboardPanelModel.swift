@@ -11,6 +11,16 @@ enum PasteMode: Equatable, Sendable {
     case plainText
 }
 
+/// 收藏选择器（⌘F）里的行。
+enum FavoritePickerRow: Equatable, Hashable, Identifiable {
+    case tab(UUID)
+    case unfavorite
+    /// 只在没有任何分组时出现，是「选择器不能新建」的唯一例外。
+    case createTab
+
+    var id: Self { self }
+}
+
 /// 面板内键盘与菜单操作对应的命令。
 enum ClipboardPanelCommand: Equatable {
     case moveUp
@@ -34,6 +44,10 @@ enum ClipboardPanelCommand: Equatable {
     case peek
     /// 收起详情预览，面板恢复原宽度。
     case endPeek
+    /// 在剪贴列表与收藏夹之间切换（⌘←）。
+    case toggleFavorites
+    /// 打开「收藏到分组」选择器（⌘F）；已打开时再按一次收起。
+    case toggleFavoritePicker
     case dismiss
 
     /// 面板内的固定按键。`⌘1`–`⌘9` 对应列表前 9 条。
@@ -59,6 +73,10 @@ enum ClipboardPanelCommand: Equatable {
         case ("x", [.control]): return .deleteSelected
         case ("x", [.control, .shift]): return .deleteAll
         case ("k", [.command]): return .toggleActionsMenu
+        // ⌘F 不进搜索框（带 ⌘ 的组合键本来就不会被当成文字输入），因此面板可全局接管。
+        case ("f", [.command]): return .toggleFavoritePicker
+        // ⌘← 在面板里优先于搜索框的「移到行首」：面板在窗口分发前就拦下了它。
+        case (Key.leftArrow, [.command]): return .toggleFavorites
         case (Key.escape, []): return .dismiss
         case (_, [.command]):
             guard characters.count == 1, let digit = Int(characters), (1...9).contains(digit) else { return nil }
@@ -90,6 +108,7 @@ enum ClipboardPanelCommand: Equatable {
 
     /// ← → 同时是搜索框里移动光标的键，只在不打断编辑时由面板接管：
     /// → 在光标停在搜索词末尾（光标本就无处可去）或预览已打开时进入预览；← 只在预览打开时用于退出。
+    /// ⌘← / ⌘F 不会被当成文字输入，面板全程接管。
     func isIntercepted(isPeeking: Bool, responder: NSResponder?) -> Bool {
         switch self {
         case .peek: isPeeking || Self.isCaretAtEnd(in: responder)
@@ -141,6 +160,14 @@ final class ClipboardPanelModel {
         didSet { selectedID = nil }
     }
 
+    /// 剪贴列表或收藏夹。呼出面板时总是回到 `.history`，但记住选中的分组。
+    private(set) var mode: ClipboardPanelMode = .history {
+        didSet { if mode != oldValue { selectedID = nil } }
+    }
+
+    /// 收藏夹里当前选中的分组；nil 表示「全部」。
+    var selectedTabID: UUID?
+
     /// 按 ID 记录选中项，面板打开期间有新复制进来时选中位置不跳动。
     private(set) var selectedID: UUID?
 
@@ -172,6 +199,13 @@ final class ClipboardPanelModel {
         }
     }
 
+    /// 正在选择收藏分组的条目 ID（⌘F 打开的选择器）；nil 表示选择器未打开。
+    /// 与「更多操作」菜单同构：都锚在条目上、都是模态的。
+    private(set) var favoritePickerItemID: UUID?
+
+    /// 选择器里高亮第几行：前 N 行是分组，最后一行（有分组时）是「取消收藏」。
+    private(set) var favoritePickerIndex = 0
+
     /// 每次呼出面板时递增。
     private(set) var presentationCount = 0
 
@@ -200,6 +234,8 @@ final class ClipboardPanelModel {
     @ObservationIgnored var onResolveNotice: (PanelNotice) -> Void = { _ in }
     /// 进入或退出详情预览时通知宿主窗口调整宽度。
     @ObservationIgnored var onPeekChange: (Bool) -> Void = { _ in }
+    /// 选择器里新建分组后，视图据此把 tab 排在对应的 pill 上开就地重命名。
+    @ObservationIgnored var onRequestTabRename: (UUID) -> Void = { _ in }
     /// 用户关掉的提示在本次运行期间不再出现；状态没修复的话下次启动会再次提示。
     @ObservationIgnored private var dismissedNotices: Set<PanelNotice> = []
 
@@ -207,8 +243,29 @@ final class ClipboardPanelModel {
         self.store = store
     }
 
+    /// 列表当前展示的条目：剪贴列表看全部历史，收藏夹只看已收藏的条目；
+    /// 两种模式共用同一套类型筛选与搜索词作为二次过滤。
     var visibleItems: [HistoryItem] {
-        Self.filter(store.items, filter: filter, query: query)
+        Self.filter(sourceItems, filter: filter, query: query)
+    }
+
+    private var sourceItems: [HistoryItem] {
+        switch mode {
+        case .history: store.items
+        case .favorites: favoritesInSelectedTab
+        }
+    }
+
+    /// 当前选中的收藏分组；nil 表示「全部」。被删掉的分组自动回到「全部」。
+    var selectedTab: FavoriteTab? {
+        guard let selectedTabID else { return nil }
+        return store.tabs.first { $0.id == selectedTabID }
+    }
+
+    /// 收藏夹当前展示的条目：选中「全部」时跨所有分组，否则只取该分组。
+    private var favoritesInSelectedTab: [HistoryItem] {
+        guard let selectedTab else { return store.favorites }
+        return store.favorites.filter { $0.favoriteTab?.id == selectedTab.id }
     }
 
     /// 未显式选中或选中项已不在列表中时，默认选中第一条。
@@ -218,11 +275,14 @@ final class ClipboardPanelModel {
     }
 
     /// 每次呼出面板时调用：清空搜索并回到第一条，保留用户选择的筛选类型。
+    /// 总是回到剪贴列表（与预览一致），但记住上次选中的收藏分组。
     func prepareForPresentation() {
         query = ""
         selectedID = nil
         isPeeking = false
+        mode = .history
         actionsMenuItemID = nil
+        favoritePickerItemID = nil
         targetAppName = targetAppNameProvider()
         refreshNotice()
         presentationCount += 1
@@ -424,6 +484,21 @@ final class ClipboardPanelModel {
         case .toggleActionsMenu:
             toggleActionsMenu()
             return
+        case .toggleFavoritePicker:
+            toggleFavoritePicker()
+            return
+        case .dismiss where isShowingFavoritePicker:
+            hideFavoritePicker()
+            return
+        case .moveUp where isShowingFavoritePicker:
+            moveFavoritePickerSelection(by: -1)
+            return
+        case .moveDown where isShowingFavoritePicker:
+            moveFavoritePickerSelection(by: 1)
+            return
+        case .paste(.original) where isShowingFavoritePicker:
+            confirmFavoritePickerSelection()
+            return
         case .dismiss where isShowingActionsMenu:
             // 菜单打开时 Esc 先收回二级菜单、再收起菜单，最后一次才收起面板。
             backOutOfActionsMenu()
@@ -438,8 +513,21 @@ final class ClipboardPanelModel {
             confirmActionsMenuSelection()
             return
         default:
-            // 其他命令不经过菜单：先收起菜单再执行。
+            // 其他命令不经过菜单：先收起菜单与选择器再执行。
             if isShowingActionsMenu { hideActions() }
+            if isShowingFavoritePicker { hideFavoritePicker() }
+        }
+
+        // Esc 逐层退：预览 → 收藏夹 → 关闭面板（与「更多操作菜单 → 面板」同构）。
+        switch command {
+        case .dismiss where isPeeking:
+            isPeeking = false
+            return
+        case .dismiss where mode == .favorites:
+            mode = .history
+            return
+        default:
+            break
         }
 
         let items = visibleItems
@@ -475,6 +563,7 @@ final class ClipboardPanelModel {
         case .convertColor(let format):
             if let item = selectedItem { convertColor(of: item, to: format) }
         case .deleteAll:
+            // 收藏项不被批量清理连带删除。
             store.clearAll()
             selectedID = nil
         case .peek:
@@ -486,8 +575,10 @@ final class ClipboardPanelModel {
             isPeeking = false
         case .dismiss:
             onDismiss()
-        case .toggleActionsMenu:
-            // 菜单命令已在上面处理完，不会走到这里。
+        case .toggleFavorites:
+            mode = mode == .favorites ? .history : .favorites
+        case .toggleActionsMenu, .toggleFavoritePicker:
+            // 这两条命令已在上面处理完，不会走到这里。
             break
         }
     }
@@ -500,6 +591,131 @@ final class ClipboardPanelModel {
         if let item = selectedItem {
             showActions(for: item)
         }
+    }
+
+    // MARK: 收藏
+
+    var isShowingFavoritePicker: Bool { favoritePickerItemID != nil }
+
+    /// 选择器卡片在容器坐标中的位置：锚在当前条目下方，与「更多操作」菜单同构。
+    var favoritePickerFrame: CGRect? {
+        guard let favoritePickerItemID, let row = rowFrames[favoritePickerItemID] else { return nil }
+        let rows = favoritePickerRows
+        guard !rows.isEmpty else { return nil }
+        return ClipboardPanelMetrics.actionsMenuFrame(
+            anchoredTo: row,
+            size: ClipboardPanelMetrics.actionsMenuSize(
+                rowCount: rows.count,
+                separatorCount: rows.contains(.unfavorite) ? 1 : 0
+            ),
+            in: actionsMenuContainer
+        )
+    }
+
+    func favoritePickerContains(_ point: CGPoint) -> Bool {
+        favoritePickerFrame?.contains(point) == true
+    }
+
+    /// 新建一个待命名的分组，名字由视图就地编辑时填入。
+    func createTab() -> FavoriteTab? {
+        store.createTab(named: String(localized: "New Group"))
+    }
+
+    func renameTab(_ tab: FavoriteTab, to name: String) {
+        store.renameTab(tab, to: name)
+    }
+
+    /// 删除分组：条目退回普通历史；当前正看着这个分组时回到「全部」。
+    func deleteTab(_ tab: FavoriteTab) {
+        if selectedTabID == tab.id { selectedTabID = nil }
+        store.deleteTab(tab)
+    }
+
+    /// 选择器当前锛定的条目。
+    var favoritePickerItem: HistoryItem? {
+        guard let favoritePickerItemID else { return nil }
+        return store.items.first { $0.id == favoritePickerItemID }
+    }
+
+    /// 选择器的行：先列出所有分组，最后（条目已收藏时）追加一行「取消收藏」。
+    /// 一个分组都没有时例外允许首行「新建分组…」（见 docs/adr/0006）：
+    /// 否则用户删光分组后就没法从面板里收藏任何东西。
+    var favoritePickerRows: [FavoritePickerRow] {
+        if store.tabs.isEmpty {
+            return [.createTab]
+        }
+        var rows: [FavoritePickerRow] = store.tabs.map { .tab($0.id) }
+        if favoritePickerItem?.isFavorited == true { rows.append(.unfavorite) }
+        return rows
+    }
+
+    var highlightedFavoritePickerRow: FavoritePickerRow? {
+        let rows = favoritePickerRows
+        return rows.indices.contains(favoritePickerIndex) ? rows[favoritePickerIndex] : nil
+    }
+
+    /// ⌘F：已打开则收起；否则锛在当前选中条目上，高亮回到该条目当前所属的分组。
+    private func toggleFavoritePicker() {
+        guard !isShowingFavoritePicker else {
+            hideFavoritePicker()
+            return
+        }
+        guard let item = selectedItem else { return }
+        favoritePickerItemID = item.id
+        favoritePickerIndex = favoritePickerRows.firstIndex { row in
+            if case .tab(let id) = row { return id == item.favoriteTab?.id }
+            return false
+        } ?? 0
+    }
+
+    func hideFavoritePicker() {
+        favoritePickerItemID = nil
+        favoritePickerIndex = 0
+    }
+
+    /// ↑↓：到头就停住，不回绕。
+    func moveFavoritePickerSelection(by offset: Int) {
+        guard isShowingFavoritePicker else { return }
+        let count = favoritePickerRows.count
+        guard count > 0 else { return }
+        favoritePickerIndex = min(max(favoritePickerIndex + offset, 0), count - 1)
+    }
+
+    func highlightFavoritePickerRow(_ row: FavoritePickerRow) {
+        guard isShowingFavoritePicker, let index = favoritePickerRows.firstIndex(of: row) else { return }
+        favoritePickerIndex = index
+    }
+
+    /// ↩ 执行当前高亮行：选分组收藏 / 取消收藏 / 新建分组。
+    func confirmFavoritePickerSelection() {
+        guard let row = highlightedFavoritePickerRow else { return }
+        activateFavoritePickerRow(row)
+    }
+
+    func activateFavoritePickerRow(_ row: FavoritePickerRow) {
+        switch row {
+        case .tab(let id):
+            guard let item = favoritePickerItem, let tab = store.tabs.first(where: { $0.id == id }) else { return }
+            store.favorite(item, in: tab)
+            selectedTabID = tab.id
+        case .unfavorite:
+            guard let item = favoritePickerItem else { return }
+            store.unfavorite(item)
+        case .createTab:
+            // 选择器里不弹输入框（固定行高放不下）：先建一个待命名的分组，
+            // 再由视图把焦点交给 tab 排的就地重命名。
+            guard let tab = store.createTab(named: String(localized: "New Group")) else { return }
+            if let item = favoritePickerItem { store.favorite(item, in: tab) }
+            selectedTabID = tab.id
+            onRequestTabRename(tab.id)
+        }
+        hideFavoritePicker()
+    }
+
+    /// 在收藏夹里切换分组；「全部」对应 nil。
+    func selectTab(_ id: UUID?) {
+        selectedTabID = id
+        selectedID = nil
     }
 
     static func filter(_ items: [HistoryItem], filter: ClipboardFilter, query: String) -> [HistoryItem] {

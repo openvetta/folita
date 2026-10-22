@@ -11,12 +11,12 @@ struct LocalizationTests {
 
     @Test func sectionTitlesInEnglish() {
         let titles = MainSection.allCases.map { localized($0.title, "en") }
-        #expect(titles == ["General", "Shortcuts", "History", "Privacy", "About"])
+        #expect(titles == ["General", "Favorites", "Shortcuts", "History", "Privacy", "About"])
     }
 
     @Test func sectionTitlesInSimplifiedChinese() {
         let titles = MainSection.allCases.map { localized($0.title, "zh-Hans") }
-        #expect(titles == ["通用", "快捷键", "历史记录", "隐私", "关于"])
+        #expect(titles == ["通用", "收藏夹", "快捷键", "历史记录", "隐私", "关于"])
     }
 
     @Test func clipboardPanelCopyIsLocalized() {
@@ -220,5 +220,45 @@ struct LocalizationTests {
         #expect(localized("Check for updates automatically", "zh-Hans") == "自动检查更新")
         #expect(localized("Check for Updates…", "zh-Hans") == "检查更新…")
         #expect(localized("Updates are not configured for this build.", "zh-Hans") == "此版本未配置自动更新。")
+    }
+
+    /// 收藏夹相关的固定文案都要有中英两版。
+    @Test func favoritesCopyIsLocalized() {
+        let copy: [(LocalizedStringResource, String, String)] = [
+            ("Favorites", "Favorites", "收藏夹"),
+            ("All", "All", "全部"),
+            ("Work", "Work", "工作"),
+            ("Life", "Life", "生活"),
+            ("New Group", "New Group", "新建分组"),
+            ("Group Name", "Group Name", "分组名称"),
+            ("Group", "Group", "分组"),
+            ("Remove from Favorites", "Remove from Favorites", "取消收藏"),
+            ("Favorite", "Favorite", "收藏"),
+            ("Delete Group", "Delete Group", "删除分组"),
+            ("Rename", "Rename", "重命名"),
+            ("Open or close Favorites", "Open or close Favorites", "打开或关闭收藏夹"),
+            ("Go back, or close the panel", "Go back, or close the panel", "返回上一层或关闭面板"),
+        ]
+        for (resource, en, zh) in copy {
+            #expect(localized(resource, "en") == en)
+            #expect(localized(resource, "zh-Hans") == zh)
+        }
+    }
+
+    /// 预设分组按界面语言播种：中文下写入的是「工作」「生活」。
+    @MainActor
+    @Test func defaultTabNamesFollowTheGivenLocale() {
+        #expect(ClipboardHistoryStore.defaultTabNames(locale: Locale(identifier: "en")) == ["Work", "Life"])
+        #expect(ClipboardHistoryStore.defaultTabNames(locale: Locale(identifier: "zh-Hans")) == ["工作", "生活"])
+    }
+
+    @Test func favoritesEmptyStateCopyIsLocalized() {
+        let group: LocalizedStringResource = "Favorite items appear here. Press ⌘F on an item and pick a group."
+        #expect(localized(group, "en") == "Favorite items appear here. Press ⌘F on an item and pick a group.")
+        #expect(localized(group, "zh-Hans") == "收藏的内容会出现在这里。在条目上按 ⌘F，选一个分组即可收藏。")
+
+        let tab: LocalizedStringResource = "Favorite items appear here. Press ⌘F on an item and pick this group."
+        #expect(localized(tab, "en") == "Favorite items appear here. Press ⌘F on an item and pick this group.")
+        #expect(localized(tab, "zh-Hans") == "收藏的内容会出现在这里。在条目上按 ⌘F，选这个分组即可收藏。")
     }
 }

@@ -30,6 +30,8 @@ enum ClipboardActionsMenuEntry: Hashable {
     case convertColor(RGBAColor, excluding: ColorFormat?)
     /// `text` 是转换后的色值，直接写在菜单项上。
     case convertTo(ColorFormat, text: String)
+    /// 收藏到某个分组，或改到另一个分组（⌘F）。
+    case favorite
     case deleteEntry
     case deleteAll
 
@@ -39,7 +41,7 @@ enum ClipboardActionsMenuEntry: Hashable {
         if details.link != nil { entries.append(.openInBrowser) }
         if !details.emails.isEmpty { entries.append(.sendEmail(addresses: details.emails)) }
         if let color = details.color { entries.append(.convertColor(color, excluding: details.colorFormat)) }
-        entries += [.deleteEntry, .deleteAll]
+        entries += [.favorite, .deleteEntry, .deleteAll]
         return entries
     }
 
@@ -50,6 +52,7 @@ enum ClipboardActionsMenuEntry: Hashable {
         case .pasteKeepingPanelOpen: ["⌥", "↩"]
         case .pasteAsPlainText: ["⇧", "↩"]
         case .deleteEntry: ["⌃", "X"]
+        case .favorite: ClipboardActionsMenuEntry.favoriteKeyCaps
         case .deleteAll: ["⌃", "⇧", "X"]
         default: []
         }
@@ -81,6 +84,7 @@ enum ClipboardActionsMenuEntry: Hashable {
         case .sendEmailTo(let address): .composeEmail(address)
         case .convertColor: nil
         case .convertTo(let format, _): .convertColor(format)
+        case .favorite: .toggleFavoritePicker
         case .deleteEntry: .deleteSelected
         case .deleteAll: .deleteAll
         }
@@ -91,7 +95,8 @@ enum ClipboardActionsMenuEntry: Hashable {
         switch self {
         case .pasteToTarget, .pasteKeepingPanelOpen, .pasteAsPlainText: 0
         case .openInBrowser, .sendEmail, .sendEmailTo, .convertColor, .convertTo: 1
-        case .deleteEntry, .deleteAll: 2
+        case .favorite: 2
+        case .deleteEntry, .deleteAll: 3
         }
     }
 
@@ -113,12 +118,19 @@ enum ClipboardActionsMenuEntry: Hashable {
         case .convertColor: .localized("Convert Color")
         case .convertTo(_, let text): .verbatim(text)
         case .deleteEntry: .localized("Delete Entry")
+        case .favorite: .localized("Favorite")
         case .deleteAll: .localized("Delete All Entries")
         }
     }
 
     /// 列表行右侧常驻的「打开菜单」提示：⌘ 与 K 分成两个键帽，连写用于设置页。
     static let menuHintKeyCaps = ["⌘", "K"]
+
+    /// 收藏动作的快捷键：⌘F 与 ⌘K 同构，不打开菜单也能直接按。
+    static let favoriteKeyCaps = ["⌘", "F"]
+
+    /// 在剪贴列表与收藏夹之间切换的快捷键（⌘←）。
+    static let favoritesKeyCaps = ["⌘", "←"]
 }
 
 /// 菜单里的一行：一级条目，或展开条目的二级条目（二级条目画在一级卡片旁边的另一张卡片里）。

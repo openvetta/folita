@@ -7,6 +7,10 @@ struct ClipboardPanelView: View {
 
     @State private var isFilterPresented = false
     @FocusState private var isSearchFocused: Bool
+    /// 收藏分组胶囊的就地重命名状态，由 tab 排与
+    /// ⌘F 选择器里「新建分组…」共用。
+    @State private var renamingTabID: UUID?
+    @State private var renameDraft = ""
 
     var body: some View {
         let isPeeking = model.isPeeking
@@ -20,6 +24,10 @@ struct ClipboardPanelView: View {
                     .gesture(WindowDragGesture())
                 VStack(alignment: .leading, spacing: 14) {
                     PanelNoticeBanner(notice: model.notice, action: model.resolveNotice, onDismiss: model.dismissNotice)
+                    if model.mode == .favorites {
+                        FavoriteTabBar(model: model, renamingTabID: $renamingTabID, renameDraft: $renameDraft)
+                            .transition(.opacity.combined(with: .offset(y: -6)))
+                    }
                     ClipboardHistoryList(model: model)
                         .frame(maxHeight: .infinity, alignment: .top)
                 }
@@ -85,6 +93,24 @@ struct ClipboardPanelView: View {
             }
         }
         .animation(.snappy(duration: 0.18), value: model.actionsMenuExpanded)
+        // ⌘F 的「收藏到分组」选择器与「更多操作」同层，也同框定位。
+        .overlay(alignment: .topLeading) {
+            if let frame = model.favoritePickerFrame {
+                FavoritePickerMenuView(
+                    rows: model.favoritePickerRows,
+                    tabs: model.store.tabs,
+                    currentTabID: model.favoritePickerItem?.favoriteTab?.id,
+                    highlighted: model.highlightedFavoritePickerRow,
+                    activate: model.activateFavoritePickerRow,
+                    highlight: model.highlightFavoritePickerRow
+                )
+                    .frame(width: frame.width, height: frame.height)
+                    .offset(x: frame.minX, y: frame.minY)
+                    .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
+            }
+        }
+        .animation(.snappy(duration: 0.18), value: model.isShowingFavoritePicker)
+        .animation(.snappy(duration: 0.18), value: model.mode)
         .animation(.snappy(duration: 0.18), value: model.isShowingActionsMenu)
         .animation(.snappy(duration: ClipboardPanelMetrics.peekAnimationDuration), value: isPeeking)
         .padding(ClipboardPanelMetrics.shadowInset)
@@ -125,7 +151,8 @@ struct ClipboardPanelView: View {
         Button {
             isFilterPresented.toggle()
         } label: {
-            Image(systemName: model.filter.symbolName)
+            // 收藏夹打开时图标改为星标，否则用户看不出当前不在剪贴列表。
+            Image(systemName: model.mode == .favorites ? ClipboardPanelMode.favorites.symbolName : model.filter.symbolName)
                 .font(.system(size: 12, weight: .semibold))
                 .frame(width: ClipboardPanelMetrics.controlHeight, height: ClipboardPanelMetrics.controlHeight)
         }
@@ -135,11 +162,11 @@ struct ClipboardPanelView: View {
         .accessibilityLabel(Text("Filter"))
         .popover(isPresented: $isFilterPresented, arrowEdge: .bottom) {
             if let languageSettings {
-                ClipboardFilterMenu(selection: $model.filter)
+                ClipboardFilterMenu(model: model)
                     .environment(languageSettings)
                     .environment(\.locale, languageSettings.effectiveLocale)
             } else {
-                ClipboardFilterMenu(selection: $model.filter)
+                ClipboardFilterMenu(model: model)
             }
         }
     }

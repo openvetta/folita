@@ -53,6 +53,12 @@ struct PanelKeyHint: Identifiable {
         PanelKeyHint(keys: "↑ ↓", action: "Select previous or next item"),
         PanelKeyHint(keys: "→", action: "Preview the selected item"),
         PanelKeyHint(keys: "←", action: "Close the preview"),
+        PanelKeyHint(
+            keys: ClipboardActionsMenuEntry.favoritesKeyCaps.joined(),
+            action: "Open or close Favorites"
+        ),
+        // 菜单里也有「收藏」，键位与这里同源。
+        PanelKeyHint(keys: ClipboardActionsMenuEntry.favoriteKeyCaps.joined(), action: "Favorite"),
         PanelKeyHint(keys: ClipboardActionsMenuEntry.pasteToTarget.shortcut, action: "Paste"),
         PanelKeyHint(keys: ClipboardActionsMenuEntry.pasteAsPlainText.shortcut, action: "Paste as Plain Text"),
         PanelKeyHint(keys: ClipboardActionsMenuEntry.pasteKeepingPanelOpen.shortcut, action: "Paste and Keep Window Open"),
@@ -62,6 +68,6 @@ struct PanelKeyHint: Identifiable {
         PanelKeyHint(keys: "⌘⌫", action: "Delete"),
         PanelKeyHint(keys: ClipboardActionsMenuEntry.deleteEntry.shortcut, action: "Delete Entry"),
         PanelKeyHint(keys: ClipboardActionsMenuEntry.deleteAll.shortcut, action: "Delete All Entries"),
-        PanelKeyHint(keys: "Esc", action: "Close the panel"),
+        PanelKeyHint(keys: "Esc", action: "Go back, or close the panel"),
     ]
 }

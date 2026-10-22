@@ -18,14 +18,14 @@ struct ClipboardPanelModelTests {
 
     init() throws {
         let container = try ModelContainer(
-            for: HistoryItem.self,
+            for: HistoryItem.self, FavoriteTab.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         var tick = Date(timeIntervalSince1970: 0)
         store = ClipboardHistoryStore(container: container, limit: { 500 }, now: {
             tick.addTimeInterval(1)
             return tick
-        })
+        }, defaultTabNames: [])
         model = ClipboardPanelModel(store: store)
         let kept = Box()
         self.kept = kept
@@ -183,11 +183,17 @@ struct ClipboardPanelModelTests {
         #expect(model.isPeeking)
     }
 
-    @Test func escapeDismissesEvenWhilePeeking() {
+    /// Esc 逐层退：预览打开时先退出预览，再按一次才收起面板（与收藏夹同一套层级）。
+    @Test func escapeClosesThePreviewBeforeThePanel() {
         var dismissed = false
         model.onDismiss = { dismissed = true }
         copy("a")
         model.perform(.peek)
+
+        model.perform(.dismiss)
+        #expect(model.isPeeking == false)
+        #expect(dismissed == false)
+
         model.perform(.dismiss)
         #expect(dismissed)
     }
@@ -232,6 +238,9 @@ struct ClipboardPanelModelTests {
         #expect(C.command(for: .escape, modifiers: []) == .dismiss)
         #expect(C.command(for: .rightArrow, modifiers: []) == .peek)
         #expect(C.command(for: .leftArrow, modifiers: []) == .endPeek)
+        // ⌘← 切收藏夹，⌘F 打开收藏选择器。
+        #expect(C.command(for: .leftArrow, modifiers: .command) == .toggleFavorites)
+        #expect(C.command(for: "f", modifiers: .command) == .toggleFavoritePicker)
         #expect(C.command(for: .rightArrow, modifiers: .command) == nil)
         #expect(C.command(for: .leftArrow, modifiers: .shift) == nil)
         // 大写锁定等非组合修饰键不影响判断。
@@ -272,7 +281,7 @@ struct ClipboardPanelModelTests {
         #expect(
             model.actionsMenuFrame == ClipboardPanelMetrics.actionsMenuFrame(
                 anchoredTo: row,
-                size: ClipboardPanelMetrics.actionsMenuSize(rowCount: 5, separatorCount: 1),
+                size: ClipboardPanelMetrics.actionsMenuSize(rowCount: 6, separatorCount: 2),
                 in: CGRect(origin: .zero, size: ClipboardPanelMetrics.containerSize(isPeeking: false))
             )
         )
@@ -362,5 +371,210 @@ struct ClipboardPanelModelTests {
         // 行间空隙与列表外不命中。
         #expect(model.item(at: CGPoint(x: 100, y: 152)) == nil)
         #expect(model.item(at: CGPoint(x: 100, y: 400)) == nil)
+    }
+
+    // MARK: 收藏夹
+
+    /// 常见流程：⌘F 收藏到「工作」→ ⌘← 进收藏夹 → 只看得到这条 → ↔切回列表。
+    @Test func favoriteThenBrowseFavorites() throws {
+        copy("draft", "groceries")
+        let work = try #require(store.createTab(named: "Work"))
+        let item = try #require(model.selectedItem)
+
+        model.perform(.toggleFavoritePicker)
+        #expect(model.isShowingFavoritePicker)
+        #expect(model.highlightedFavoritePickerRow == .tab(work.id))
+
+        model.activateFavoritePickerRow(.tab(work.id))
+        #expect(model.isShowingFavoritePicker == false)
+        #expect(item.isFavorited)
+        #expect(model.selectedTabID == work.id)
+
+        model.perform(.toggleFavorites)
+        #expect(model.mode == .favorites)
+        #expect(model.visibleItems.map(\.title) == ["groceries"])
+
+        model.perform(.toggleFavorites)
+        #expect(model.mode == .history)
+        #expect(model.visibleItems.count == 2)
+    }
+
+    /// 收藏夹里的 ↑↓ 与删除照旧作用在列表上；删除的是整条剪贴。
+    @Test func keyboardAndDeleteWorkInsideFavorites() throws {
+        copy("c", "b", "a")
+        let tab = try #require(store.createTab(named: "Work"))
+        for item in store.items {
+            store.favorite(item, in: tab)
+        }
+        // 按 store.items 顺序收藏，收藏时间递增，收藏夹因此倒序。
+        model.perform(.toggleFavorites)
+        #expect(model.visibleItems.map(\.title) == ["c", "b", "a"])
+
+        model.perform(.moveDown)
+        #expect(model.selectedItem?.title == "b")
+
+        model.perform(.deleteSelected)
+        #expect(store.items.map(\.title) == ["a", "c"])
+        #expect(model.visibleItems.map(\.title) == ["c", "a"])
+    }
+
+    /// 收藏夹里按 Esc 逐层退：先关预览、再退出收藏夹、最后才收起面板。
+    @Test func escapeBacksOutOneLayerAtATime() throws {
+        var dismissed = false
+        model.onDismiss = { dismissed = true }
+        copy("a")
+        let tab = try #require(store.createTab(named: "Work"))
+        let item = try #require(model.selectedItem)
+        store.favorite(item, in: tab)
+
+        model.perform(.toggleFavorites)
+        model.perform(.peek)
+        #expect(model.mode == .favorites)
+        #expect(model.isPeeking)
+
+        model.perform(.dismiss)
+        #expect(model.mode == .favorites)
+        #expect(model.isPeeking == false)
+        #expect(dismissed == false)
+
+        model.perform(.dismiss)
+        #expect(model.mode == .history)
+        #expect(dismissed == false)
+
+        model.perform(.dismiss)
+        #expect(dismissed)
+    }
+
+    /// 收藏夹里可以预览：→ 进预览，⌘← 直接退出收藏夹。
+    @Test func previewWorksInsideFavorites() throws {
+        copy("a")
+        let tab = try #require(store.createTab(named: "Work"))
+        let item = try #require(model.selectedItem)
+        store.favorite(item, in: tab)
+
+        model.perform(.toggleFavorites)
+        model.perform(.peek)
+        #expect(model.isPeeking)
+
+        model.perform(.toggleFavorites)
+        #expect(model.mode == .history)
+    }
+
+    /// 换分组、取消收藏都走同一个选择器。
+    @Test func pickerCanMoveAndUnfavorite() throws {
+        copy("a")
+        let work = try #require(store.createTab(named: "Work"))
+        let life = try #require(store.createTab(named: "Life"))
+        let item = try #require(model.selectedItem)
+        store.favorite(item, in: work)
+
+        model.perform(.toggleFavoritePicker)
+        // 已收藏时最后多一行「取消收藏」。
+        #expect(model.favoritePickerRows == [.tab(work.id), .tab(life.id), .unfavorite])
+        #expect(model.highlightedFavoritePickerRow == .tab(work.id))
+
+        model.activateFavoritePickerRow(.tab(life.id))
+        #expect(item.favoriteTab?.id == life.id)
+
+        model.perform(.toggleFavoritePicker)
+        #expect(model.highlightedFavoritePickerRow == .tab(life.id))
+        model.activateFavoritePickerRow(.unfavorite)
+        #expect(item.isFavorited == false)
+        #expect(store.favorites.isEmpty)
+    }
+
+    /// 没有分组时选择器只剩「新建分组…」，否则用户没地方收纳。
+    @Test func pickerOffersCreateWhenNoTabsExist() {
+        copy("a")
+        #expect(store.tabs.isEmpty)
+
+        model.perform(.toggleFavoritePicker)
+        #expect(model.favoritePickerRows == [.createTab])
+
+        model.confirmFavoritePickerSelection()
+        #expect(store.tabs.count == 1)
+        #expect(model.selectedItem?.isFavorited == true)
+    }
+
+    /// 选择器打开时 ↑↓ 只移动高亮，Esc 收起选择器且不退出收藏夹。
+    @Test func pickerKeysAreModal() throws {
+        copy("a")
+        let work = try #require(store.createTab(named: "Work"))
+        try #require(store.createTab(named: "Life"))
+        let item = try #require(model.selectedItem)
+        store.favorite(item, in: work)
+
+        model.perform(.toggleFavorites)
+        model.perform(.toggleFavoritePicker)
+        #expect(model.highlightedFavoritePickerRow == .tab(try #require(store.tabs.first).id))
+
+        model.perform(.moveDown)
+        #expect(model.highlightedFavoritePickerRow == .tab(store.tabs[1].id))
+
+        model.perform(.dismiss)
+        #expect(model.isShowingFavoritePicker == false)
+        #expect(model.mode == .favorites)
+    }
+
+    /// ⌘F 再按一次收起，不递归打开。
+    @Test func commandFTogglesThePicker() {
+        copy("a")
+        model.perform(.toggleFavoritePicker)
+        #expect(model.isShowingFavoritePicker)
+        model.perform(.toggleFavoritePicker)
+        #expect(model.isShowingFavoritePicker == false)
+    }
+
+    /// 列表为空时不开选择器（没有可收藏的条目）。
+    @Test func pickerDoesNotOpenOnAnEmptyList() {
+        model.perform(.toggleFavoritePicker)
+        #expect(model.isShowingFavoritePicker == false)
+    }
+
+    /// 重新呼出面板总是回到剪贴列表，但记住上次选中的分组。
+    @Test func presentationReturnsToHistoryButKeepsTheTab() throws {
+        copy("a")
+        let tab = try #require(store.createTab(named: "Work"))
+        model.perform(.toggleFavorites)
+        model.selectTab(tab.id)
+
+        model.prepareForPresentation()
+        #expect(model.mode == .history)
+        #expect(model.selectedTabID == tab.id)
+        #expect(model.isShowingFavoritePicker == false)
+    }
+
+    /// 收藏夹里选类型筛选是叠加的：只筛收藏项，不是筛全部历史。
+    @Test func typeFilterNarrowsFavoritesOnly() throws {
+        copy("meeting", "https://folita.app")
+        let tab = try #require(store.createTab(named: "Work"))
+        let link = try #require(model.selectedItem)
+        store.favorite(link, in: tab)
+
+        model.perform(.toggleFavorites)
+        #expect(model.visibleItems.map(\.title) == ["https://folita.app"])
+
+        // 链接在类型筛选里同时算文本，因此用「仅图片」验证筛选真的叠加在收藏项上。
+        model.filter = .images
+        #expect(model.visibleItems.isEmpty)
+
+        model.filter = .links
+        #expect(model.visibleItems.map(\.title) == ["https://folita.app"])
+        #expect(store.items.count == 2)
+    }
+
+    /// 删除分组：条目退回普通历史，当前视图回到「全部」。
+    @Test func deletingTheSelectedTabFallsBackToAll() throws {
+        copy("a")
+        let tab = try #require(store.createTab(named: "Work"))
+        let item = try #require(model.selectedItem)
+        store.favorite(item, in: tab)
+        model.perform(.toggleFavorites)
+        model.selectTab(tab.id)
+
+        model.deleteTab(tab)
+        #expect(model.selectedTabID == nil)
+        #expect(model.visibleItems.isEmpty)
+        #expect(store.items.map(\.title) == ["a"])
     }
 }

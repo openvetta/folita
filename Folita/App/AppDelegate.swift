@@ -14,6 +14,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 剪贴面板是独立于 SwiftUI Scene 的 NSPanel，由 AppDelegate 持有整个生命周期。
     let clipboardPanel: ClipboardPanelController
 
+    /// 预设收藏分组的播种状态（见 docs/adr/0006）。
+    let favoriteSettings: FavoriteSettings
+
     private let clipboardMonitor: ClipboardMonitor
     private let pasteService: PasteService
     private let hotKeys: GlobalHotKeyService
@@ -25,9 +28,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let opened = AppEnvironment.isRunningTests
             ? HistoryStorage.Opened(container: HistoryStorage.makeInMemoryContainer(), backupURL: nil)
             : HistoryStorage.open()
-        let historyStore = ClipboardHistoryStore(container: opened.container, limit: { historySettings.limit })
+        let favoriteSettings = FavoriteSettings()
+        // 预设分组只在首次启动播种一次，名字按当时的界面语言写入。
+        let historyStore = ClipboardHistoryStore(
+            container: opened.container,
+            limit: { historySettings.limit },
+            defaultTabNames: ClipboardHistoryStore.defaultTabNames(
+                locale: AppEnvironment.isRunningTests ? Locale(identifier: "en") : LanguageSettings.shared.effectiveLocale
+            ),
+            favoriteSettings: AppEnvironment.isRunningTests ? nil : favoriteSettings
+        )
         historySettings.onLimitChange = { historyStore.enforceLimit() }
 
+        self.favoriteSettings = favoriteSettings
         self.historySettings = historySettings
         self.privacySettings = privacySettings
         self.historyStore = historyStore
