@@ -18,7 +18,7 @@ struct ClipboardFilterMenu: View {
         .frame(width: 244)
     }
 
-    /// 收藏夹置顶：再点一次退回剪贴列表，与 ⌘← 同义。
+    /// 收藏夹置顶：再点一次退回剪贴列表，与 ⌘→ 同义。
     private var modeRow: some View {
         Button {
             model.perform(.toggleFavorites)

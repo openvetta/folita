@@ -46,7 +46,7 @@ enum ClipboardPanelCommand: Equatable {
     case peek
     /// 收起详情预览，面板恢复原宽度。
     case endPeek
-    /// 在剪贴列表与收藏夹之间切换（⌘←）。
+    /// 在剪贴列表与收藏夹之间切换（⌘→）。
     case toggleFavorites
     /// 打开「收藏到分组」选择器（⌘F）；已打开时再按一次收起。
     case toggleFavoritePicker
@@ -77,8 +77,9 @@ enum ClipboardPanelCommand: Equatable {
         case ("k", [.command]): return .toggleActionsMenu
         // ⌘F 不进搜索框（带 ⌘ 的组合键本来就不会被当成文字输入），因此面板可全局接管。
         case ("f", [.command]): return .toggleFavoritePicker
-        // ⌘← 在面板里优先于搜索框的「移到行首」：面板在窗口分发前就拦下了它。
-        case (Key.leftArrow, [.command]): return .toggleFavorites
+        // ⌘→ 在剪贴列表与收藏夹之间切换：向右进入收藏夹，再按一次返回（向右「深入」更符合直觉）。
+        // 带 ⌘ 的组合键不会被搜索框当成文字或光标移动，面板可在窗口分发前接管。
+        case (Key.rightArrow, [.command]): return .toggleFavorites
         case (",", [.command]): return .openMainPanel
         case (Key.escape, []): return .dismiss
         case (_, [.command]):
@@ -111,7 +112,7 @@ enum ClipboardPanelCommand: Equatable {
 
     /// ← → 同时是搜索框里移动光标的键，只在不打断编辑时由面板接管：
     /// → 在光标停在搜索词末尾（光标本就无处可去）或预览已打开时进入预览；← 只在预览打开时用于退出。
-    /// ⌘← / ⌘F 不会被当成文字输入，面板全程接管。
+    /// ⌘→ / ⌘F 不会被当成文字输入，面板全程接管。
     func isIntercepted(isPeeking: Bool, responder: NSResponder?) -> Bool {
         switch self {
         case .peek: isPeeking || Self.isCaretAtEnd(in: responder)

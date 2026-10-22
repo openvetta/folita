@@ -240,10 +240,10 @@ struct ClipboardPanelModelTests {
         #expect(C.command(for: .escape, modifiers: []) == .dismiss)
         #expect(C.command(for: .rightArrow, modifiers: []) == .peek)
         #expect(C.command(for: .leftArrow, modifiers: []) == .endPeek)
-        // ⌘← 切收藏夹，⌘F 打开收藏选择器。
-        #expect(C.command(for: .leftArrow, modifiers: .command) == .toggleFavorites)
+        // ⌘→ 切收藏夹，⌘F 打开收藏选择器。
+        #expect(C.command(for: .rightArrow, modifiers: .command) == .toggleFavorites)
         #expect(C.command(for: "f", modifiers: .command) == .toggleFavoritePicker)
-        #expect(C.command(for: .rightArrow, modifiers: .command) == nil)
+        #expect(C.command(for: .leftArrow, modifiers: .command) == nil)
         #expect(C.command(for: .leftArrow, modifiers: .shift) == nil)
         // 大写锁定等非组合修饰键不影响判断。
         #expect(C.command(for: .return, modifiers: [.capsLock]) == .paste(.original))
@@ -393,7 +393,7 @@ struct ClipboardPanelModelTests {
 
     // MARK: 收藏夹
 
-    /// 常见流程：⌘F 收藏到「工作」→ ⌘← 进收藏夹 → 只看得到这条 → ↔切回列表。
+    /// 常见流程：⌘F 收藏到「工作」→ ⌘→ 进收藏夹 → 只看得到这条 → ↔切回列表。
     @Test func favoriteThenBrowseFavorites() throws {
         copy("draft", "groceries")
         let work = try #require(store.createTab(named: "Work"))
@@ -463,7 +463,7 @@ struct ClipboardPanelModelTests {
         #expect(dismissed)
     }
 
-    /// 收藏夹里可以预览：→ 进预览，⌘← 直接退出收藏夹。
+    /// 收藏夹里可以预览：→ 进预览，⌘→ 退出收藏夹。
     @Test func previewWorksInsideFavorites() throws {
         copy("a")
         let tab = try #require(store.createTab(named: "Work"))
