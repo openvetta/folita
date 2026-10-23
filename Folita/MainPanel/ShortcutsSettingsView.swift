@@ -54,8 +54,12 @@ struct PanelKeyHint: Identifiable {
         PanelKeyHint(keys: "→", action: "Preview the selected item"),
         PanelKeyHint(keys: "←", action: "Close the preview"),
         PanelKeyHint(
-            keys: ClipboardActionsMenuEntry.favoritesKeyCaps.joined(),
-            action: "Open or close Favorites"
+            keys: ClipboardActionsMenuEntry.openFavoritesKeyCaps.joined(),
+            action: "Open Favorites"
+        ),
+        PanelKeyHint(
+            keys: ClipboardActionsMenuEntry.closeFavoritesKeyCaps.joined(),
+            action: "Back to Clipboard"
         ),
         // 菜单里也有「收藏」，键位与这里同源。
         PanelKeyHint(keys: ClipboardActionsMenuEntry.favoriteKeyCaps.joined(), action: "Favorite"),

@@ -27,6 +27,8 @@ enum ClipboardPanelMetrics {
     static let peekDetailBottomInset: CGFloat = 26
     /// 加宽 / 收窄动画的时长；窗口在收窄动画结束后再缩回，避免裁掉还没收完的容器。
     static let peekAnimationDuration: Double = 0.36
+    /// 剪贴列表与收藏夹视图切换动画的时长。
+    static let modeTransitionDuration: Double = 0.22
     static let peekCollapseDelay: Duration = .milliseconds(420)
     /// 「更多操作」菜单：卡片宽度、每行高度、内边距、分组分割线、与行的间距、距容器边缘的最小距离。
     static let actionsMenuWidth: CGFloat = 264

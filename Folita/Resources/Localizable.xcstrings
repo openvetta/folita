@@ -1482,6 +1482,26 @@
         }
       }
     },
+    "Open Favorites" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开收藏夹"
+          }
+        }
+      }
+    },
+    "Back to Clipboard" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回剪贴板"
+          }
+        }
+      }
+    },
     "Open or close Favorites" : {
       "localizations" : {
         "zh-Hans" : {

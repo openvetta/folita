@@ -237,6 +237,8 @@ struct LocalizationTests {
             ("Favorite", "Favorite", "收藏"),
             ("Delete Group", "Delete Group", "删除分组"),
             ("Rename", "Rename", "重命名"),
+            ("Open Favorites", "Open Favorites", "打开收藏夹"),
+            ("Back to Clipboard", "Back to Clipboard", "返回剪贴板"),
             ("Open or close Favorites", "Open or close Favorites", "打开或关闭收藏夹"),
             ("Go back, or close the panel", "Go back, or close the panel", "返回上一层或关闭面板"),
         ]

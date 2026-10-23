@@ -46,7 +46,11 @@ enum ClipboardPanelCommand: Equatable {
     case peek
     /// 收起详情预览，面板恢复原宽度。
     case endPeek
-    /// 在剪贴列表与收藏夹之间切换（⌘→）。
+    /// 进入收藏夹（⌘←）。
+    case openFavorites
+    /// 在收藏夹中返回剪贴列表（⌘→）。
+    case closeFavorites
+    /// 在剪贴列表与收藏夹之间切换。
     case toggleFavorites
     /// 打开「收藏到分组」选择器（⌘F）；已打开时再按一次收起。
     case toggleFavoritePicker
@@ -77,9 +81,10 @@ enum ClipboardPanelCommand: Equatable {
         case ("k", [.command]): return .toggleActionsMenu
         // ⌘F 不进搜索框（带 ⌘ 的组合键本来就不会被当成文字输入），因此面板可全局接管。
         case ("f", [.command]): return .toggleFavoritePicker
-        // ⌘→ 在剪贴列表与收藏夹之间切换：向右进入收藏夹，再按一次返回（向右「深入」更符合直觉）。
+        // ⌘← 进入收藏夹（从左往右入场）；⌘→ 在收藏夹中返回剪贴列表（从右往左入场）。
         // 带 ⌘ 的组合键不会被搜索框当成文字或光标移动，面板可在窗口分发前接管。
-        case (Key.rightArrow, [.command]): return .toggleFavorites
+        case (Key.leftArrow, [.command]): return .openFavorites
+        case (Key.rightArrow, [.command]): return .closeFavorites
         case (",", [.command]): return .openMainPanel
         case (Key.escape, []): return .dismiss
         case (_, [.command]):
@@ -252,14 +257,16 @@ final class ClipboardPanelModel {
     /// 列表当前展示的条目：剪贴列表看全部历史，收藏夹只看已收藏的条目；
     /// 两种模式共用同一套类型筛选与搜索词作为二次过滤。
     var visibleItems: [HistoryItem] {
-        Self.filter(sourceItems, filter: filter, query: query)
+        items(for: mode)
     }
 
-    private var sourceItems: [HistoryItem] {
-        switch mode {
+    /// 获取指定模式下的条目列表（供视图按模式渲染，避免切换动画期间离场视图内容突变）。
+    func items(for mode: ClipboardPanelMode) -> [HistoryItem] {
+        let source: [HistoryItem] = switch mode {
         case .history: store.items
         case .favorites: favoritesInSelectedTab
         }
+        return Self.filter(source, filter: filter, query: query)
     }
 
     /// 当前选中的收藏分组；nil 表示「全部」。被删掉的分组自动回到「全部」。
@@ -530,7 +537,7 @@ final class ClipboardPanelModel {
             isPeeking = false
             return
         case .dismiss where mode == .favorites:
-            mode = .history
+            perform(.closeFavorites)
             return
         default:
             break
@@ -583,8 +590,18 @@ final class ClipboardPanelModel {
             onOpenMainPanel()
         case .dismiss:
             onDismiss()
+        case .openFavorites:
+            guard mode != .favorites else { return }
+            mode = .favorites
+        case .closeFavorites:
+            guard mode == .favorites else { return }
+            mode = .history
         case .toggleFavorites:
-            mode = mode == .favorites ? .history : .favorites
+            if mode == .favorites {
+                perform(.closeFavorites)
+            } else {
+                perform(.openFavorites)
+            }
         case .toggleActionsMenu, .toggleFavoritePicker:
             // 这两条命令已在上面处理完，不会走到这里。
             break

@@ -138,6 +138,8 @@ struct ClipboardPanelTests {
         #expect(ClipboardPanelCommand.command(for: try key("\u{1B}")) == .dismiss)
         #expect(ClipboardPanelCommand.command(for: try key("3", .command)) == .pasteAt(2))
         #expect(ClipboardPanelCommand.command(for: try key("a")) == nil)
+        #expect(ClipboardPanelCommand.command(for: try key("\u{F702}", .command)) == .openFavorites)
+        #expect(ClipboardPanelCommand.command(for: try key("\u{F703}", .command)) == .closeFavorites)
         #expect(ClipboardPanelCommand.command(for: try key("1")) == nil)
     }
 
@@ -207,6 +209,30 @@ struct ClipboardPanelTests {
         let count = model.store.items.count
         #expect(controller.handleKeyDown(try key("\u{7F}", .command)))
         #expect(model.store.items.count == count - 1)
+    }
+
+    /// 常见流程：⌘← 进入收藏夹 → ⌘→ 返回剪贴板；剪贴板中按 ⌘→ 无效，收藏夹中按 ⌘← 无效。
+    @Test func favoritesSwitchingKeyboardFlow() throws {
+        let model = makePanelModel(copying: ["first", "second"])
+        let controller = ClipboardPanelController(model: model, placementSettings: makePlacementSettings())
+        controller.show()
+        defer { controller.hide() }
+
+        // 在剪贴板中按 ⌘→ 不会进入收藏夹
+        #expect(controller.handleKeyDown(try key("\u{F703}", .command)))
+        #expect(model.mode == .history)
+
+        // 在剪贴板中按 ⌘← 进入收藏夹
+        #expect(controller.handleKeyDown(try key("\u{F702}", .command)))
+        #expect(model.mode == .favorites)
+
+        // 在收藏夹中按 ⌘← 不会重复操作
+        #expect(controller.handleKeyDown(try key("\u{F702}", .command)))
+        #expect(model.mode == .favorites)
+
+        // 在收藏夹中按 ⌘→ 返回剪贴板
+        #expect(controller.handleKeyDown(try key("\u{F703}", .command)))
+        #expect(model.mode == .history)
     }
 
     /// 输入法组字时方向键用于选词，不能被当成面板快捷键。

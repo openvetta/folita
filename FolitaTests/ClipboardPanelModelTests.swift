@@ -240,10 +240,10 @@ struct ClipboardPanelModelTests {
         #expect(C.command(for: .escape, modifiers: []) == .dismiss)
         #expect(C.command(for: .rightArrow, modifiers: []) == .peek)
         #expect(C.command(for: .leftArrow, modifiers: []) == .endPeek)
-        // ⌘→ 切收藏夹，⌘F 打开收藏选择器。
-        #expect(C.command(for: .rightArrow, modifiers: .command) == .toggleFavorites)
+        // ⌘← 进收藏夹，⌘→ 出收藏夹，⌘F 打开收藏选择器。
+        #expect(C.command(for: .leftArrow, modifiers: .command) == .openFavorites)
+        #expect(C.command(for: .rightArrow, modifiers: .command) == .closeFavorites)
         #expect(C.command(for: "f", modifiers: .command) == .toggleFavoritePicker)
-        #expect(C.command(for: .leftArrow, modifiers: .command) == nil)
         #expect(C.command(for: .leftArrow, modifiers: .shift) == nil)
         // 大写锁定等非组合修饰键不影响判断。
         #expect(C.command(for: .return, modifiers: [.capsLock]) == .paste(.original))
@@ -408,11 +408,17 @@ struct ClipboardPanelModelTests {
         #expect(item.isFavorited)
         #expect(model.selectedTabID == work.id)
 
-        model.perform(.toggleFavorites)
+        // ⌘→ 在剪贴历史中不起作用；必须按 ⌘← 进入收藏夹。
+        model.perform(.closeFavorites)
+        #expect(model.mode == .history)
+        model.perform(.openFavorites)
         #expect(model.mode == .favorites)
         #expect(model.visibleItems.map(\.title) == ["groceries"])
 
-        model.perform(.toggleFavorites)
+        // ⌘← 在收藏夹中不重复触发；按 ⌘→ 返回剪贴历史。
+        model.perform(.openFavorites)
+        #expect(model.mode == .favorites)
+        model.perform(.closeFavorites)
         #expect(model.mode == .history)
         #expect(model.visibleItems.count == 2)
     }

@@ -24,21 +24,17 @@ struct ClipboardPanelView: View {
                     .gesture(WindowDragGesture())
                 VStack(alignment: .leading, spacing: 14) {
                     PanelNoticeBanner(notice: model.notice, action: model.resolveNotice, onDismiss: model.dismissNotice)
-                    if model.mode == .favorites {
-                        FavoriteTabBar(
-                            tabs: model.store.tabs,
-                            selectedTabID: model.selectedTabID,
-                            renamingTabID: $renamingTabID,
-                            renameDraft: $renameDraft,
-                            select: model.selectTab,
-                            create: model.createTab,
-                            rename: model.renameTab,
-                            delete: model.deleteTab
-                        )
-                            .transition(.opacity.combined(with: .offset(y: -6)))
+                    ZStack(alignment: .topLeading) {
+                        if model.mode == .favorites {
+                            favoritesContent
+                                .transition(.move(edge: .leading).combined(with: .opacity))
+                        } else {
+                            historyContent
+                                .transition(.move(edge: .trailing).combined(with: .opacity))
+                        }
                     }
-                    ClipboardHistoryList(model: model)
-                        .frame(maxHeight: .infinity, alignment: .top)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .clipped()
                 }
                 // 预览时列表收窄到左侧 1/3，右侧 2/3 留给详情栏。
                 .frame(width: ClipboardPanelMetrics.listColumnWidth(isPeeking: isPeeking), alignment: .leading)
@@ -119,7 +115,7 @@ struct ClipboardPanelView: View {
             }
         }
         .animation(.snappy(duration: 0.18), value: model.isShowingFavoritePicker)
-        .animation(.snappy(duration: 0.18), value: model.mode)
+        .animation(.snappy(duration: ClipboardPanelMetrics.modeTransitionDuration), value: model.mode)
         .animation(.snappy(duration: 0.18), value: model.isShowingActionsMenu)
         .animation(.snappy(duration: ClipboardPanelMetrics.peekAnimationDuration), value: isPeeking)
         .padding(ClipboardPanelMetrics.shadowInset)
@@ -178,6 +174,29 @@ struct ClipboardPanelView: View {
                 ClipboardFilterMenu(model: model)
             }
         }
+    }
+
+    private var favoritesContent: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            FavoriteTabBar(
+                tabs: model.store.tabs,
+                selectedTabID: model.selectedTabID,
+                renamingTabID: $renamingTabID,
+                renameDraft: $renameDraft,
+                select: model.selectTab,
+                create: model.createTab,
+                rename: model.renameTab,
+                delete: model.deleteTab
+            )
+            ClipboardHistoryList(model: model, mode: .favorites)
+                .frame(maxHeight: .infinity, alignment: .top)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    private var historyContent: some View {
+        ClipboardHistoryList(model: model, mode: .history)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }
 

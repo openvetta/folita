@@ -129,8 +129,14 @@ enum ClipboardActionsMenuEntry: Hashable {
     /// 收藏动作的快捷键：⌘F 与 ⌘K 同构，不打开菜单也能直接按。
     static let favoriteKeyCaps = ["⌘", "F"]
 
-    /// 在剪贴列表与收藏夹之间切换的快捷键（⌘→）。
-    static let favoritesKeyCaps = ["⌘", "→"]
+    /// 打开收藏夹的快捷键（⌘←）。
+    static let openFavoritesKeyCaps = ["⌘", "←"]
+
+    /// 在收藏夹中返回剪贴列表的快捷键（⌘→）。
+    static let closeFavoritesKeyCaps = ["⌘", "→"]
+
+    /// 在剪贴列表与收藏夹之间切换的快捷键。
+    static let favoritesKeyCaps = openFavoritesKeyCaps
 }
 
 /// 菜单里的一行：一级条目，或展开条目的二级条目（二级条目画在一级卡片旁边的另一张卡片里）。

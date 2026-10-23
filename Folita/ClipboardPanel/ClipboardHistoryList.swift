@@ -3,16 +3,18 @@ import SwiftUI
 /// 剪贴面板中的历史列表。
 struct ClipboardHistoryList: View {
     @Bindable var model: ClipboardPanelModel
+    var mode: ClipboardPanelMode? = nil
     @State private var scrollPosition = ScrollPosition(idType: Never.self)
     @State private var listGeometry = ListGeometry()
 
 
     var body: some View {
-        let items = model.visibleItems
+        let currentMode = mode ?? model.mode
+        let items = model.items(for: currentMode)
         if items.isEmpty {
-            emptyState
+            emptyState(for: currentMode)
         } else {
-            let selectedID = model.selectedItem?.id
+            let selectedID = (currentMode == model.mode) ? model.selectedItem?.id : nil
             ScrollView {
                 LazyVStack(spacing: ClipboardPanelMetrics.historyRowSpacing) {
                     ForEach(items) { item in
@@ -59,8 +61,8 @@ struct ClipboardHistoryList: View {
     }
 
     @ViewBuilder
-    private var emptyState: some View {
-        if model.mode == .favorites {
+    private func emptyState(for currentMode: ClipboardPanelMode) -> some View {
+        if currentMode == .favorites {
             favoritesEmptyState
         } else if model.store.items.isEmpty {
             ClipboardHistoryEmptyView(
